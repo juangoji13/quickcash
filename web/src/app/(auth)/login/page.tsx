@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks';
 import styles from './login.module.css';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    const { error: signInError } = await signIn(email, password);
+    const { error: signInError } = await signIn(identifier, password);
 
     if (signInError) {
       setError(signInError);
@@ -76,18 +76,18 @@ export default function LoginPage() {
             )}
 
             <div className={styles.fieldGroup}>
-              <label htmlFor="email" className="input-label">
-                Correo electrónico
+              <label htmlFor="identifier" className="input-label">
+                Usuario o Correo
               </label>
               <input
-                id="email"
-                type="email"
+                id="identifier"
+                type="text"
                 className="input"
-                placeholder="admin@quickcash.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="@usuario o email@empresa.com"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
-                autoComplete="email"
+                autoComplete="username"
               />
             </div>
 

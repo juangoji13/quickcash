@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/store/auth-context';
+import { NextAuthProvider } from '@/components/providers/SessionProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -28,8 +29,11 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <NextAuthProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );
 }
+

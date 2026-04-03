@@ -1,226 +1,224 @@
 /* ============================================
  * QuickCash — Collection Routes Service
- * CRUD de Rutas de Cobro
+ * CRUD de Rutas de Cobro (SQL Local / Drizzle)
  * ============================================ */
 
-import { supabase } from '@/lib/supabase/client';
+import { db } from '@/lib/db';
+import { collection_routes, clients, users, loans, payments } from '@/lib/db/schema';
+import { eq, and, desc, asc, sql, inArray, isNull } from 'drizzle-orm';
 import type { CollectionRoute, CollectionRouteWithDetails } from '@/types';
 
-/* ---- GET: Todas las rutas del tenant ---- */
+/* ---- GET: Todas las rutas ---- */
 
 export async function getCollectionRoutes(): Promise<CollectionRouteWithDetails[]> {
-  const { data, error } = await supabase
-    .from('collection_routes')
-    .select(`
-      *,
-      collector:users!collection_routes_collector_id_fkey (id, full_name, email, phone),
-      clients (id, full_name, document_id, phone, risk_status, route_id)
-    `)
-    .order('created_at', { ascending: false });
+  try {
+    const results = await db.query.collection_routes.findMany({
+      with: {
+        collector: true,
+        clients: true,
+      },
+      orderBy: [desc(collection_routes.created_at)],
+    });
 
-  if (error) {
+    const routes = results as unknown as CollectionRouteWithDetails[];
+
+    for (const route of routes) {
+      if (route.clients && route.clients.length > 0) {
+        const clientIds = route.clients.map(c => c.id);
+
+        const activeLoans = await db.query.loans.findMany({
+          where: and(
+            inArray(loans.client_id, clientIds),
+            eq(loans.status, 'active')
+          ),
+        });
+
+        const loanIds = activeLoans.map(l => l.id);
+        
+        if (loanIds.length > 0) {
+          const todayCollectedResult = await db.select({
+            sum: sql<number>`sum(${payments.amount_paid})`
+          }).from(payments)
+            .where(and(
+              inArray(payments.loan_id, loanIds),
+              eq(payments.status, 'paid'),
+              sql`DATE(${payments.paid_date}) = CURRENT_DATE`
+            ));
+
+          route.total_daily_quota = activeLoans.reduce((sum, l) => sum + l.installment_amount, 0);
+          route.total_collected_today = Number(todayCollectedResult[0]?.sum || 0);
+        } else {
+          route.total_daily_quota = 0;
+          route.total_collected_today = 0;
+        }
+      } else {
+        route.total_daily_quota = 0;
+        route.total_collected_today = 0;
+      }
+    }
+
+    return routes;
+  } catch (error) {
     console.error('Error fetching routes:', error);
     return [];
   }
-
-  // Enrich with quota info
-  const routes = (data || []) as CollectionRouteWithDetails[];
-
-  // For each route, calculate totals from active loans of its clients
-  for (const route of routes) {
-    if (route.clients && route.clients.length > 0) {
-      const clientIds = route.clients.map(c => c.id);
-
-      const { data: loans } = await supabase
-        .from('loans')
-        .select('installment_amount, client_id')
-        .in('client_id', clientIds)
-        .eq('status', 'active');
-
-      const { data: todayPayments } = await supabase
-        .from('payments')
-        .select('amount_paid')
-        .in('loan_id', (loans || []).map((l: { installment_amount: number; client_id: string }) => l.client_id))
-        .eq('status', 'paid')
-        .gte('paid_date', new Date().toISOString().split('T')[0]);
-
-      route.total_daily_quota = (loans || []).reduce((sum: number, l: { installment_amount: number }) => sum + l.installment_amount, 0);
-      route.total_collected_today = (todayPayments || []).reduce((sum: number, p: { amount_paid: number }) => sum + p.amount_paid, 0);
-    } else {
-      route.total_daily_quota = 0;
-      route.total_collected_today = 0;
-    }
-  }
-
-  return routes;
 }
 
-/* ---- GET: Una ruta por ID ---- */
+/* ---- GET: Una ruta ---- */
 
 export async function getRouteById(id: string): Promise<CollectionRouteWithDetails | null> {
-  const { data, error } = await supabase
-    .from('collection_routes')
-    .select(`
-      *,
-      collector:users!collection_routes_collector_id_fkey (id, full_name, email, phone),
-      clients (id, full_name, document_id, phone, address, risk_status, route_id)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error) {
+  try {
+    const result = await db.query.collection_routes.findFirst({
+      where: eq(collection_routes.id, id),
+      with: {
+        collector: true,
+        clients: true,
+      },
+    });
+    return result as unknown as CollectionRouteWithDetails;
+  } catch (error) {
     console.error('Error fetching route:', error);
     return null;
   }
-  return data as CollectionRouteWithDetails;
 }
 
 /* ---- POST: Crear ruta ---- */
 
-export async function createRoute(route: {
-  tenant_id: string;
-  name: string;
-  zone?: string;
-  collector_id?: string;
-  color?: string;
-  notes?: string;
-}): Promise<{ data: CollectionRoute | null; error?: string }> {
-  const { data, error } = await supabase
-    .from('collection_routes')
-    .insert(route)
-    .select()
-    .single();
+export async function createRoute(routeData: any): Promise<{ data: CollectionRoute | null; error?: string }> {
+  try {
+    const [newRoute] = await db.insert(collection_routes).values({
+      tenant_id: routeData.tenant_id,
+      name: routeData.name,
+      zone: routeData.zone,
+      collector_id: routeData.collector_id,
+      color: routeData.color || '#3B82F6',
+      notes: routeData.notes,
+    }).returning();
 
-  if (error) return { data: null, error: error.message };
-  return { data: data as CollectionRoute };
+    return { data: newRoute as unknown as CollectionRoute };
+  } catch (err: any) {
+    return { data: null, error: err.message };
+  }
 }
 
 /* ---- PUT: Actualizar ruta ---- */
 
 export async function updateRoute(
   id: string,
-  updates: Partial<Pick<CollectionRoute, 'name' | 'zone' | 'collector_id' | 'color' | 'is_active' | 'notes'>>
+  updates: Partial<CollectionRoute>
 ): Promise<{ error?: string }> {
-  const { error } = await supabase
-    .from('collection_routes')
-    .update(updates)
-    .eq('id', id);
-
-  if (error) return { error: error.message };
-  return {};
+  try {
+    await db.update(collection_routes)
+      .set(updates as any)
+      .where(eq(collection_routes.id, id));
+    return {};
+  } catch (err: any) {
+    return { error: err.message };
+  }
 }
 
 /* ---- DELETE: Eliminar ruta ---- */
 
 export async function deleteRoute(id: string): Promise<{ error?: string }> {
-  // First, unassign all clients from this route
-  await supabase
-    .from('clients')
-    .update({ route_id: null })
-    .eq('route_id', id);
-
-  const { error } = await supabase
-    .from('collection_routes')
-    .delete()
-    .eq('id', id);
-
-  if (error) return { error: error.message };
-  return {};
+  try {
+    await db.transaction(async (tx) => {
+      await tx.update(clients).set({ route_id: null }).where(eq(clients.route_id, id));
+      await tx.delete(collection_routes).where(eq(collection_routes.id, id));
+    });
+    return {};
+  } catch (err: any) {
+    return { error: err.message };
+  }
 }
 
 /* ---- Assign/Remove clients ---- */
 
 export async function addClientToRoute(clientId: string, routeId: string): Promise<{ error?: string }> {
-  const { error } = await supabase
-    .from('clients')
-    .update({ route_id: routeId })
-    .eq('id', clientId);
-
-  if (error) return { error: error.message };
-  return {};
+  try {
+    await db.update(clients).set({ route_id: routeId }).where(eq(clients.id, clientId));
+    return {};
+  } catch (err: any) {
+    return { error: err.message };
+  }
 }
 
 export async function removeClientFromRoute(clientId: string): Promise<{ error?: string }> {
-  const { error } = await supabase
-    .from('clients')
-    .update({ route_id: null })
-    .eq('id', clientId);
-
-  if (error) return { error: error.message };
-  return {};
+  try {
+    await db.update(clients).set({ route_id: null }).where(eq(clients.id, clientId));
+    return {};
+  } catch (err: any) {
+    return { error: err.message };
+  }
 }
 
 /* ---- Get unassigned clients ---- */
 
-export async function getUnassignedClients(): Promise<{ id: string; full_name: string; document_id: string; phone: string | null }[]> {
-  const { data, error } = await supabase
-    .from('clients')
-    .select('id, full_name, document_id, phone')
-    .is('route_id', null)
-    .order('full_name');
-
-  if (error) {
-    console.error('Error fetching unassigned clients:', error);
+export async function getUnassignedClients(): Promise<any[]> {
+  try {
+    const results = await db.query.clients.findMany({
+      where: isNull(clients.route_id),
+      orderBy: [clients.full_name],
+    });
+    return results;
+  } catch (error) {
     return [];
   }
-  return data || [];
 }
 
 /* ---- GET: Route Active Checklist ---- */
 
 export async function getRouteActiveChecklist(routeId: string) {
-  const { data: clients, error } = await supabase
-    .from('clients')
-    .select(`
-      id, full_name, document_id, risk_status,
-      loans (
-        id, status, installment_amount, total_amount,
-        payments ( id, amount_due, status, due_date, is_locked, installment_number )
-      )
-    `)
-    .eq('route_id', routeId)
-    .order('created_at', { ascending: true });
+  try {
+    const routeClients = await db.query.clients.findMany({
+      where: eq(clients.route_id, routeId),
+      with: {
+        loans: {
+          where: eq(loans.status, 'active'),
+          with: {
+            payments: {
+              where: and(
+                eq(payments.is_locked, false),
+                inArray(payments.status, ['pending', 'partial', 'missed', 'grace'])
+              ),
+              orderBy: [asc(payments.installment_number)],
+            }
+          }
+        }
+      },
+    });
 
-  if (error) {
+    const checklist = routeClients.map((client: any) => {
+      const activeLoan = client.loans?.[0];
+      if (!activeLoan) return null;
+
+      const targetPayment = activeLoan.payments?.[0];
+      if (!targetPayment) return null;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueDate = new Date(targetPayment.due_date);
+      dueDate.setHours(0, 0, 0, 0);
+      
+      if (['pending', 'grace'].includes(targetPayment.status) && dueDate > today) {
+        return null; 
+      }
+
+      return {
+        client_id: client.id,
+        client_name: client.full_name,
+        document_id: client.document_id,
+        risk_status: client.risk_status,
+        loan_id: activeLoan.id,
+        payment_id: targetPayment.id,
+        expectedQuota: targetPayment.amount_due,
+        dueDate: targetPayment.due_date.toISOString().split('T')[0],
+        installment_number: targetPayment.installment_number
+      };
+    }).filter(Boolean);
+
+    return checklist;
+  } catch (error) {
     console.error('Error fetching checklist:', error);
     return [];
   }
-
-  const checklist = (clients || []).map((client: any) => {
-    // Buscar préstamo activo
-    const activeLoan = client.loans?.find((l: any) => l.status === 'active');
-    if (!activeLoan) return null;
-
-    // Obtener la cuota pendiente más antigua
-    const pendingPayments = (activeLoan.payments || [])
-      .filter((p: any) => !p.is_locked && ['pending', 'partial', 'missed', 'grace'].includes(p.status))
-      .sort((a: any, b: any) => a.installment_number - b.installment_number);
-
-    const targetPayment = pendingPayments[0];
-    if (!targetPayment) return null; // Préstamo no tiene cuotas pendientes pero sigue activo temporalmente
-
-    // Excluir si es una cuota futura que aún no se debe pagar
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dueDate = new Date(targetPayment.due_date + 'T12:00:00');
-    dueDate.setHours(0, 0, 0, 0);
-    
-    if (['pending', 'grace'].includes(targetPayment.status) && dueDate > today) {
-      return null; // Aún no corresponde cobrarla hoy
-    }
-
-    return {
-      client_id: client.id,
-      client_name: client.full_name,
-      document_id: client.document_id,
-      risk_status: client.risk_status,
-      loan_id: activeLoan.id,
-      payment_id: targetPayment.id,
-      expectedQuota: targetPayment.amount_due,
-      dueDate: targetPayment.due_date,
-      installment_number: targetPayment.installment_number
-    };
-  }).filter(Boolean);
-
-  return checklist;
 }

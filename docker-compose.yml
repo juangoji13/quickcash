@@ -1,15 +1,42 @@
-version: '3'
+version: '3.8'
 
 services:
+  quickcash-db:
+    image: postgres:16-alpine
+    container_name: quickcash-db
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=quickcash_pass_2024
+      - POSTGRES_DB=quickcash
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - quickcash-network
+
   quickcash-web:
     build:
       context: ./web
       dockerfile: Dockerfile
     container_name: quickcash-web
     restart: always
+    depends_on:
+      - quickcash-db
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      # - NEXT_PUBLIC_SUPABASE_URL= (Opcional, en caso que no lo lean del Build)
-      # - NEXT_PUBLIC_SUPABASE_ANON_KEY=
+      - DATABASE_URL=postgresql://admin:quickcash_pass_2024@quickcash-db:5432/quickcash?schema=public
+      - NEXTAUTH_URL=http://149.130.165.146:3000
+      - NEXTAUTH_SECRET=quickcash_secret_key_777_change_me
+    networks:
+      - quickcash-network
+
+volumes:
+  postgres_data:
+
+networks:
+  quickcash-network:
+    driver: bridge

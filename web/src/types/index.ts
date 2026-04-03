@@ -35,6 +35,7 @@ export interface User {
   id: string;
   tenant_id: string;
   email: string;
+  username: string | null; // Nuevo campo para handle con @
   full_name: string;
   role: UserRole;
   phone: string | null;

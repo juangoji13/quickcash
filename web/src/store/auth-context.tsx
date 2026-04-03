@@ -1,6 +1,6 @@
 /* ============================================
  * QuickCash — Auth Context
- * Gestión de estado de autenticación global
+ * Gestión de estado de autenticación (SQL Local / NextAuth)
  * ============================================ */
 
 'use client';
@@ -12,92 +12,65 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 import type { User as AppUser } from '@/types';
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface AuthState {
-  supabaseUser: SupabaseUser | null;
   appUser: AppUser | null;
-  session: Session | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (identifier: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
+  const { data: session, status } = useSession();
   const [appUser, setAppUser] = useState<AppUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const isLoading = status === 'loading';
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setSupabaseUser(session?.user ?? null);
-      if (session?.user) {
-        fetchAppUser(session.user.id);
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setSupabaseUser(session?.user ?? null);
-      if (session?.user) {
-        fetchAppUser(session.user.id);
-      } else {
-        setAppUser(null);
-        setIsLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function fetchAppUser(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      setAppUser(data as AppUser);
-    } catch (err) {
-      console.error('Error fetching app user:', err);
+    if (session?.user) {
+      // Map session user to AppUser type
+      const user = session.user as any;
+      setAppUser({
+        id: user.id,
+        tenant_id: user.tenantId,
+        email: user.email || '',
+        username: user.username || '', // Incluir username
+        full_name: user.name || '',
+        role: user.role,
+        phone: null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      });
+    } else {
       setAppUser(null);
-    } finally {
-      setIsLoading(false);
     }
-  }
+  }, [session]);
 
-  async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
+  async function signIn(identifier: string, password: string) {
+    const result = await nextAuthSignIn('credentials', {
+      identifier,
       password,
+      redirect: false,
     });
-    return { error: error?.message ?? null };
+
+    if (result?.error) {
+      return { error: 'Credenciales inválidas. Revisa tu usuario/email y contraseña.' };
+    }
+
+    return { error: null };
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    await nextAuthSignOut({ redirect: true, callbackUrl: '/login' });
     setAppUser(null);
-    setSession(null);
-    setSupabaseUser(null);
   }
 
   return (
     <AuthContext.Provider
-      value={{ supabaseUser, appUser, session, isLoading, signIn, signOut }}
+      value={{ appUser, isLoading, signIn, signOut }}
     >
       {children}
     </AuthContext.Provider>

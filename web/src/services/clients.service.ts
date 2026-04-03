@@ -1,88 +1,100 @@
 /* ============================================
  * QuickCash — Clients Service
- * CRUD completo de clientes
+ * CRUD completo de clientes (SQL Local / Drizzle)
  * ============================================ */
 
-import { supabase } from '@/lib/supabase/client';
+import { db } from '@/lib/db';
+import { clients, loans, users } from '@/lib/db/schema';
+import { eq, or, ilike, desc } from 'drizzle-orm';
 import type { Client, ClientWithLoans } from '@/types';
 
 export async function getClients(): Promise<Client[]> {
-  const { data, error } = await supabase
-    .from('clients')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) {
+  try {
+    const results = await db.query.clients.findMany({
+      orderBy: [desc(clients.created_at)],
+    });
+    return results as unknown as Client[];
+  } catch (error) {
     console.error('Error fetching clients:', error);
     return [];
   }
-  return data || [];
 }
 
 export async function getClientById(id: string): Promise<ClientWithLoans | null> {
-  const { data, error } = await supabase
-    .from('clients')
-    .select(`
-      *,
-      loans (*),
-      collector:users!clients_collector_id_fkey (id, full_name, email)
-    `)
-    .eq('id', id)
-    .single();
+  try {
+    const result = await db.query.clients.findFirst({
+      where: eq(clients.id, id),
+      with: {
+        loans: true,
+        collector: true,
+      },
+    });
 
-  if (error) {
+    return result as unknown as ClientWithLoans;
+  } catch (error) {
     console.error('Error fetching client:', error);
     return null;
   }
-  return data as ClientWithLoans;
 }
 
 export async function createClient(
-  client: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'risk_status'>
+  clientData: any
 ): Promise<{ data: Client | null; error?: string }> {
-  const { data, error } = await supabase
-    .from('clients')
-    .insert(client)
-    .select()
-    .single();
+  try {
+    const [newClient] = await db.insert(clients).values({
+      full_name: clientData.full_name,
+      tenant_id: clientData.tenant_id,
+      collector_id: clientData.collector_id,
+      document_id: clientData.document_id,
+      phone: clientData.phone,
+      address: clientData.address,
+      latitude: clientData.latitude,
+      longitude: clientData.longitude,
+      risk_status: 'green',
+    }).returning();
 
-  if (error) return { data: null, error: error.message };
-  return { data };
+    return { data: newClient as unknown as Client };
+  } catch (err: any) {
+    return { data: null, error: err.message };
+  }
 }
 
 export async function updateClient(
   id: string,
   updates: Partial<Client>
 ): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
-    .from('clients')
-    .update(updates)
-    .eq('id', id);
-
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+  try {
+    await db.update(clients)
+      .set(updates as any)
+      .where(eq(clients.id, id));
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
 }
 
 export async function deleteClient(id: string): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
-    .from('clients')
-    .delete()
-    .eq('id', id);
-
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+  try {
+    await db.delete(clients).where(eq(clients.id, id));
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
 }
 
 export async function searchClients(query: string): Promise<Client[]> {
-  const { data, error } = await supabase
-    .from('clients')
-    .select('*')
-    .or(`full_name.ilike.%${query}%,document_id.ilike.%${query}%,phone.ilike.%${query}%`)
-    .order('full_name');
-
-  if (error) {
+  try {
+    const results = await db.query.clients.findMany({
+      where: or(
+        ilike(clients.full_name, `%${query}%`),
+        ilike(clients.document_id, `%${query}%`),
+        ilike(clients.phone, `%${query}%`)
+      ),
+      orderBy: [clients.full_name],
+    });
+    return results as unknown as Client[];
+  } catch (error) {
     console.error('Error searching clients:', error);
     return [];
   }
-  return data || [];
 }

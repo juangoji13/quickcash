@@ -1,10 +1,12 @@
 /* ============================================
  * QuickCash — Loans Service
- * Motor de préstamos y cálculos financieros
+ * Motor de préstamos y cálculos financieros (SQL Local / Drizzle)
  * ============================================ */
 
-import { supabase } from '@/lib/supabase/client';
-import type { Loan, LoanWithClient, LoanWithPayments, Payment, InstallmentScheduleItem } from '@/types';
+import { db } from '@/lib/db';
+import { loans, payments, clients, users } from '@/lib/db/schema';
+import { eq, and, desc, asc, sql } from 'drizzle-orm';
+import type { Loan, LoanWithClient, LoanWithPayments, Payment, InstallmentScheduleItem, LoanStatus } from '@/types';
 
 /* ---- Algoritmo de Cronograma de Cuotas ---- */
 
@@ -15,8 +17,8 @@ interface ScheduleOptions {
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
   startDate: string;
   skipNonWorkingDays: boolean;
-  nonWorkingDays: string[];  // ['sunday', 'saturday']
-  holidays: string[];        // ['2026-12-25', '2026-01-01']
+  nonWorkingDays: string[]; 
+  holidays: string[];        
 }
 
 export function calculateLoanSchedule(options: ScheduleOptions): {
@@ -36,12 +38,10 @@ export function calculateLoanSchedule(options: ScheduleOptions): {
     holidays,
   } = options;
 
-  // Calcular montos
   const interestAmount = principalAmount * (interestRate / 100);
   const totalAmount = principalAmount + interestAmount;
   const installmentAmount = Math.ceil(totalAmount / totalInstallments);
 
-  // Generar cronograma de fechas
   const schedule: InstallmentScheduleItem[] = [];
   let currentDate = new Date(startDate + 'T12:00:00');
 
@@ -49,13 +49,10 @@ export function calculateLoanSchedule(options: ScheduleOptions): {
 
   function isNonWorkingDay(date: Date): boolean {
     if (!skipNonWorkingDays) return false;
-
     const dayName = dayNames[date.getDay()];
     if (nonWorkingDays.includes(dayName)) return true;
-
     const dateStr = date.toISOString().split('T')[0];
     if (holidays.includes(dateStr)) return true;
-
     return false;
   }
 
@@ -71,23 +68,14 @@ export function calculateLoanSchedule(options: ScheduleOptions): {
   function addFrequency(date: Date, freq: string): Date {
     const next = new Date(date);
     switch (freq) {
-      case 'daily':
-        next.setDate(next.getDate() + 1);
-        break;
-      case 'weekly':
-        next.setDate(next.getDate() + 7);
-        break;
-      case 'biweekly':
-        next.setDate(next.getDate() + 14);
-        break;
-      case 'monthly':
-        next.setMonth(next.getMonth() + 1);
-        break;
+      case 'daily': next.setDate(next.getDate() + 1); break;
+      case 'weekly': next.setDate(next.getDate() + 7); break;
+      case 'biweekly': next.setDate(next.getDate() + 14); break;
+      case 'monthly': next.setMonth(next.getMonth() + 1); break;
     }
     return next;
   }
 
-  // Primera cuota
   let dueDate = addFrequency(currentDate, frequency);
   if (skipNonWorkingDays) {
     while (isNonWorkingDay(dueDate)) {
@@ -96,7 +84,6 @@ export function calculateLoanSchedule(options: ScheduleOptions): {
   }
 
   for (let i = 1; i <= totalInstallments; i++) {
-    // Última cuota ajusta el monto para cuadrar exactamente
     const amountDue = i === totalInstallments
       ? totalAmount - (installmentAmount * (totalInstallments - 1))
       : installmentAmount;
@@ -105,7 +92,7 @@ export function calculateLoanSchedule(options: ScheduleOptions): {
       installment_number: i,
       due_date: dueDate.toISOString().split('T')[0],
       amount_due: amountDue,
-      status: 'pending',
+      status: 'pending' as any,
       amount_paid: 0,
       paid_date: null,
     });
@@ -122,103 +109,109 @@ export function calculateLoanSchedule(options: ScheduleOptions): {
 
   const endDate = schedule[schedule.length - 1].due_date;
 
-  return {
-    totalAmount,
-    installmentAmount,
-    endDate,
-    schedule,
-  };
+  return { totalAmount, installmentAmount, endDate, schedule };
 }
 
 /* ---- CRUD de Préstamos ---- */
 
 export async function getLoans(): Promise<LoanWithClient[]> {
-  const { data, error } = await supabase
-    .from('loans')
-    .select(`
-      *,
-      client:clients (id, full_name, document_id, phone, risk_status)
-    `)
-    .order('created_at', { ascending: false });
+  try {
+    const results = await db.query.loans.findMany({
+      with: {
+        client: true,
+      },
+      orderBy: [desc(loans.created_at)],
+    });
 
-  if (error) {
+    return results as unknown as LoanWithClient[];
+  } catch (error) {
     console.error('Error fetching loans:', error);
     return [];
   }
-  return (data || []) as LoanWithClient[];
 }
 
 export async function getLoanById(id: string): Promise<LoanWithPayments | null> {
-  const { data, error } = await supabase
-    .from('loans')
-    .select(`
-      *,
-      payments (*)
-    `)
-    .eq('id', id)
-    .order('installment_number', { referencedTable: 'payments', ascending: true })
-    .single();
+  try {
+    const loan = await db.query.loans.findFirst({
+      where: eq(loans.id, id),
+      with: {
+        payments: {
+          orderBy: [asc(payments.installment_number)],
+        },
+      },
+    });
 
-  if (error) {
+    return loan as unknown as LoanWithPayments;
+  } catch (error) {
     console.error('Error fetching loan:', error);
     return null;
   }
-  return data as LoanWithPayments;
+}
+
+export async function getLoansByClientId(clientId: string): Promise<LoanWithPayments[]> {
+  try {
+    const results = await db.query.loans.findMany({
+      where: eq(loans.client_id, clientId),
+      with: {
+        payments: {
+          orderBy: [asc(payments.installment_number)],
+        },
+      },
+      orderBy: [desc(loans.created_at)],
+    });
+
+    return results as unknown as LoanWithPayments[];
+  } catch (error) {
+    console.error('Error fetching client loans:', error);
+    return [];
+  }
 }
 
 export async function createLoan(
-  loanData: {
-    tenant_id: string;
-    client_id: string;
-    collector_id: string;
-    principal_amount: number;
-    interest_rate: number;
-    total_amount: number;
-    total_installments: number;
-    frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
-    installment_amount: number;
-    start_date: string;
-    end_date: string;
-    skip_non_working_days: boolean;
-  },
+  loanData: any,
   schedule: InstallmentScheduleItem[]
-): Promise<{ data: Loan | null; error?: string }> {
-  // Crear préstamo
-  const { data: loan, error: loanError } = await supabase
-    .from('loans')
-    .insert(loanData)
-    .select()
-    .single();
+): Promise<{ data: any | null; error?: string }> {
+  try {
+    return await db.transaction(async (tx) => {
+      // 1. Insertar el préstamo
+      const [newLoan] = await tx.insert(loans).values({
+        tenant_id: loanData.tenant_id,
+        client_id: loanData.client_id,
+        collector_id: loanData.collector_id,
+        principal_amount: loanData.principal_amount,
+        interest_rate: loanData.interest_rate,
+        total_amount: loanData.total_amount,
+        balance: loanData.total_amount,
+        total_installments: loanData.total_installments,
+        installment_amount: loanData.installment_amount,
+        frequency: loanData.frequency,
+        status: 'active',
+        start_date: new Date(loanData.start_date),
+        end_date: new Date(loanData.end_date),
+        skip_non_working_days: loanData.skip_non_working_days || false,
+      }).returning();
 
-  if (loanError) return { data: null, error: loanError.message };
+      // 2. Insertar cuotas
+      const paymentValues = schedule.map((item) => ({
+        tenant_id: loanData.tenant_id,
+        loan_id: newLoan.id,
+        collector_id: loanData.collector_id,
+        installment_number: item.installment_number,
+        amount_due: item.amount_due,
+        amount_paid: 0,
+        due_date: new Date(item.due_date),
+        status: 'pending',
+        is_locked: false,
+      }));
 
-  // Crear todas las cuotas del cronograma
-  const payments: Omit<Payment, 'id' | 'created_at' | 'updated_at'>[] = schedule.map((item) => ({
-    tenant_id: loanData.tenant_id,
-    loan_id: loan.id,
-    collector_id: loanData.collector_id,
-    installment_number: item.installment_number,
-    amount_due: item.amount_due,
-    amount_paid: 0,
-    due_date: item.due_date,
-    paid_date: null,
-    status: 'pending' as const,
-    latitude: null,
-    longitude: null,
-    is_locked: false,
-  }));
+      await tx.insert(payments).values(paymentValues);
 
-  const { error: paymentsError } = await supabase
-    .from('payments')
-    .insert(payments);
-
-  if (paymentsError) {
-    console.error('Error creating payment schedule:', paymentsError);
-    // Loan was created but payments failed — log for admin review
-    return { data: loan, error: `Préstamo creado pero error en cuotas: ${paymentsError.message}` };
+      return { data: newLoan };
+    });
+  } catch (err: any) {
+    console.error('Error in createLoan:', err);
+    return { data: null, error: err.message };
   }
-
-  return { data: loan };
 }
 
 /* ---- Registro de Pagos ---- */
@@ -229,148 +222,126 @@ export async function registerPayment(
   latitude?: number,
   longitude?: number
 ): Promise<{ success: boolean; error?: string }> {
-  // Obtener información del pago actual
-  const { data: currentPayment, error: fetchErr } = await supabase
-    .from('payments')
-    .select('amount_due, loan_id, installment_number, is_locked, due_date')
-    .eq('id', paymentId)
-    .single();
+  try {
+    const currentPayment = await db.query.payments.findFirst({
+      where: eq(payments.id, paymentId),
+    });
 
-  if (fetchErr || !currentPayment) {
-    return { success: false, error: fetchErr?.message || 'Cuota no encontrada' };
-  }
+    if (!currentPayment) return { success: false, error: 'Cuota no encontrada' };
+    if (currentPayment.is_locked) return { success: false, error: 'Esta cuota ya ha sido registrada' };
 
-  if (currentPayment.is_locked) {
-    return { success: false, error: 'Esta cuota ya ha sido registrada' };
-  }
+    let status = 'paid';
+    if (amountPaid === 0) status = 'missed';
+    else if (amountPaid < currentPayment.amount_due) status = 'partial';
 
-  let status = 'paid';
-  if (amountPaid === 0) status = 'missed';
-  else if (amountPaid < currentPayment.amount_due) status = 'partial';
+    await db.transaction(async (tx) => {
+      await tx.update(payments).set({
+        amount_paid: amountPaid,
+        paid_date: new Date(),
+        status: status as any,
+        latitude: latitude || null,
+        longitude: longitude || null,
+        is_locked: true,
+      }).where(eq(payments.id, paymentId));
 
-  const { error } = await supabase
-    .from('payments')
-    .update({
-      amount_paid: amountPaid,
-      paid_date: new Date().toISOString().split('T')[0],
-      status,
-      latitude: latitude || null,
-      longitude: longitude || null,
-      is_locked: true,
-    })
-    .eq('id', paymentId);
-
-  if (error) return { success: false, error: error.message };
-
-  // Fetch parent loan for total_installments and frequency
-  const { data: currentLoan } = await supabase
-    .from('loans')
-    .select('paid_installments, total_installments, frequency')
-    .eq('id', currentPayment.loan_id)
-    .single();
-
-  if (!currentLoan) return { success: true };
-
-  // Lógica de traslado de saldo: Si hay faltante (partial o missed), sumar el restante 
-  if (amountPaid < currentPayment.amount_due) {
-    const remainder = currentPayment.amount_due - amountPaid;
-    
-    // Si estamos en la última cuota (o la pasamos), creamos una cuota adicional
-    if (currentPayment.installment_number >= currentLoan.total_installments) {
-      const nextDate = new Date(currentPayment.due_date + 'T12:00:00');
-      const addDays = currentLoan.frequency === 'daily' ? 1 
-                    : currentLoan.frequency === 'weekly' ? 7 
-                    : currentLoan.frequency === 'biweekly' ? 14 
-                    : 30; // approx monthly
-      nextDate.setDate(nextDate.getDate() + addDays);
-
-      await supabase.from('payments').insert({
-        loan_id: currentPayment.loan_id,
-        installment_number: currentPayment.installment_number + 1,
-        amount_due: remainder,
-        due_date: nextDate.toISOString().split('T')[0],
-        status: 'pending',
-        is_locked: false
+      const currentLoan = await tx.query.loans.findFirst({
+        where: eq(loans.id, currentPayment.loan_id),
       });
 
-      // Expandimos el total de cuotas del préstamo
-      await supabase.from('loans').update({
-        total_installments: currentLoan.total_installments + 1
-      }).eq('id', currentPayment.loan_id);
-      
-    } else {
-      // Sumar a la siguiente cuota existente
-      const { data: nextPayment } = await supabase
-        .from('payments')
-        .select('id, amount_due')
-        .eq('loan_id', currentPayment.loan_id)
-        .eq('installment_number', currentPayment.installment_number + 1)
-        .single();
+      if (!currentLoan) return;
 
-      if (nextPayment) {
-        await supabase
-          .from('payments')
-          .update({ amount_due: nextPayment.amount_due + remainder })
-          .eq('id', nextPayment.id);
+      // Lógica de traslado de saldo
+      if (amountPaid < currentPayment.amount_due) {
+        const remainder = currentPayment.amount_due - amountPaid;
+        
+        if (currentPayment.installment_number >= currentLoan.total_installments) {
+          // Nueva cuota al final
+          const nextDate = new Date(currentPayment.due_date);
+          const addDays = currentLoan.frequency === 'daily' ? 1 
+                        : currentLoan.frequency === 'weekly' ? 7 
+                        : currentLoan.frequency === 'biweekly' ? 14 
+                        : 30;
+          nextDate.setDate(nextDate.getDate() + addDays);
+
+          await tx.insert(payments).values({
+            tenant_id: currentLoan.tenant_id,
+            loan_id: currentLoan.id,
+            collector_id: currentLoan.collector_id,
+            installment_number: currentPayment.installment_number + 1,
+            amount_due: remainder,
+            due_date: nextDate,
+            status: 'pending',
+          });
+
+          await tx.update(loans).set({
+            total_installments: currentLoan.total_installments + 1,
+            balance: (currentLoan.balance || 0) - amountPaid,
+          }).where(eq(loans.id, currentLoan.id));
+        } else {
+          // Sumar a la siguiente
+          const nextPayment = await tx.query.payments.findFirst({
+            where: and(
+              eq(payments.loan_id, currentLoan.id),
+              eq(payments.installment_number, currentPayment.installment_number + 1)
+            ),
+          });
+
+          if (nextPayment) {
+            await tx.update(payments).set({
+              amount_due: nextPayment.amount_due + remainder,
+            }).where(eq(payments.id, nextPayment.id));
+          }
+        }
       }
-    }
+
+      // Actualizar status del préstamo
+      const newPaidInstallments = currentLoan.paid_installments + (status === 'paid' ? 1 : 0);
+      const isCompleted = (status === 'paid' && newPaidInstallments >= currentLoan.total_installments);
+
+      await tx.update(loans).set({
+        paid_installments: newPaidInstallments,
+        balance: (currentLoan.balance || 0) - amountPaid,
+        status: isCompleted ? 'completed' : 'active',
+      }).where(eq(loans.id, currentLoan.id));
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error in registerPayment:', err);
+    return { success: false, error: err.message };
   }
-
-  // Actualizar status del préstamo
-  const newPaid = currentLoan.paid_installments + (status === 'paid' ? 1 : 0);
-  
-  // Es completado si es un pago FULL y con este pago se cubren todas las cuotas
-  // (Nota: Si fue partial/missed, total_installments se expandió o no sumó paid)
-  // Re-fetch currentLoan total_installments to be safe incase it increased
-  const currentTotal = amountPaid < currentPayment.amount_due ? currentLoan.total_installments + 1 : currentLoan.total_installments;
-  const isCompleted = (status === 'paid' && newPaid >= currentTotal);
-
-  await supabase
-    .from('loans')
-    .update({ 
-      paid_installments: newPaid,
-      ...(isCompleted ? { status: 'completed' } : {})
-    })
-    .eq('id', currentPayment.loan_id);
-
-  return { success: true };
 }
 
-/* ---- Día de Gracia (Desplazamiento) ---- */
+/* ---- Día de Gracia ---- */
 
 export async function applyGraceDay(
   loanId: string,
   missedPaymentId: string
 ): Promise<{ success: boolean; error?: string }> {
-  // 1. Marcar el pago como "grace"
-  const { error: updateError } = await supabase
-    .from('payments')
-    .update({ status: 'grace', is_locked: true })
-    .eq('id', missedPaymentId);
+  try {
+    await db.transaction(async (tx) => {
+      await tx.update(payments).set({
+        status: 'grace' as any,
+        is_locked: true,
+      }).where(eq(payments.id, missedPaymentId));
 
-  if (updateError) return { success: false, error: updateError.message };
+      const loanRecord = await tx.query.loans.findFirst({
+        where: eq(loans.id, loanId),
+      });
 
-  // 2. Obtener el préstamo para recalcular
-  const { data: loan } = await supabase
-    .from('loans')
-    .select('end_date')
-    .eq('id', loanId)
-    .single();
+      if (loanRecord) {
+        const newEndDate = new Date(loanRecord.end_date);
+        newEndDate.setDate(newEndDate.getDate() + 1);
+        await tx.update(loans).set({
+          end_date: newEndDate,
+        }).where(eq(loans.id, loanId));
+      }
+    });
 
-  if (!loan) return { success: false, error: 'Préstamo no encontrado' };
-
-  // 3. Extender la fecha final del préstamo en 1 día
-  const endDate = new Date(loan.end_date + 'T12:00:00');
-  endDate.setDate(endDate.getDate() + 1);
-
-  const { error: loanError } = await supabase
-    .from('loans')
-    .update({ end_date: endDate.toISOString().split('T')[0] })
-    .eq('id', loanId);
-
-  if (loanError) return { success: false, error: loanError.message };
-
-  return { success: true };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
 }
 
 /* ---- Motor de Renovaciones ---- */
@@ -385,93 +356,59 @@ export function calculateRenewal(
   netToDiburse: number;
   newTotalAmount: number;
 } {
-  // Calcular saldo pendiente del préstamo actual
-  const paidAmount = currentLoan.installment_amount * currentLoan.paid_installments;
+  const paidAmount = currentLoan.installment_amount * (currentLoan.paid_installments || 0);
   const remainingBalance = currentLoan.total_amount - paidAmount;
-
-  // Calcular nuevo préstamo
   const newInterest = newPrincipal * (newInterestRate / 100);
   const newTotalAmount = newPrincipal + newInterest;
-
-  // El neto a entregar es: nuevo capital - lo que debe del anterior
   const netToDiburse = newPrincipal - remainingBalance;
 
-  return {
-    remainingBalance,
-    netToDiburse,
-    newTotalAmount,
-  };
+  return { remainingBalance, netToDiburse, newTotalAmount };
 }
 
-/* ---- Eliminar Préstamo Completo ---- */
+/* ---- Eliminar Préstamo ---- */
+
 export async function deleteLoan(loanId: string): Promise<{ success: boolean; error?: string }> {
-  // 1. Borrar pagos (si no hay CASCADE configurado, evita error fk)
-  const { error: paymentsErr } = await supabase
-    .from('payments')
-    .delete()
-    .eq('loan_id', loanId);
-
-  if (paymentsErr) {
-    return { success: false, error: paymentsErr.message };
+  try {
+    await db.transaction(async (tx) => {
+      await tx.delete(payments).where(eq(payments.loan_id, loanId));
+      await tx.delete(loans).where(eq(loans.id, loanId));
+    });
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
-
-  // 2. Borrar préstamo
-  const { error: loanErr } = await supabase
-    .from('loans')
-    .delete()
-    .eq('id', loanId);
-
-  if (loanErr) {
-    return { success: false, error: loanErr.message };
-  }
-
-  return { success: true };
 }
 
-/* ---- Saldar Crédito Completo (pago total) ---- */
+/* ---- Saldar Crédito ---- */
+
 export async function payOffLoan(loanId: string): Promise<{ success: boolean; error?: string }> {
-  const today = new Date().toISOString().split('T')[0];
+  try {
+    await db.transaction(async (tx) => {
+      const pending = await tx.query.payments.findMany({
+        where: and(
+          eq(payments.loan_id, loanId),
+          sql`${payments.status} IN ('pending', 'partial', 'missed')`
+        ),
+      });
 
-  // 1. Obtener todas las cuotas pendientes
-  const { data: pendingPayments, error: fetchErr } = await supabase
-    .from('payments')
-    .select('id, amount_due')
-    .eq('loan_id', loanId)
-    .in('status', ['pending', 'partial', 'missed'])
-    .order('installment_number', { ascending: true });
+      for (const p of pending) {
+        await tx.update(payments).set({
+          amount_paid: p.amount_due,
+          status: 'paid',
+          paid_date: new Date(),
+          is_locked: true,
+        }).where(eq(payments.id, p.id));
+      }
 
-  if (fetchErr || !pendingPayments) {
-    return { success: false, error: fetchErr?.message || 'Error al obtener cuotas' };
+      const loanRecord = await tx.query.loans.findFirst({ where: eq(loans.id, loanId) });
+      await tx.update(loans).set({
+        status: 'completed',
+        paid_installments: loanRecord?.total_installments || 0,
+        balance: 0,
+      }).where(eq(loans.id, loanId));
+    });
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
-
-  // 2. Marcar cada cuota pendiente como pagada hoy con su monto completo
-  for (const p of pendingPayments) {
-    await supabase
-      .from('payments')
-      .update({
-        amount_paid: p.amount_due,
-        status: 'paid',
-        paid_date: today,
-        is_locked: true,
-      })
-      .eq('id', p.id);
-  }
-
-  // 3. Marcar el préstamo como completado
-  const { data: loan } = await supabase
-    .from('loans')
-    .select('total_installments')
-    .eq('id', loanId)
-    .single();
-
-  await supabase
-    .from('loans')
-    .update({
-      status: 'completed',
-      paid_installments: loan?.total_installments || 0,
-    })
-    .eq('id', loanId);
-
-  return { success: true };
 }
-

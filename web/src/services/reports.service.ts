@@ -1,9 +1,11 @@
 /* ============================================
  * QuickCash — Reports Service
- * Reportes financieros y análisis
+ * Reportes financieros y análisis (SQL Local / Drizzle)
  * ============================================ */
 
-import { supabase } from '@/lib/supabase/client';
+import { db } from '@/lib/db';
+import { payments, loans, users, clients } from '@/lib/db/schema';
+import { eq, and, gte, lte, sql } from 'drizzle-orm';
 
 export interface FinancialReport {
   period: string;
@@ -18,38 +20,48 @@ export interface FinancialReport {
 }
 
 export async function getCollectionReport(dateFrom: string, dateTo: string): Promise<FinancialReport> {
-  // Pagos en el periodo
-  const { data: payments } = await supabase
-    .from('payments')
-    .select('amount_paid, amount_due, status')
-    .gte('due_date', dateFrom)
-    .lte('due_date', dateTo);
+  try {
+    const from = new Date(dateFrom);
+    const to = new Date(dateTo);
 
-  const totalCollected = (payments || []).reduce((sum, p) => sum + Number(p.amount_paid), 0);
-  const totalExpected = (payments || []).reduce((sum, p) => sum + Number(p.amount_due), 0);
+    // Pagos en el periodo
+    const periodPayments = await db.query.payments.findMany({
+      where: and(
+        gte(payments.due_date, from),
+        lte(payments.due_date, to)
+      ),
+    });
 
-  // Préstamos creados en el periodo
-  const { data: newLoans } = await supabase
-    .from('loans')
-    .select('id, principal_amount, interest_rate, status')
-    .gte('created_at', dateFrom + 'T00:00:00')
-    .lte('created_at', dateTo + 'T23:59:59');
+    const totalCollected = periodPayments.reduce((sum, p) => sum + Number(p.amount_paid), 0);
+    const totalExpected = periodPayments.reduce((sum, p) => sum + Number(p.amount_due), 0);
 
-  const capitalDeployed = (newLoans || []).reduce((sum, l) => sum + Number(l.principal_amount), 0);
-  const interestEarned = (newLoans || []).reduce((sum, l) =>
-    sum + (Number(l.principal_amount) * Number(l.interest_rate) / 100), 0);
+    // Préstamos creados en el periodo
+    const newLoansList = await db.query.loans.findMany({
+      where: and(
+        gte(loans.created_at, from),
+        lte(loans.created_at, to)
+      ),
+    });
 
-  return {
-    period: `${dateFrom} — ${dateTo}`,
-    capital_deployed: capitalDeployed,
-    interest_earned: interestEarned,
-    total_collected: totalCollected,
-    total_expected: totalExpected,
-    collection_rate: totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100 * 10) / 10 : 0,
-    new_loans: (newLoans || []).length,
-    completed_loans: (newLoans || []).filter(l => l.status === 'completed').length,
-    defaulted_loans: (newLoans || []).filter(l => l.status === 'defaulted').length,
-  };
+    const capitalDeployed = newLoansList.reduce((sum, l) => sum + Number(l.principal_amount), 0);
+    const interestEarned = newLoansList.reduce((sum, l) =>
+      sum + (Number(l.principal_amount) * Number(l.interest_rate) / 100), 0);
+
+    return {
+      period: `${dateFrom} — ${dateTo}`,
+      capital_deployed: capitalDeployed,
+      interest_earned: interestEarned,
+      total_collected: totalCollected,
+      total_expected: totalExpected,
+      collection_rate: totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100 * 10) / 10 : 0,
+      new_loans: newLoansList.length,
+      completed_loans: newLoansList.filter(l => l.status === 'completed').length,
+      defaulted_loans: newLoansList.filter(l => l.status === 'defaulted').length,
+    };
+  } catch (error) {
+    console.error('Error generating report:', error);
+    throw error;
+  }
 }
 
 export interface CollectorPerformance {
@@ -63,49 +75,49 @@ export interface CollectorPerformance {
 }
 
 export async function getCollectorPerformance(): Promise<CollectorPerformance[]> {
-  const today = new Date().toISOString().split('T')[0];
-
-  // Get all collectors
-  const { data: collectors } = await supabase
-    .from('users')
-    .select('id, full_name')
-    .eq('role', 'collector');
-
-  if (!collectors || collectors.length === 0) return [];
-
-  const results: CollectorPerformance[] = [];
-
-  for (const collector of collectors) {
-    const { data: payments } = await supabase
-      .from('payments')
-      .select('amount_paid, amount_due')
-      .eq('collector_id', collector.id)
-      .eq('due_date', today);
-
-    const { data: clients } = await supabase
-      .from('clients')
-      .select('id')
-      .eq('collector_id', collector.id);
-
-    const { data: loans } = await supabase
-      .from('loans')
-      .select('id')
-      .eq('collector_id', collector.id)
-      .eq('status', 'active');
-
-    const totalCollected = (payments || []).reduce((s, p) => s + Number(p.amount_paid), 0);
-    const totalExpected = (payments || []).reduce((s, p) => s + Number(p.amount_due), 0);
-
-    results.push({
-      collector_id: collector.id,
-      collector_name: collector.full_name,
-      total_collected: totalCollected,
-      total_expected: totalExpected,
-      collection_rate: totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0,
-      total_clients: (clients || []).length,
-      active_loans: (loans || []).length,
+  try {
+    const collectors = await db.query.users.findMany({
+      where: eq(users.role, 'collector'),
     });
-  }
 
-  return results;
+    const results: CollectorPerformance[] = [];
+
+    for (const collector of collectors) {
+      const todayPayments = await db.query.payments.findMany({
+        where: and(
+          eq(payments.collector_id, collector.id),
+          sql`DATE(${payments.due_date}) = CURRENT_DATE`
+        ),
+      });
+
+      const collectorClients = await db.query.clients.findMany({
+        where: eq(clients.collector_id, collector.id),
+      });
+
+      const activeLoans = await db.query.loans.findMany({
+        where: and(
+          eq(loans.collector_id, collector.id),
+          eq(loans.status, 'active')
+        ),
+      });
+
+      const totalCollected = todayPayments.reduce((s, p) => s + Number(p.amount_paid), 0);
+      const totalExpected = todayPayments.reduce((s, p) => s + Number(p.amount_due), 0);
+
+      results.push({
+        collector_id: collector.id,
+        collector_name: collector.full_name || 'Sin Nombre',
+        total_collected: totalCollected,
+        total_expected: totalExpected,
+        collection_rate: totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0,
+        total_clients: collectorClients.length,
+        active_loans: activeLoans.length,
+      });
+    }
+
+    return results;
+  } catch (error) {
+    console.error('Error fetching collector performance:', error);
+    return [];
+  }
 }

@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks';
 import { getClients, createClient, deleteClient, searchClients } from '@/services/clients.service';
+import { getLoansByClientId } from '@/services/loans.service';
 import { formatDate, getRiskBadgeClass, getRiskLabel, getInitials, formatCurrency } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
 import type { Client } from '@/types';
 import { ConfirmModal } from '@/components/ui/Modal';
 import styles from './clients.module.css';
@@ -113,12 +113,7 @@ export default function ClientsPage() {
     setSelectedClient(client);
     setView('detail');
     setLoading(true);
-    const { data: loansData } = await supabase
-      .from('loans')
-      .select('*, payments(*)')
-      .eq('client_id', client.id)
-      .order('created_at', { ascending: false });
-    
+    const loansData = await getLoansByClientId(client.id);
     setClientLoans(loansData || []);
     setLoading(false);
   }
