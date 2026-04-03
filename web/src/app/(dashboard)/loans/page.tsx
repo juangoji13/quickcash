@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks';
-import { getLoans, createLoan, calculateLoanSchedule, getLoanById, deleteLoan, registerPayment, payOffLoan, applyGraceDay, calculateRenewal } from '@/services/loans.service';
+import { getLoans, createLoan, getLoanById, deleteLoan, registerPayment, payOffLoan, applyGraceDay } from '@/services/loans.service';
+import { calculateLoanSchedule, calculateRenewal } from '@/lib/utils/loans';
 import { getClients } from '@/services/clients.service';
 import { getTenant } from '@/services/tenant.service';
 import { formatCurrency, formatDate } from '@/lib/utils';

@@ -1,3 +1,5 @@
+'use server';
+
 /* ============================================
  * QuickCash — Collection Routes Service
  * CRUD de Rutas de Cobro (SQL Local / Drizzle)

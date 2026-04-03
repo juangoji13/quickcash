@@ -1,3 +1,5 @@
+'use server';
+
 /* ============================================
  * QuickCash — Tenant Service
  * CRUD y configuración del tenant (SQL Local / Drizzle)

@@ -1,3 +1,5 @@
+'use server';
+
 /* ============================================
  * QuickCash — Route Closures Service
  * Cierres de caja y jornada (SQL Local / Drizzle)

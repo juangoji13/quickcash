@@ -1,3 +1,5 @@
+'use server';
+
 /* ============================================
  * QuickCash — Collectors Service
  * Gestión de cobradores e invitaciones (SQL Local / Drizzle)

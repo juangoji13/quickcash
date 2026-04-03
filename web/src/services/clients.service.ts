@@ -1,3 +1,5 @@
+'use server';
+
 /* ============================================
  * QuickCash — Clients Service
  * CRUD completo de clientes (SQL Local / Drizzle)

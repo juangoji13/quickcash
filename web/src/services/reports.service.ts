@@ -1,3 +1,5 @@
+'use server';
+
 /* ============================================
  * QuickCash — Reports Service
  * Reportes financieros y análisis (SQL Local / Drizzle)

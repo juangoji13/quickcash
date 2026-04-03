@@ -1,3 +1,5 @@
+'use server';
+
 /* ============================================
  * QuickCash — Dashboard Service
  * KPIs y métricas en tiempo real (SQL Local / Drizzle)
