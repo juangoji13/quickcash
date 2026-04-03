@@ -25,11 +25,11 @@ services:
     depends_on:
       - quickcash-db
     ports:
-      - "3000:3000"
+      - "3005:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://admin:quickcash_pass_2024@quickcash-db:5432/quickcash?schema=public
-      - NEXTAUTH_URL=http://149.130.165.146:3000
+      - NEXTAUTH_URL=http://149.130.165.146:3005
       - NEXTAUTH_SECRET=quickcash_secret_key_777_change_me
     networks:
       - quickcash-network
