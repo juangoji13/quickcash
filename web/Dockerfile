@@ -48,6 +48,11 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy DB sync and seed files (needed for runtime mgmt)
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./
+COPY --from=builder --chown=nextjs:nodejs /app/src/lib/db ./src/lib/db
+COPY --from=builder --chown=nextjs:nodejs /app/src/types ./src/types
+
 USER nextjs
 
 EXPOSE 3000
