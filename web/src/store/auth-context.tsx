@@ -16,6 +16,7 @@ import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from
 import type { User as AppUser } from '@/types';
 
 interface AuthState {
+  session: any | null;
   appUser: AppUser | null;
   isLoading: boolean;
   signIn: (identifier: string, password: string) => Promise<{ error: string | null }>;
@@ -36,8 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAppUser({
         id: user.id,
         tenant_id: user.tenantId,
+        username: user.username || '',
         email: user.email || '',
-        username: user.username || '', // Incluir username
         full_name: user.name || '',
         role: user.role,
         phone: null,
@@ -70,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ appUser, isLoading, signIn, signOut }}
+      value={{ session, appUser, isLoading, signIn, signOut }}
     >
       {children}
     </AuthContext.Provider>
