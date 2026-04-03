@@ -18,6 +18,7 @@ async function seed() {
     const hashedPassword = await bcrypt.hash('admin123', 10);
     
     const [admin] = await db.insert(users).values({
+      username: '@admin_master',
       email: 'admin@quickcash.com',
       password_hash: hashedPassword,
       full_name: 'Administrador Sistema',
