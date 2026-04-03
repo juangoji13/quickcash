@@ -36,22 +36,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Copy essential files for runtime
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
+COPY --from=builder /app/next.config.ts ./
 COPY --from=builder /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-# NOTE: Ensure "output: 'standalone'" is in next.config.ts
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Copy DB sync and seed files (needed for runtime mgmt)
-COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./
-COPY --from=builder --chown=nextjs:nodejs /app/src/lib/db ./src/lib/db
-COPY --from=builder --chown=nextjs:nodejs /app/src/types ./src/types
+COPY --from=builder /app/.next ./.next
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/src/lib/db ./src/lib/db
+COPY --from=builder /app/src/types ./src/types
+COPY --from=builder /app/drizzle.config.ts ./
+# If drizzle migrations folder exists, include it
+# COPY --from=builder /app/drizzle ./drizzle  
 
 USER nextjs
 
@@ -60,5 +56,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Note: this requires next.config.ts to have output: "standalone"
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
