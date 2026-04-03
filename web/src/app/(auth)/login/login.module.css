@@ -1,0 +1,159 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-light);
+  padding: var(--space-4);
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  max-width: 960px;
+  min-height: 560px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Brand Panel */
+.brandPanel {
+  flex: 1;
+  background-color: var(--color-asphalt);
+  padding: var(--space-10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandContent {
+  text-align: center;
+}
+
+.brandLogo {
+  font-family: var(--font-logo);
+  font-size: var(--text-5xl);
+  color: var(--color-white);
+  margin-bottom: var(--space-4);
+}
+
+.brandAccent {
+  color: var(--color-safety-yellow);
+}
+
+.brandTagline {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  color: var(--color-gray-300);
+  line-height: 1.6;
+  margin-bottom: var(--space-10);
+}
+
+.brandStats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.brandStat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-gray-300);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+}
+
+.brandStatValue {
+  font-size: var(--text-2xl);
+}
+
+.brandStatLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+/* Form Panel */
+.formPanel {
+  flex: 1;
+  background-color: var(--color-card-white);
+  padding: var(--space-10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.formHeader {
+  margin-bottom: var(--space-2);
+}
+
+.formTitle {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  color: var(--color-asphalt);
+  margin-bottom: var(--space-2);
+}
+
+.formSubtitle {
+  font-size: var(--text-sm);
+  color: var(--color-gray-400);
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.errorBox {
+  background-color: var(--color-red-bg);
+  color: var(--color-red);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--color-red);
+}
+
+.submitBtn {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    max-width: 440px;
+  }
+
+  .brandPanel {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .brandStats {
+    display: none;
+  }
+
+  .formPanel {
+    padding: var(--space-8) var(--space-6);
+  }
+}

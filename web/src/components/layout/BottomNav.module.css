@@ -1,0 +1,73 @@
+/* Bottom Nav — solo visible en móvil */
+.bottomNav {
+  display: none; /* oculto en desktop */
+}
+
+@media (max-width: 767px) {
+  .bottomNav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background-color: #2C3E50; /* asphalt */
+    border-top: 3px solid #F1C40F; /* acento amarillo — identidad QuickCash */
+    z-index: 200;
+    align-items: center;
+    justify-content: space-around;
+    /* iOS safe area */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .navItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    height: 100%;
+    color: rgba(255, 255, 255, 0.45);
+    text-decoration: none;
+    transition: color 150ms ease;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .navItemActive {
+    color: #F1C40F; /* amarillo seguridad */
+  }
+
+  .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 150ms ease;
+  }
+
+  .navItemActive .icon {
+    transform: translateY(-2px);
+  }
+
+  .label {
+    font-family: 'Rubik', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  .activePill {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: #F1C40F;
+    border-radius: 0 0 3px 3px;
+    box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);
+  }
+}

@@ -1,0 +1,231 @@
+/* ============================================
+ * Dashboard Layout — Responsive (Mobile-First)
+ * ============================================ */
+
+.dashboardLayout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg-light);
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ---- TopBar base ---- */
+.topBar {
+  height: var(--header-height);
+  background-color: var(--color-card-white);
+  border-bottom: 1px solid var(--color-gray-100);
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-8);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Logo QuickCash centrado absolutamente en el TopBar */
+.topBarLogo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-logo);
+  font-size: 1.35rem;
+  color: var(--color-asphalt);
+  letter-spacing: -0.01em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.topBarLogo span {
+  color: var(--color-safety-yellow);
+}
+
+/* Desktop topbar visible, mobile hidden */
+.topBarDesktop { display: flex; }
+.topBarMobile  { display: none; }
+
+.pageContext {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.greeting {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-gray-400);
+}
+
+.greeting strong {
+  color: var(--color-asphalt);
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+/* Mobile Logo — QuickCash brand */
+.mobileLogo {
+  font-family: var(--font-logo);
+  font-size: 1.4rem;
+  color: var(--color-asphalt);
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.mobileLogo span {
+  color: var(--color-safety-yellow);
+}
+
+/* Top Actions */
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.iconBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light);
+  border: 1px solid var(--color-gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-500);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  text-decoration: none;
+}
+
+.iconBtn:hover {
+  background: var(--color-gray-50);
+  color: var(--color-asphalt);
+  border-color: var(--color-gray-300);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.iconBtn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.notificationDot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-red);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-white);
+  animation: pulse 2s infinite;
+}
+
+/* Page Content */
+.pageContent {
+  flex: 1;
+  padding: var(--space-8);
+  max-width: var(--max-content-width);
+  width: 100%;
+  animation: fadeIn var(--transition-base) ease-out;
+}
+
+/* ---- Loading Screen ---- */
+.loadingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--gradient-asphalt);
+  gap: var(--space-6);
+}
+
+.loadingLogo {
+  font-family: var(--font-logo);
+  font-size: var(--text-5xl);
+  color: var(--color-white);
+  text-shadow: 0 0 40px rgba(241, 196, 15, 0.2);
+}
+
+.loadingLogo span {
+  color: var(--color-safety-yellow);
+  text-shadow: 0 0 30px rgba(241, 196, 15, 0.4);
+}
+
+.loadingBar {
+  width: 200px;
+  height: 3px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loadingBarInner {
+  width: 40%;
+  height: 100%;
+  background: var(--gradient-yellow);
+  border-radius: 2px;
+  animation: loadingSlide 1.2s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(241, 196, 15, 0.5);
+}
+
+@keyframes loadingSlide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ============================================
+ * RESPONSIVE — Mobile (< 768px)
+ * ============================================ */
+@media (max-width: 767px) {
+  .mainContent {
+    margin-left: 0;
+  }
+
+  /* Esconder desktop topbar, mostrar móvil */
+  .topBarDesktop { display: none; }
+
+  .topBarMobile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-4);
+    height: 56px;
+    background-color: var(--color-card-white);
+    border-bottom: 3px solid var(--color-safety-yellow);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  }
+
+  /* Logo absolutamente centrado en la toolbar móvil.
+     Funciona siempre, sin importar el ancho de los íconos laterales. */
+  .mobileLogo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .pageContent {
+    padding: var(--space-4);
+    max-width: 100%;
+    /* Espacio para la bottom nav + safe area de iOS */
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  }
+}
