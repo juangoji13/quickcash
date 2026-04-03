@@ -16,6 +16,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Ensure Next.js reads our env file during build for Prerender
+RUN if [ -f .env.local ]; then cp .env.local .env.production; fi
+
 # Environment variables must be set at build time for Next.js 
 # Or we use standalone features
 ENV NEXT_TELEMETRY_DISABLED=1
