@@ -45,6 +45,7 @@ COPY --from=builder /app/.next ./.next
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/src/lib/db ./src/lib/db
 COPY --from=builder /app/src/types ./src/types
+COPY --from=builder /app/src/scripts ./src/scripts
 COPY --from=builder /app/drizzle.config.ts ./
 # If drizzle migrations folder exists, include it
 # COPY --from=builder /app/drizzle ./drizzle  

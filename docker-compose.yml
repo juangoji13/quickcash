@@ -34,6 +34,23 @@ services:
     networks:
       - quickcash-network
 
+  quickcash-bot:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: quickcash-bot
+    restart: always
+    depends_on:
+      - quickcash-db
+    command: npm run bot:start
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://admin:quickcash_pass_2024@quickcash-db:5432/quickcash?schema=public
+      - BOT_TOKEN=8627376599:AAGFo8Nytscp_2f2Rr-y-4QYYzopGmdIQDg
+      - OWNER_ID=8409547845
+    networks:
+      - quickcash-network
+
 volumes:
   postgres_data:
 

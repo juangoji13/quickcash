@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:push": "drizzle-kit push",
-    "db:seed": "npx tsx src/lib/db/seed.ts"
+    "db:seed": "npx tsx src/lib/db/seed.ts",
+    "bot:start": "npx tsx src/scripts/bot.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
@@ -22,6 +23,7 @@
     "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "telegraf": "^4.16.3",
     "tsx": "^4.19.3",
     "@types/pg": "^8.20.0"
   },
