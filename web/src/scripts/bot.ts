@@ -12,6 +12,7 @@ if (!BOT_TOKEN || !OWNER_ID) {
   process.exit(1);
 }
 
+// Interfaz para la sesión personalizada
 interface MySession extends Scenes.WizardSessionData {
   userData: {
     fullName?: string;
@@ -36,50 +37,58 @@ bot.use(async (ctx: any, next: () => Promise<void>) => {
 // --- Scene: Create Lender (Prestamista) ---
 const createLenderWizard = new Scenes.WizardScene<MyContext>(
   'create-lender-wizard',
-  async (ctx) => {
+  async (ctx: any) => {
+    // Inicializar datos LIMPIOS
     ctx.scene.session.userData = {};
-    await ctx.reply('➕ Iniciando creación de nuevo Prestamista.\n\nEscribe el **Nombre Completo**:');
+    await ctx.reply('➕ **NUEVA CREACIÓN DE PRESTAMISTA**\n\nPor favor, escribe el **Nombre Completo**:');
     return ctx.wizard.next();
   },
-  async (ctx) => {
+  async (ctx: any) => {
     if (!('text' in ctx.message!)) return ctx.reply('Por favor envía un texto.');
     ctx.scene.session.userData.fullName = ctx.message.text;
     await ctx.reply('Escribe el **Nombre de Usuario** (ej: @juan_pres):');
     return ctx.wizard.next();
   },
-  async (ctx) => {
+  async (ctx: any) => {
     if (!('text' in ctx.message!)) return ctx.reply('Por favor envía un texto.');
-    let username = ctx.message.text;
+    let username = ctx.message.text.trim();
     if (!username.startsWith('@')) username = '@' + username;
+    
+    // Verificar si el usuario ya existe
+    const existing = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    if (existing.length > 0) {
+      return ctx.reply(`❌ El usuario ${username} ya existe. Por favor intenta con otro:`);
+    }
+
     ctx.scene.session.userData.username = username;
-    await ctx.reply('Escribe el **Email** (obligatorio para la base de datos):');
+    await ctx.reply(`Email para **${username}**:`);
     return ctx.wizard.next();
   },
-  async (ctx) => {
+  async (ctx: any) => {
     if (!('text' in ctx.message!)) return ctx.reply('Por favor envía un texto.');
     ctx.scene.session.userData.email = ctx.message.text;
     await ctx.reply('Escribe la **Contraseña** de acceso web:');
     return ctx.wizard.next();
   },
-  async (ctx) => {
+  async (ctx: any) => {
     if (!('text' in ctx.message!)) return ctx.reply('Por favor envía un texto.');
     ctx.scene.session.userData.password = ctx.message.text;
 
     const { fullName, username, email, password } = ctx.scene.session.userData;
     
     await ctx.reply(
-      `📝 **Resumen del Nuevo Prestamista**:\n\n` +
-      `👤 Nombre: ${fullName}\n` +
-      `🆔 Usuario: ${username}\n` +
-      `📧 Email: ${email}\n` +
-      `🔑 Pass: ${password}\n\n` +
-      `¿Confirmas la creación?`,
+      `📝 **VERIFICA LOS DATOS**\n\n` +
+      `👤 **Nombre:** ${fullName}\n` +
+      `🆔 **Usuario:** ${username}\n` +
+      `📧 **Email:** ${email}\n` +
+      `🔑 **Password:** \`${password}\` (haz clic para copiar)\n\n` +
+      `¿Son correctos estos datos?`,
       Markup.inlineKeyboard([
-        [Markup.button.callback('✅ Confirmar y Crear', 'confirm_create')],
-        [Markup.button.callback('❌ Cancelar', 'cancel_create')]
+        [Markup.button.callback('✅ CONFIRMAR Y CREAR', 'confirm_create')],
+        [Markup.button.callback('❌ CANCELAR', 'cancel_create')]
       ])
     );
-    return; // Esperar a la acción del botón
+    return;
   }
 );
 
@@ -136,9 +145,9 @@ const mainMenu = (ctx: any) => {
 bot.start(mainMenu);
 
 // --- Actions ---
-bot.action('start_create', (ctx) => ctx.scene.enter('create-lender-wizard'));
+bot.action('start_create', (ctx: any) => ctx.scene.enter('create-lender-wizard'));
 
-bot.action('list_users', async (ctx) => {
+bot.action('list_users', async (ctx: any) => {
   const allUsers = await db.select().from(users);
   if (allUsers.length === 0) return ctx.reply('No hay usuarios en la base de datos.');
 
@@ -159,7 +168,7 @@ bot.action('list_users', async (ctx) => {
   }
 });
 
-bot.action(/toggle_(.+)_(0|1)/, async (ctx) => {
+bot.action(/toggle_(.+)_(0|1)/, async (ctx: any) => {
   const userId = ctx.match[1];
   const newState = ctx.match[2] === '1';
 
