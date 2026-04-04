@@ -7,13 +7,16 @@
 
 import { db } from '@/lib/db';
 import { users, invitations } from '@/lib/db/schema';
-import { eq, inArray, desc } from 'drizzle-orm';
+import { eq, and, inArray, desc } from 'drizzle-orm';
 import type { User, Invitation } from '@/types';
 
-export async function getCollectors(): Promise<User[]> {
+export async function getCollectors(tenantId: string): Promise<User[]> {
   try {
     const results = await db.query.users.findMany({
-      where: inArray(users.role, ['collector', 'admin']),
+      where: and(
+        eq(users.tenant_id, tenantId),
+        inArray(users.role, ['collector', 'admin'])
+      ),
       orderBy: [users.full_name],
     });
     return results as unknown as User[];
@@ -25,12 +28,16 @@ export async function getCollectors(): Promise<User[]> {
 
 export async function updateCollector(
   id: string,
+  tenantId: string,
   updates: Partial<Pick<User, 'full_name' | 'phone' | 'is_active'>>
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await db.update(users)
       .set(updates as any)
-      .where(eq(users.id, id));
+      .where(and(
+        eq(users.id, id),
+        eq(users.tenant_id, tenantId)
+      ));
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -39,9 +46,10 @@ export async function updateCollector(
 
 /* ---- Invitaciones ---- */
 
-export async function getInvitations(): Promise<Invitation[]> {
+export async function getInvitations(tenantId: string): Promise<Invitation[]> {
   try {
     const results = await db.query.invitations.findMany({
+      where: eq(invitations.tenant_id, tenantId),
       orderBy: [desc(invitations.created_at)],
     });
     return results as unknown as Invitation[];
@@ -74,9 +82,12 @@ export async function createInvitation(
   }
 }
 
-export async function deleteInvitation(id: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteInvitation(id: string, tenantId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    await db.delete(invitations).where(eq(invitations.id, id));
+    await db.delete(invitations).where(and(
+      eq(invitations.id, id),
+      eq(invitations.tenant_id, tenantId)
+    ));
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };

@@ -25,10 +25,13 @@ export default function OverviewPage() {
 
   useEffect(() => {
     async function load() {
+      if (!appUser?.tenant_id) return;
+      
       try {
+        setLoading(true);
         const [kpiData, upcomingData] = await Promise.all([
-          getDashboardKPIs(),
-          getUpcomingPayments()
+          getDashboardKPIs(appUser.tenant_id),
+          getUpcomingPayments(appUser.tenant_id)
         ]);
         setKpis(kpiData);
         setUpcoming(upcomingData);
@@ -39,7 +42,7 @@ export default function OverviewPage() {
       }
     }
     load();
-  }, []);
+  }, [appUser?.tenant_id]);
 
   const firstName = appUser?.full_name?.split(' ')[0] || 'Admin';
 

@@ -35,11 +35,12 @@ export default function ClientsPage() {
   const [formSaving, setFormSaving] = useState(false);
 
   const loadClients = useCallback(async () => {
+    if (!appUser?.tenant_id) return;
     setLoading(true);
-    const data = await getClients();
+    const data = await getClients(appUser.tenant_id);
     setClients(data);
     setLoading(false);
-  }, []);
+  }, [appUser?.tenant_id]);
 
   useEffect(() => {
     loadClients();
@@ -47,8 +48,10 @@ export default function ClientsPage() {
 
   async function handleSearch(query: string) {
     setSearch(query);
+    if (!appUser?.tenant_id) return;
+    
     if (query.length >= 2) {
-      const results = await searchClients(query);
+      const results = await searchClients(query, appUser.tenant_id);
       setClients(results);
     } else if (query === '') {
       loadClients();
@@ -90,7 +93,7 @@ export default function ClientsPage() {
   }
 
   async function confirmDeleteClient() {
-    if (!deleteTarget) return;
+    if (!deleteTarget || !appUser?.tenant_id) return;
     const { id } = deleteTarget;
     
     // UI Optimista
@@ -98,7 +101,7 @@ export default function ClientsPage() {
     if (selectedClient?.id === id) setView('list');
     setDeleteTarget(null);
     
-    const { error } = await deleteClient(id);
+    const { error } = await deleteClient(id, appUser.tenant_id);
     if (error) {
       alert(`Error: ${error}`);
       loadClients(); // Revertir
@@ -110,10 +113,11 @@ export default function ClientsPage() {
   }
 
   async function openDetail(client: Client) {
+    if (!appUser?.tenant_id) return;
     setSelectedClient(client);
     setView('detail');
     setLoading(true);
-    const loansData = await getLoansByClientId(client.id);
+    const loansData = await getLoansByClientId(client.id, appUser.tenant_id);
     setClientLoans(loansData || []);
     setLoading(false);
   }

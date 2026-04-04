@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks';
 import { getTenant, updateTenant } from '@/services/tenant.service';
 import type { Tenant } from '@/types';
@@ -31,13 +31,10 @@ export default function SettingsPage() {
   const [newHoliday, setNewHoliday] = useState('');
   const [holidays, setHolidays] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadTenant();
-  }, []);
-
-  async function loadTenant() {
+  const loadTenant = useCallback(async () => {
+    if (!appUser) return;
     setLoading(true);
-    const data = await getTenant();
+    const data = await getTenant(appUser.tenant_id);
     if (data) {
       setTenant(data);
       setName(data.name);
@@ -46,7 +43,11 @@ export default function SettingsPage() {
       setHolidays((data.holidays as string[]) || []);
     }
     setLoading(false);
-  }
+  }, [appUser]);
+
+  useEffect(() => {
+    loadTenant();
+  }, [loadTenant]);
 
   function toggleDay(day: string) {
     setNonWorkingDays((prev) =>
@@ -70,6 +71,7 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage(null);
 
+    if (!appUser) return;
     const { success, error } = await updateTenant(tenant.id, {
       name,
       currency,

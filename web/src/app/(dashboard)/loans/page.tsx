@@ -59,17 +59,18 @@ export default function LoansPage() {
   } | null>(null);
 
   const loadData = useCallback(async () => {
+    if (!appUser?.tenant_id) return;
     setLoading(true);
     const [loansData, clientsData, tenantData] = await Promise.all([
-      getLoans(),
-      getClients(),
-      getTenant(),
+      getLoans(appUser.tenant_id),
+      getClients(appUser.tenant_id),
+      getTenant(appUser.tenant_id),
     ]);
     setLoans(loansData);
     setClients(clientsData);
     setTenant(tenantData);
     setLoading(false);
-  }, []);
+  }, [appUser?.tenant_id]);
 
   useEffect(() => {
     loadData();
@@ -172,15 +173,16 @@ export default function LoansPage() {
   }
 
   async function openDetail(loan: LoanWithClient) {
+    if (!appUser?.tenant_id) return;
     setSelectedLoan(loan);
     setView('detail');
     setLoanDetail(null);
-    const details = await getLoanById(loan.id);
+    const details = await getLoanById(loan.id, appUser.tenant_id);
     setLoanDetail(details);
   }
 
   async function confirmDeleteLoan() {
-    if (!deleteTarget) return;
+    if (!deleteTarget || !appUser) return;
     const currentId = deleteTarget.id;
     
     // UI Optimista
@@ -189,7 +191,7 @@ export default function LoansPage() {
     setSelectedLoan(null);
     setDeleteTarget(null);
     
-    const { success, error } = await deleteLoan(currentId);
+    const { success, error } = await deleteLoan(currentId, appUser.tenant_id);
     if (!success) {
       alert(`Error al eliminar: ${error}`);
       loadData(); // Revertir
@@ -203,12 +205,12 @@ export default function LoansPage() {
   }
 
   async function confirmPayInstallment(amountStr: string) {
-    if (!payTarget) return;
+    if (!payTarget || !appUser) return;
     
     const amt = parseFloat(amountStr);
     if (isNaN(amt) || amt <= 0) return alert('Monto inválido');
     
-    const { success, error } = await registerPayment(payTarget.id, amt);
+    const { success, error } = await registerPayment(payTarget.id, appUser.tenant_id, amt);
     if (!success) {
       alert(`Error al registrar pago: ${error}`);
       return;
@@ -217,8 +219,8 @@ export default function LoansPage() {
     setPayTarget(null);
 
     // Refresh loan details
-    if (selectedLoan) {
-      const details = await getLoanById(selectedLoan.id);
+    if (selectedLoan && appUser?.tenant_id) {
+      const details = await getLoanById(selectedLoan.id, appUser.tenant_id);
       setLoanDetail(details);
       // Actualizar lista para reflejar el avance
       loadData();
@@ -230,8 +232,9 @@ export default function LoansPage() {
   }
 
   async function handleQuickPay(loan: LoanWithClient) {
+    if (!appUser?.tenant_id) return;
     // Buscar la primera cuota vencida o pendiente
-    const details = await getLoanById(loan.id);
+    const details = await getLoanById(loan.id, appUser.tenant_id);
     if (!details) return alert('No se pudo cargar el detalle del préstamo.');
     
     const nextPayable = details.payments?.find((p: any) => p.status === 'missed' || p.status === 'pending' || p.status === 'partial');
@@ -249,16 +252,16 @@ export default function LoansPage() {
   }
 
   async function confirmPayOff() {
-    if (!payOffTarget) return;
-    const { success, error } = await payOffLoan(payOffTarget.loanId);
+    if (!payOffTarget || !appUser) return;
+    const { success, error } = await payOffLoan(payOffTarget.loanId, appUser.tenant_id);
     setPayOffTarget(null);
     if (!success) {
       alert(`Error al saldar: ${error}`);
       return;
     }
     // Refrescar detalle y lista
-    if (selectedLoan) {
-      const details = await getLoanById(selectedLoan.id);
+    if (selectedLoan && appUser?.tenant_id) {
+      const details = await getLoanById(selectedLoan.id, appUser.tenant_id);
       setLoanDetail(details);
       loadData();
     }
@@ -276,7 +279,7 @@ export default function LoansPage() {
   }
 
   async function confirmRenewal() {
-    if (!renewTarget || !selectedLoan) return;
+    if (!renewTarget || !selectedLoan || !appUser) return;
     const np = parseFloat(renewPrincipal);
     const ni = parseFloat(renewInterestRate);
     const ninst = parseInt(renewInstallments);
@@ -290,7 +293,7 @@ export default function LoansPage() {
 
     setSaving(true);
     // 1. Pay off existing loan temporarily logically closing it
-    const payOffRes = await payOffLoan(selectedLoan.id);
+    const payOffRes = await payOffLoan(selectedLoan.id, appUser.tenant_id);
     if (!payOffRes.success) {
       alert('Error cerrando préstamo anterior: ' + payOffRes.error);
       setSaving(false);
@@ -344,10 +347,10 @@ export default function LoansPage() {
   }
 
   async function confirmGraceDay() {
-    if (!graceTarget || !selectedLoan) return;
+    if (!graceTarget || !selectedLoan || !appUser) return;
     
     // El servicio necesita el loanId para extender la date_end
-    const { success, error } = await applyGraceDay(selectedLoan.id, graceTarget.paymentId);
+    const { success, error } = await applyGraceDay(selectedLoan.id, appUser.tenant_id, graceTarget.paymentId);
     setGraceTarget(null);
 
     if (!success) {
@@ -355,9 +358,11 @@ export default function LoansPage() {
       return;
     }
 
-    const details = await getLoanById(selectedLoan.id);
-    setLoanDetail(details);
-    loadData();
+    if (selectedLoan && appUser?.tenant_id) {
+      const details = await getLoanById(selectedLoan.id, appUser.tenant_id);
+      setLoanDetail(details);
+      loadData();
+    }
   }
 
   const filteredLoans = loans.filter((l) => {

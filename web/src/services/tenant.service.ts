@@ -10,9 +10,11 @@ import { tenants } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Tenant } from '@/types';
 
-export async function getTenant(): Promise<Tenant | null> {
+export async function getTenant(tenantId: string): Promise<Tenant | null> {
   try {
-    const result = await db.query.tenants.findFirst();
+    const result = await db.query.tenants.findFirst({
+      where: eq(tenants.id, tenantId)
+    });
     return result as unknown as Tenant;
   } catch (error) {
     console.error('Error fetching tenant:', error);

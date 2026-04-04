@@ -21,7 +21,7 @@ export interface FinancialReport {
   defaulted_loans: number;
 }
 
-export async function getCollectionReport(dateFrom: string, dateTo: string): Promise<FinancialReport> {
+export async function getCollectionReport(dateFrom: string, dateTo: string, tenantId: string): Promise<FinancialReport> {
   try {
     const from = new Date(dateFrom);
     const to = new Date(dateTo);
@@ -29,6 +29,7 @@ export async function getCollectionReport(dateFrom: string, dateTo: string): Pro
     // Pagos en el periodo
     const periodPayments = await db.query.payments.findMany({
       where: and(
+        eq(payments.tenant_id, tenantId),
         gte(payments.due_date, from),
         lte(payments.due_date, to)
       ),
@@ -40,6 +41,7 @@ export async function getCollectionReport(dateFrom: string, dateTo: string): Pro
     // Préstamos creados en el periodo
     const newLoansList = await db.query.loans.findMany({
       where: and(
+        eq(loans.tenant_id, tenantId),
         gte(loans.created_at, from),
         lte(loans.created_at, to)
       ),
@@ -76,10 +78,13 @@ export interface CollectorPerformance {
   active_loans: number;
 }
 
-export async function getCollectorPerformance(): Promise<CollectorPerformance[]> {
+export async function getCollectorPerformance(tenantId: string): Promise<CollectorPerformance[]> {
   try {
     const collectors = await db.query.users.findMany({
-      where: eq(users.role, 'collector'),
+      where: and(
+        eq(users.role, 'collector'),
+        eq(users.tenant_id, tenantId)
+      ),
     });
 
     const results: CollectorPerformance[] = [];
@@ -88,17 +93,22 @@ export async function getCollectorPerformance(): Promise<CollectorPerformance[]>
       const todayPayments = await db.query.payments.findMany({
         where: and(
           eq(payments.collector_id, collector.id),
+          eq(payments.tenant_id, tenantId),
           sql`DATE(${payments.due_date}) = CURRENT_DATE`
         ),
       });
 
       const collectorClients = await db.query.clients.findMany({
-        where: eq(clients.collector_id, collector.id),
+        where: and(
+          eq(clients.collector_id, collector.id),
+          eq(clients.tenant_id, tenantId)
+        ),
       });
 
       const activeLoans = await db.query.loans.findMany({
         where: and(
           eq(loans.collector_id, collector.id),
+          eq(loans.tenant_id, tenantId),
           eq(loans.status, 'active')
         ),
       });

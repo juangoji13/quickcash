@@ -12,9 +12,10 @@ import type { CollectionRoute, CollectionRouteWithDetails } from '@/types';
 
 /* ---- GET: Todas las rutas ---- */
 
-export async function getCollectionRoutes(): Promise<CollectionRouteWithDetails[]> {
+export async function getCollectionRoutes(tenantId: string): Promise<CollectionRouteWithDetails[]> {
   try {
     const results = await db.query.collection_routes.findMany({
+      where: eq(collection_routes.tenant_id, tenantId),
       with: {
         collector: true,
         clients: true,
@@ -68,10 +69,13 @@ export async function getCollectionRoutes(): Promise<CollectionRouteWithDetails[
 
 /* ---- GET: Una ruta ---- */
 
-export async function getRouteById(id: string): Promise<CollectionRouteWithDetails | null> {
+export async function getRouteById(id: string, tenantId: string): Promise<CollectionRouteWithDetails | null> {
   try {
     const result = await db.query.collection_routes.findFirst({
-      where: eq(collection_routes.id, id),
+      where: and(
+        eq(collection_routes.id, id),
+        eq(collection_routes.tenant_id, tenantId)
+      ),
       with: {
         collector: true,
         clients: true,
@@ -107,12 +111,16 @@ export async function createRoute(routeData: any): Promise<{ data: CollectionRou
 
 export async function updateRoute(
   id: string,
+  tenantId: string,
   updates: Partial<CollectionRoute>
 ): Promise<{ error?: string }> {
   try {
     await db.update(collection_routes)
       .set(updates as any)
-      .where(eq(collection_routes.id, id));
+      .where(and(
+        eq(collection_routes.id, id),
+        eq(collection_routes.tenant_id, tenantId)
+      ));
     return {};
   } catch (err: any) {
     return { error: err.message };
@@ -121,9 +129,15 @@ export async function updateRoute(
 
 /* ---- DELETE: Eliminar ruta ---- */
 
-export async function deleteRoute(id: string): Promise<{ error?: string }> {
+export async function deleteRoute(id: string, tenantId: string): Promise<{ error?: string }> {
   try {
     await db.transaction(async (tx) => {
+      // First ensure the route belongs to the tenant
+      const route = await tx.query.collection_routes.findFirst({
+        where: and(eq(collection_routes.id, id), eq(collection_routes.tenant_id, tenantId))
+      });
+      if (!route) throw new Error('Ruta no encontrada o acceso denegado');
+
       await tx.update(clients).set({ route_id: null }).where(eq(clients.route_id, id));
       await tx.delete(collection_routes).where(eq(collection_routes.id, id));
     });
@@ -135,18 +149,28 @@ export async function deleteRoute(id: string): Promise<{ error?: string }> {
 
 /* ---- Assign/Remove clients ---- */
 
-export async function addClientToRoute(clientId: string, routeId: string): Promise<{ error?: string }> {
+export async function addClientToRoute(clientId: string, routeId: string, tenantId: string): Promise<{ error?: string }> {
   try {
-    await db.update(clients).set({ route_id: routeId }).where(eq(clients.id, clientId));
+    await db.update(clients)
+      .set({ route_id: routeId })
+      .where(and(
+        eq(clients.id, clientId),
+        eq(clients.tenant_id, tenantId)
+      ));
     return {};
   } catch (err: any) {
     return { error: err.message };
   }
 }
 
-export async function removeClientFromRoute(clientId: string): Promise<{ error?: string }> {
+export async function removeClientFromRoute(clientId: string, tenantId: string): Promise<{ error?: string }> {
   try {
-    await db.update(clients).set({ route_id: null }).where(eq(clients.id, clientId));
+    await db.update(clients)
+      .set({ route_id: null })
+      .where(and(
+        eq(clients.id, clientId),
+        eq(clients.tenant_id, tenantId)
+      ));
     return {};
   } catch (err: any) {
     return { error: err.message };
@@ -155,10 +179,13 @@ export async function removeClientFromRoute(clientId: string): Promise<{ error?:
 
 /* ---- Get unassigned clients ---- */
 
-export async function getUnassignedClients(): Promise<any[]> {
+export async function getUnassignedClients(tenantId: string): Promise<any[]> {
   try {
     const results = await db.query.clients.findMany({
-      where: isNull(clients.route_id),
+      where: and(
+        eq(clients.tenant_id, tenantId),
+        isNull(clients.route_id)
+      ),
       orderBy: [clients.full_name],
     });
     return results;
@@ -169,10 +196,13 @@ export async function getUnassignedClients(): Promise<any[]> {
 
 /* ---- GET: Route Active Checklist ---- */
 
-export async function getRouteActiveChecklist(routeId: string) {
+export async function getRouteActiveChecklist(routeId: string, tenantId: string) {
   try {
     const routeClients = await db.query.clients.findMany({
-      where: eq(clients.route_id, routeId),
+      where: and(
+        eq(clients.route_id, routeId),
+        eq(clients.tenant_id, tenantId)
+      ),
       with: {
         loans: {
           where: eq(loans.status, 'active'),

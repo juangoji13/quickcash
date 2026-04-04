@@ -7,12 +7,13 @@
 
 import { db } from '@/lib/db';
 import { clients, loans, users } from '@/lib/db/schema';
-import { eq, or, ilike, desc } from 'drizzle-orm';
+import { eq, or, ilike, desc, and } from 'drizzle-orm';
 import type { Client, ClientWithLoans } from '@/types';
 
-export async function getClients(): Promise<Client[]> {
+export async function getClients(tenantId: string): Promise<Client[]> {
   try {
     const results = await db.query.clients.findMany({
+      where: eq(clients.tenant_id, tenantId),
       orderBy: [desc(clients.created_at)],
     });
     return results as unknown as Client[];
@@ -75,22 +76,30 @@ export async function updateClient(
   }
 }
 
-export async function deleteClient(id: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteClient(id: string, tenantId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    await db.delete(clients).where(eq(clients.id, id));
+    await db.delete(clients).where(
+      and(
+        eq(clients.id, id),
+        eq(clients.tenant_id, tenantId)
+      )
+    );
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
 }
 
-export async function searchClients(query: string): Promise<Client[]> {
+export async function searchClients(query: string, tenantId: string): Promise<Client[]> {
   try {
     const results = await db.query.clients.findMany({
-      where: or(
-        ilike(clients.full_name, `%${query}%`),
-        ilike(clients.document_id, `%${query}%`),
-        ilike(clients.phone, `%${query}%`)
+      where: and(
+        eq(clients.tenant_id, tenantId),
+        or(
+          ilike(clients.full_name, `%${query}%`),
+          ilike(clients.document_id, `%${query}%`),
+          ilike(clients.phone, `%${query}%`)
+        )
       ),
       orderBy: [clients.full_name],
     });

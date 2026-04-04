@@ -63,15 +63,16 @@ export default function RoutesPage() {
   const [showCollectorPicker, setShowCollectorPicker] = useState(false);
 
   const loadData = useCallback(async () => {
+    if (!appUser) return;
     setLoading(true);
     const [routesData, collectorsData] = await Promise.all([
-      getCollectionRoutes(),
-      getCollectors(),
+      getCollectionRoutes(appUser.tenant_id),
+      getCollectors(appUser.tenant_id),
     ]);
     setRoutes(routesData);
     setCollectors(collectorsData);
     setLoading(false);
-  }, []);
+  }, [appUser]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -101,7 +102,8 @@ export default function RoutesPage() {
     if (selectedRoute?.id === id) { setView('list'); setSelectedRoute(null); }
     setDeleteRouteTarget(null);
     
-    const { error } = await deleteRoute(id);
+    if (!appUser) return;
+    const { error } = await deleteRoute(id, appUser.tenant_id);
     if (error) {
       alert(`Error al eliminar la ruta: ${error}`);
       loadData(); // Revertir en caso de error
@@ -113,8 +115,8 @@ export default function RoutesPage() {
   }
 
   async function handleAssignCollector(collectorId: string) {
-    if (!selectedRoute) return;
-    const { error } = await updateRoute(selectedRoute.id, { collector_id: collectorId || undefined });
+    if (!selectedRoute || !appUser) return;
+    const { error } = await updateRoute(selectedRoute.id, appUser.tenant_id, { collector_id: collectorId || undefined });
     if (error) alert(`Error: ${error}`);
     else {
       setShowCollectorPicker(false);
@@ -131,14 +133,15 @@ export default function RoutesPage() {
   }
 
   async function openAssign() {
-    const data = await getUnassignedClients();
+    if (!appUser) return;
+    const data = await getUnassignedClients(appUser.tenant_id);
     setUnassigned(data);
     setShowAssign(true);
   }
 
   async function handleAssignClient(clientId: string) {
-    if (!selectedRoute) return;
-    const { error } = await addClientToRoute(clientId, selectedRoute.id);
+    if (!selectedRoute || !appUser) return;
+    const { error } = await addClientToRoute(clientId, selectedRoute.id, appUser.tenant_id);
     if (error) {
       alert(`Error al asignar cliente: ${error}`);
       return;
@@ -156,7 +159,8 @@ export default function RoutesPage() {
     setRoutes(prev => prev.map(r => r.id === selectedRoute.id ? { ...r, clients: (r.clients || []).filter((c: any) => c.id !== clientId) } : r));
     setRemoveClientTarget(null);
     
-    const { error } = await removeClientFromRoute(clientId);
+    if (!appUser) return;
+    const { error } = await removeClientFromRoute(clientId, appUser.tenant_id);
     if (error) {
       alert(`Error al quitar cliente: ${error}`);
       refreshRouteDetail(); // Revertir en caso de error
@@ -168,7 +172,8 @@ export default function RoutesPage() {
   }
 
   async function refreshRouteDetail() {
-    const updatedRoutes = await getCollectionRoutes();
+    if (!appUser) return;
+    const updatedRoutes = await getCollectionRoutes(appUser.tenant_id);
     setRoutes(updatedRoutes);
     if (selectedRoute) {
       const r = updatedRoutes.find(r => r.id === selectedRoute.id);
@@ -182,10 +187,10 @@ export default function RoutesPage() {
   }
 
   async function handleStartRoute() {
-    if (!selectedRoute) return;
+    if (!selectedRoute || !appUser) return;
     setRouteStarted(true);
     setLoadingChecklist(true);
-    const list = await getRouteActiveChecklist(selectedRoute.id);
+    const list = await getRouteActiveChecklist(selectedRoute.id, appUser.tenant_id);
     setActiveChecklist(list);
     
     // Set default values to the expected quota
@@ -208,14 +213,14 @@ export default function RoutesPage() {
   }
 
   async function confirmRegisterPayment(amountStr: string) {
-    if (!payTarget) return;
-    const { id, isFull } = payTarget;
+    if (!payTarget || !appUser) return;
+    const { id } = payTarget;
     
     // If not full payment, use the provided amount.
     let amt = parseFloat(amountStr);
     if (isNaN(amt) || amt < 0) return alert('Monto inválido');
 
-    const { success, error } = await registerPayment(id, amt);
+    const { success, error } = await registerPayment(id, appUser.tenant_id, amt);
     if (!success) {
       alert(`Error al registrar: ${error}`);
       return;

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/hooks';
 import { getCollectionReport, getCollectorPerformance, type FinancialReport, type CollectorPerformance } from '@/services/reports.service';
 import { formatCurrency } from '@/lib/utils';
 import styles from './reports.module.css';
@@ -8,6 +9,7 @@ import styles from './reports.module.css';
 type ReportTab = 'financial' | 'performance';
 
 export default function ReportsPage() {
+  const { appUser } = useAuth();
   const [tab, setTab] = useState<ReportTab>('financial');
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<FinancialReport | null>(null);
@@ -19,20 +21,21 @@ export default function ReportsPage() {
   });
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0]);
 
-  useEffect(() => {
-    loadReport();
-  }, [dateFrom, dateTo]);
-
-  async function loadReport() {
+  const loadReport = useCallback(async () => {
+    if (!appUser) return;
     setLoading(true);
     const [rep, perf] = await Promise.all([
-      getCollectionReport(dateFrom, dateTo),
-      getCollectorPerformance(),
+      getCollectionReport(dateFrom, dateTo, appUser.tenant_id),
+      getCollectorPerformance(appUser.tenant_id),
     ]);
     setReport(rep);
     setPerformance(perf);
     setLoading(false);
-  }
+  }, [dateFrom, dateTo, appUser]);
+
+  useEffect(() => {
+    loadReport();
+  }, [loadReport]);
 
   return (
     <div className={styles.page}>

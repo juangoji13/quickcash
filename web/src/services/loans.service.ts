@@ -14,9 +14,10 @@ import type { Loan, LoanWithClient, LoanWithPayments, Payment, InstallmentSchedu
 /* ---- CRUD de Préstamos ---- */
 
 
-export async function getLoans(): Promise<LoanWithClient[]> {
+export async function getLoans(tenantId: string): Promise<LoanWithClient[]> {
   try {
     const results = await db.query.loans.findMany({
+      where: eq(loans.tenant_id, tenantId),
       with: {
         client: true,
       },
@@ -30,10 +31,13 @@ export async function getLoans(): Promise<LoanWithClient[]> {
   }
 }
 
-export async function getLoanById(id: string): Promise<LoanWithPayments | null> {
+export async function getLoanById(id: string, tenantId: string): Promise<LoanWithPayments | null> {
   try {
     const loan = await db.query.loans.findFirst({
-      where: eq(loans.id, id),
+      where: and(
+        eq(loans.id, id),
+        eq(loans.tenant_id, tenantId)
+      ),
       with: {
         payments: {
           orderBy: [asc(payments.installment_number)],
@@ -48,10 +52,13 @@ export async function getLoanById(id: string): Promise<LoanWithPayments | null> 
   }
 }
 
-export async function getLoansByClientId(clientId: string): Promise<LoanWithPayments[]> {
+export async function getLoansByClientId(clientId: string, tenantId: string): Promise<LoanWithPayments[]> {
   try {
     const results = await db.query.loans.findMany({
-      where: eq(loans.client_id, clientId),
+      where: and(
+        eq(loans.client_id, clientId),
+        eq(loans.tenant_id, tenantId)
+      ),
       with: {
         payments: {
           orderBy: [asc(payments.installment_number)],
@@ -118,13 +125,17 @@ export async function createLoan(
 
 export async function registerPayment(
   paymentId: string,
+  tenantId: string,
   amountPaid: number,
   latitude?: number,
   longitude?: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const currentPayment = await db.query.payments.findFirst({
-      where: eq(payments.id, paymentId),
+      where: and(
+        eq(payments.id, paymentId),
+        eq(payments.tenant_id, tenantId)
+      ),
     });
 
     if (!currentPayment) return { success: false, error: 'Cuota no encontrada' };
@@ -216,17 +227,24 @@ export async function registerPayment(
 
 export async function applyGraceDay(
   loanId: string,
+  tenantId: string,
   missedPaymentId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await db.transaction(async (tx) => {
+      // Validar pertenencia
+      const payment = await tx.query.payments.findFirst({
+        where: and(eq(payments.id, missedPaymentId), eq(payments.tenant_id, tenantId))
+      });
+      if (!payment) throw new Error('Acceso denegado');
+
       await tx.update(payments).set({
         status: 'grace' as any,
         is_locked: true,
       }).where(eq(payments.id, missedPaymentId));
 
       const loanRecord = await tx.query.loans.findFirst({
-        where: eq(loans.id, loanId),
+        where: and(eq(loans.id, loanId), eq(loans.tenant_id, tenantId)),
       });
 
       if (loanRecord) {
@@ -248,9 +266,14 @@ export async function applyGraceDay(
 /* ---- Eliminar Préstamo ---- */
 
 
-export async function deleteLoan(loanId: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteLoan(loanId: string, tenantId: string): Promise<{ success: boolean; error?: string }> {
   try {
     await db.transaction(async (tx) => {
+      const loan = await tx.query.loans.findFirst({
+        where: and(eq(loans.id, loanId), eq(loans.tenant_id, tenantId))
+      });
+      if (!loan) throw new Error('Acceso denegado');
+
       await tx.delete(payments).where(eq(payments.loan_id, loanId));
       await tx.delete(loans).where(eq(loans.id, loanId));
     });
@@ -262,9 +285,14 @@ export async function deleteLoan(loanId: string): Promise<{ success: boolean; er
 
 /* ---- Saldar Crédito ---- */
 
-export async function payOffLoan(loanId: string): Promise<{ success: boolean; error?: string }> {
+export async function payOffLoan(loanId: string, tenantId: string): Promise<{ success: boolean; error?: string }> {
   try {
     await db.transaction(async (tx) => {
+      const loanRecord = await tx.query.loans.findFirst({ 
+        where: and(eq(loans.id, loanId), eq(loans.tenant_id, tenantId)) 
+      });
+      if (!loanRecord) throw new Error('Acceso denegado');
+
       const pending = await tx.query.payments.findMany({
         where: and(
           eq(payments.loan_id, loanId),
@@ -281,7 +309,6 @@ export async function payOffLoan(loanId: string): Promise<{ success: boolean; er
         }).where(eq(payments.id, p.id));
       }
 
-      const loanRecord = await tx.query.loans.findFirst({ where: eq(loans.id, loanId) });
       await tx.update(loans).set({
         status: 'completed',
         paid_installments: loanRecord?.total_installments || 0,

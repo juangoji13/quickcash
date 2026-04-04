@@ -10,7 +10,7 @@ import { route_closures, users } from '@/lib/db/schema';
 import { eq, and, desc, gte, lte, sql } from 'drizzle-orm';
 import type { RouteClosureRecord } from '@/types';
 
-export async function getRouteClosures(filters?: {
+export async function getRouteClosures(tenantId: string, filters?: {
   collectorId?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -21,11 +21,11 @@ export async function getRouteClosures(filters?: {
         collector: true,
       },
       where: (closures) => {
-        const conditions = [];
+        const conditions = [eq(closures.tenant_id, tenantId)];
         if (filters?.collectorId) conditions.push(eq(closures.collector_id, filters.collectorId));
         if (filters?.dateFrom) conditions.push(gte(closures.closure_date, new Date(filters.dateFrom)));
         if (filters?.dateTo) conditions.push(lte(closures.closure_date, new Date(filters.dateTo)));
-        return conditions.length > 0 ? and(...conditions) : undefined;
+        return and(...conditions);
       },
       orderBy: [desc(route_closures.closure_date)],
     });
@@ -37,10 +37,11 @@ export async function getRouteClosures(filters?: {
   }
 }
 
-export async function getTodayClosure(collectorId: string): Promise<RouteClosureRecord | null> {
+export async function getTodayClosure(collectorId: string, tenantId: string): Promise<RouteClosureRecord | null> {
   try {
     const result = await db.query.route_closures.findFirst({
       where: and(
+        eq(route_closures.tenant_id, tenantId),
         eq(route_closures.collector_id, collectorId),
         sql`DATE(${route_closures.closure_date}) = CURRENT_DATE`
       ),
@@ -70,6 +71,7 @@ export async function createClosure(
 
 export async function closeClosure(
   id: string,
+  tenantId: string,
   totals: { total_collected: number; total_expected: number; total_visits: number }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -78,7 +80,10 @@ export async function closeClosure(
         ...totals,
         status: 'closed',
       })
-      .where(eq(route_closures.id, id));
+      .where(and(
+        eq(route_closures.id, id),
+        eq(route_closures.tenant_id, tenantId)
+      ));
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };

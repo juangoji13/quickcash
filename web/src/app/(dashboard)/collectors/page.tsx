@@ -35,12 +35,16 @@ export default function CollectorsPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string } | null>(null);
 
   const loadData = useCallback(async () => {
+    if (!appUser?.tenant_id) return;
     setLoading(true);
-    const [colls, invs] = await Promise.all([getCollectors(), getInvitations()]);
+    const [colls, invs] = await Promise.all([
+      getCollectors(appUser.tenant_id),
+      getInvitations(appUser.tenant_id)
+    ]);
     setCollectors(colls);
     setInvitations(invs);
     setLoading(false);
-  }, []);
+  }, [appUser?.tenant_id]);
 
   const stats = {
     total: collectors.length,
@@ -57,7 +61,8 @@ export default function CollectorsPage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   async function handleToggleActive(user: User) {
-    const { success, error } = await updateCollector(user.id, { is_active: !user.is_active });
+    if (!appUser?.tenant_id) return;
+    const { success, error } = await updateCollector(user.id, appUser.tenant_id, { is_active: !user.is_active });
     if (error) alert(`Error: ${error}`);
     else loadData();
   }
@@ -88,8 +93,8 @@ export default function CollectorsPage() {
   }
 
   async function confirmDeleteInv() {
-    if (!deleteTarget) return;
-    await deleteInvitation(deleteTarget.id);
+    if (!deleteTarget || !appUser?.tenant_id) return;
+    await deleteInvitation(deleteTarget.id, appUser.tenant_id);
     setDeleteTarget(null);
     loadData();
   }

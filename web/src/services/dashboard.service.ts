@@ -10,14 +10,17 @@ import { loans, payments, clients } from '@/lib/db/schema';
 import { eq, and, sql, or, inArray } from 'drizzle-orm';
 import type { DashboardKPIs } from '@/types';
 
-export async function getDashboardKPIs(): Promise<DashboardKPIs> {
+export async function getDashboardKPIs(tenantId: string): Promise<DashboardKPIs> {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // 1. Capital en calle y Préstamos Activos
     const activeLoans = await db.query.loans.findMany({
-      where: eq(loans.status, 'active'),
+      where: and(
+        eq(loans.status, 'active'),
+        eq(loans.tenant_id, tenantId)
+      ),
     });
 
     let capitalInStreet = 0;
@@ -37,11 +40,13 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
     });
 
     // 2. Recaudo del día
-    // Comparison in SQL for dates can be tricky with timestamps, so we use sql template
     const todayCollectedResult = await db.select({
       sum: sql<number>`sum(${payments.amount_paid})`
     }).from(payments)
-      .where(sql`DATE(${payments.paid_date}) = CURRENT_DATE`);
+      .where(and(
+        eq(payments.tenant_id, tenantId),
+        sql`DATE(${payments.paid_date}) = CURRENT_DATE`
+      ));
 
     const todayCollected = Number(todayCollectedResult[0]?.sum || 0);
 
@@ -49,12 +54,17 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
     const todayExpectedResult = await db.select({
       sum: sql<number>`sum(${payments.amount_due})`
     }).from(payments)
-      .where(sql`DATE(${payments.due_date}) = CURRENT_DATE`);
+      .where(and(
+        eq(payments.tenant_id, tenantId),
+        sql`DATE(${payments.due_date}) = CURRENT_DATE`
+      ));
 
     const todayExpected = Number(todayExpectedResult[0]?.sum || 0);
 
     // 4. Clientes y Riesgo
-    const allClients = await db.query.clients.findMany();
+    const allClients = await db.query.clients.findMany({
+      where: eq(clients.tenant_id, tenantId)
+    });
     const riskDist = { green: 0, yellow: 0, red: 0 };
     
     allClients.forEach((c) => {
@@ -84,13 +94,16 @@ export async function getDashboardKPIs(): Promise<DashboardKPIs> {
   }
 }
 
-export async function getUpcomingPayments(limit: number = 5) {
+export async function getUpcomingPayments(tenantId: string, limit: number = 5) {
   try {
     const todayStr = new Date().toISOString().split('T')[0];
 
     // Obtener pagos próximos
     const upcoming = await db.query.payments.findMany({
-      where: inArray(payments.status, ['pending', 'partial', 'missed']),
+      where: and(
+        eq(payments.tenant_id, tenantId),
+        inArray(payments.status, ['pending', 'partial', 'missed'])
+      ),
       with: {
         loan: {
           with: {
