@@ -99,24 +99,35 @@ createLenderWizard.action('confirm_create', async (ctx: any) => {
   }
   
   try {
-    const [tenant] = await db.select().from(tenants).limit(1);
+    // 1. CREAR UN NUEVO NEGOCIO (TENANT) PARA ESTE USUARIO
+    const [newTenant] = await db.insert(tenants).values({
+      name: `Negocio de ${data.fullName}`,
+      currency: 'COP',
+    }).returning();
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
+    // 2. CREAR EL USUARIO ASOCIADO AL NUEVO NEGOCIO
     await db.insert(users).values({
       full_name: data.fullName,
       username: data.username,
       email: data.email,
       password_hash: hashedPassword,
       role: 'admin',
-      tenant_id: tenant.id,
+      tenant_id: newTenant.id,
       is_active: true
     });
 
-    await ctx.answerCbQuery('Usuario creado con éxito');
-    await ctx.editMessageText(`✨ El prestamista **${data.fullName}** ya puede entrar a la web.`);
+    await ctx.answerCbQuery('Usuario y Negocio creados con éxito');
+    await ctx.editMessageText(
+      `✨ **¡ÉXITO!** ✨\n\n` +
+      `👤 Prestamista: **${data.fullName}**\n` +
+      `🏢 Negocio Privado: Creado e Independiente.\n\n` +
+      `Ya puede iniciar sesión en la web y gestionar sus propios préstamos.`
+    );
     return ctx.scene.leave();
   } catch (err: any) {
-    await ctx.reply(`❌ Error al crear: ${err.message}`);
+    await ctx.reply(`❌ Error al crear el negocio/usuario: ${err.message}`);
     return ctx.scene.leave();
   }
 });
