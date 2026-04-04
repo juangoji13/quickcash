@@ -4,8 +4,13 @@ import { users, tenants } from '../lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
-const BOT_TOKEN = process.env.BOT_TOKEN || '8627376599:AAGFo8Nytscp_2f2Rr-y-4QYYzopGmdIQDg';
-const OWNER_ID = Number(process.env.OWNER_ID) || 8409547845;
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const OWNER_ID = Number(process.env.OWNER_ID);
+
+if (!BOT_TOKEN || !OWNER_ID) {
+  console.error('❌ Error: BOT_TOKEN o OWNER_ID no configurados en variables de entorno.');
+  process.exit(1);
+}
 
 interface MySession extends Scenes.WizardSessionData {
   userData: {
@@ -18,10 +23,10 @@ interface MySession extends Scenes.WizardSessionData {
 
 interface MyContext extends Scenes.WizardContext<MySession> {}
 
-const bot = new Telegraf<MyContext>(BOT_TOKEN);
+const bot = new Telegraf<any>(BOT_TOKEN);
 
 // --- Middleware: Security ---
-bot.use(async (ctx, next) => {
+bot.use(async (ctx: any, next: () => Promise<void>) => {
   if (ctx.from?.id !== OWNER_ID) {
     return ctx.reply('⛔ Acceso denegado. Solo el dueño de QuickCash puede usar este bot.');
   }
@@ -78,7 +83,7 @@ const createLenderWizard = new Scenes.WizardScene<MyContext>(
   },
   async (ctx) => {
     // Handled by actions below
-    return ctx.wizard.leave();
+    return ctx.scene.leave();
   }
 );
 

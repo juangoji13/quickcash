@@ -46,8 +46,8 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://admin:quickcash_pass_2024@quickcash-db:5432/quickcash?schema=public
-      - BOT_TOKEN=8627376599:AAGFo8Nytscp_2f2Rr-y-4QYYzopGmdIQDg
-      - OWNER_ID=8409547845
+      - BOT_TOKEN=${BOT_TOKEN}
+      - OWNER_ID=${OWNER_ID}
     networks:
       - quickcash-network
 
