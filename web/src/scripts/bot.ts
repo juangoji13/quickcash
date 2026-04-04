@@ -79,13 +79,44 @@ const createLenderWizard = new Scenes.WizardScene<MyContext>(
         [Markup.button.callback('❌ Cancelar', 'cancel_create')]
       ])
     );
-    return ctx.wizard.next();
-  },
-  async (ctx) => {
-    // Handled by actions below
-    return ctx.scene.leave();
+    return; // Esperar a la acción del botón
   }
 );
+
+createLenderWizard.action('confirm_create', async (ctx: any) => {
+  const data = (ctx.scene.session as any).userData;
+  if (!data || !data.password) {
+    return ctx.reply('❌ Error: Datos perdidos. Por favor intenta de nuevo.');
+  }
+  
+  try {
+    const [tenant] = await db.select().from(tenants).limit(1);
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    await db.insert(users).values({
+      full_name: data.fullName,
+      username: data.username,
+      email: data.email,
+      password_hash: hashedPassword,
+      role: 'admin',
+      tenant_id: tenant.id,
+      is_active: true
+    });
+
+    await ctx.answerCbQuery('Usuario creado con éxito');
+    await ctx.editMessageText(`✨ El prestamista **${data.fullName}** ya puede entrar a la web.`);
+    return ctx.scene.leave();
+  } catch (err: any) {
+    await ctx.reply(`❌ Error al crear: ${err.message}`);
+    return ctx.scene.leave();
+  }
+});
+
+createLenderWizard.action('cancel_create', (ctx: any) => {
+  ctx.answerCbQuery('Operación cancelada');
+  ctx.editMessageText('❌ Creación de prestamista cancelada.');
+  return ctx.scene.leave();
+});
 
 const stage = new Scenes.Stage<MyContext>([createLenderWizard]);
 bot.use(session());
@@ -151,36 +182,6 @@ bot.action(/toggle_(.+)_(0|1)/, async (ctx) => {
   }
 });
 
-bot.action('confirm_create', async (ctx) => {
-  const data = (ctx.scene.session as any).userData;
-  try {
-    const [tenant] = await db.select().from(tenants).limit(1);
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-
-    await db.insert(users).values({
-      full_name: data.fullName,
-      username: data.username,
-      email: data.email,
-      password_hash: hashedPassword,
-      role: 'admin',
-      tenant_id: tenant.id,
-      is_active: true
-    });
-
-    await ctx.answerCbQuery('Usuario creado con éxito');
-    await ctx.reply(`✨ El prestamista **${data.fullName}** ya puede entrar a la web enviando sus credenciales.`);
-    return ctx.scene.leave();
-  } catch (err: any) {
-    await ctx.reply(`❌ Error al crear: ${err.message}`);
-    return ctx.scene.leave();
-  }
-});
-
-bot.action('cancel_create', (ctx) => {
-  ctx.answerCbQuery('Operación cancelada');
-  ctx.reply('❌ Creación cancelada.');
-  return ctx.scene.leave();
-});
 
 // --- Start Bot ---
 bot.launch(() => {
