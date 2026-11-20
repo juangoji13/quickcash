@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks';
 import Sidebar from '@/components/layout/Sidebar';
@@ -47,6 +47,7 @@ export default function DashboardLayout({
   const [hasUnread, setHasUnread] = useState(true);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const toggleNotifications = () => {
     setIsNotifOpen((prev) => !prev);
@@ -58,8 +59,16 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!isLoading && !session) {
       router.replace('/login');
+      return;
     }
-  }, [session, isLoading, router]);
+
+    // Proteger todas las rutas de préstamos para el SuperAdmin
+    if (appUser && (appUser.role === 'superadmin' || (appUser.role as string) === 'super_admin')) {
+      if (pathname !== '/superadmin' && pathname !== '/settings') {
+        router.replace('/superadmin');
+      }
+    }
+  }, [session, isLoading, appUser, pathname, router]);
 
   if (isLoading) {
     return (
@@ -75,6 +84,13 @@ export default function DashboardLayout({
   }
 
   if (!session) return null;
+
+  // El SuperAdmin sólo puede visualizar la consola global y ajustes
+  if (appUser && (appUser.role === 'superadmin' || (appUser.role as string) === 'super_admin')) {
+    if (pathname !== '/superadmin' && pathname !== '/settings') {
+      return null;
+    }
+  }
 
   return (
     <div className={styles.dashboardLayout}>
@@ -134,9 +150,13 @@ export default function DashboardLayout({
               </Link>
             )}
           </div>
-          <div className={styles.mobileLogo} style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', margin: 0 }}>
+          <Link
+            href={appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin' ? '/superadmin' : '/overview'}
+            className={styles.mobileLogo}
+            style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', margin: 0, textDecoration: 'none' }}
+          >
             Quick<span>Cash</span>
-          </div>
+          </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2 }}>
             <button className={styles.iconBtn} onClick={toggleNotifications} aria-label="Notificaciones">
               <IconBell />

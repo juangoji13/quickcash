@@ -34,26 +34,13 @@ export async function getSuperAdminKPIs(): Promise<SuperAdminKPIs> {
       }
     });
 
-    // 2. Capital en calle global (préstamos activos)
-    const activeLoans = await db.query.loans.findMany({
-      where: eq(loans.status, 'active'),
-    });
+    // 2. Total de usuarios registrados en el sistema
+    const allUsers = await db.query.users.findMany();
+    const totalUsers = allUsers.length;
 
-    let totalCapitalInStreet = 0;
-    activeLoans.forEach((loan) => {
-      const paid = (loan.paid_installments || 0) * (loan.installment_amount || 0);
-      const principalTotal = loan.principal_amount || 0;
-      const remainingPrincipal = Math.max(0, principalTotal - paid);
-      totalCapitalInStreet += remainingPrincipal;
-    });
-
-    // 3. Recaudo global hoy (con zona horaria America/Bogota)
-    const todayCollectedResult = await db.select({
-      sum: sql<number>`sum(${payments.amount_paid})`
-    }).from(payments)
-      .where(sql`DATE(${payments.paid_date}) = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE`);
-
-    const totalTodayCollected = Number(todayCollectedResult[0]?.sum || 0);
+    // 3. Total de clientes registrados en la red
+    const allClients = await db.query.clients.findMany();
+    const totalClients = allClients.length;
 
     // 4. Total de cobradores en operación
     const collectors = await db.query.users.findMany({
@@ -68,8 +55,8 @@ export async function getSuperAdminKPIs(): Promise<SuperAdminKPIs> {
     return {
       total_tenants: totalTenants,
       active_tenants: activeTenants,
-      total_capital_in_street: Math.round(totalCapitalInStreet * 100) / 100,
-      total_today_collected: totalTodayCollected,
+      total_users: totalUsers,
+      total_clients: totalClients,
       total_collectors: totalCollectors,
     };
   } catch (error) {
@@ -77,8 +64,8 @@ export async function getSuperAdminKPIs(): Promise<SuperAdminKPIs> {
     return {
       total_tenants: 0,
       active_tenants: 0,
-      total_capital_in_street: 0,
-      total_today_collected: 0,
+      total_users: 0,
+      total_clients: 0,
       total_collectors: 0,
     };
   }
@@ -159,5 +146,54 @@ export async function toggleTenantStatus(
       success: false,
       error: error.message || 'Error al actualizar el estado del prestamista.',
     };
+  }
+}
+
+/**
+ * Obtiene el directorio completo de todos los usuarios registrados en la plataforma.
+ */
+export async function getAllPlatformUsers() {
+  try {
+    await requireSuperAdminAuth();
+    const allUsers = await db.query.users.findMany({
+      orderBy: [desc(users.created_at)],
+      with: {
+        tenant: true,
+      },
+    });
+
+    return allUsers.map((u) => ({
+      id: u.id,
+      full_name: u.full_name || 'Sin nombre',
+      username: u.username || '—',
+      email: u.email,
+      role: u.role,
+      phone: u.phone || '—',
+      is_active: u.is_active,
+      tenant_name: u.tenant ? u.tenant.name : 'Plataforma Global',
+      created_at: u.created_at ? new Date(u.created_at).toISOString() : '',
+    }));
+  } catch (error) {
+    console.error('Error in getAllPlatformUsers:', error);
+    return [];
+  }
+}
+
+/**
+ * Activa o suspende a un usuario específico del sistema.
+ */
+export async function toggleUserActive(
+  userId: string,
+  isActive: boolean
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireSuperAdminAuth();
+    await db.update(users)
+      .set({ is_active: isActive, updated_at: new Date() })
+      .where(eq(users.id, userId));
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in toggleUserActive:', error);
+    return { success: false, error: error.message };
   }
 }

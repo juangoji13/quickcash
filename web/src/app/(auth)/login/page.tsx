@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getSession } from 'next-auth/react';
 import { useAuth } from '@/hooks';
 import styles from './login.module.css';
 
@@ -25,7 +26,13 @@ export default function LoginPage() {
       setError(signInError);
       setLoading(false);
     } else {
-      router.replace('/overview');
+      const session = await getSession();
+      const userRole = (session?.user as any)?.role;
+      if (userRole === 'superadmin' || userRole === 'super_admin') {
+        router.replace('/superadmin');
+      } else {
+        router.replace('/overview');
+      }
     }
   }
 

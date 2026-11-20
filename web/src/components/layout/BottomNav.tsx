@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/hooks';
 import styles from './BottomNav.module.css';
 
 function IconDashboard() {
@@ -44,15 +45,43 @@ function IconCollectors() {
   );
 }
 
-const NAV_ITEMS = [
+function IconSuperAdmin() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  );
+}
+
+function IconSettings() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+    </svg>
+  );
+}
+
+const LENDER_NAV_ITEMS = [
   { href: '/overview',    label: 'Inicio',     Icon: IconDashboard  },
   { href: '/clients',     label: 'Clientes',   Icon: IconClients    },
   { href: '/loans',       label: 'Préstamos',  Icon: IconLoans      },
   { href: '/collectors',  label: 'Equipo',     Icon: IconCollectors },
 ];
 
+const SUPERADMIN_NAV_ITEMS = [
+  { href: '/superadmin', label: 'SuperAdmin', Icon: IconSuperAdmin },
+  { href: '/settings',   label: 'Ajustes',    Icon: IconSettings   },
+];
+
 export default function BottomNav() {
   const pathname = usePathname();
+  const { appUser } = useAuth();
+
+  const isSuperAdmin =
+    appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin';
+
+  const navItems = isSuperAdmin ? SUPERADMIN_NAV_ITEMS : LENDER_NAV_ITEMS;
 
   const handleTap = () => {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -62,7 +91,7 @@ export default function BottomNav() {
 
   return (
     <nav className={styles.bottomNav} aria-label="Navegación principal">
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         const isActive = pathname === item.href;
         return (
           <Link

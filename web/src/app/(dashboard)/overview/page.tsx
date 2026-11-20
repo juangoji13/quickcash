@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks';
 import { getDashboardKPIs, getUpcomingPayments } from '@/services/dashboard.service';
@@ -19,13 +20,20 @@ interface UpcomingPayment {
 
 export default function OverviewPage() {
   const { appUser } = useAuth();
+  const router = useRouter();
   const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
   const [upcoming, setUpcoming] = useState<UpcomingPayment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin') {
+      router.replace('/superadmin');
+    }
+  }, [appUser, router]);
+
+  useEffect(() => {
     async function load() {
-      if (!appUser?.tenant_id) return;
+      if (!appUser?.tenant_id || appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin') return;
       
       try {
         setLoading(true);
@@ -45,6 +53,10 @@ export default function OverviewPage() {
   }, [appUser?.tenant_id]);
 
   const firstName = appUser?.full_name?.split(' ')[0] || 'Admin';
+
+  if (appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin') {
+    return null;
+  }
 
   return (
     <div className={styles.page}>

@@ -228,9 +228,11 @@ export interface SuperAdminTenant {
 export interface SuperAdminKPIs {
   total_tenants: number;
   active_tenants: number;
-  total_capital_in_street: number;
-  total_today_collected: number;
+  total_users: number;
+  total_clients: number;
   total_collectors: number;
+  total_capital_in_street?: number;
+  total_today_collected?: number;
 }
 
 export interface RegisterLenderInput {

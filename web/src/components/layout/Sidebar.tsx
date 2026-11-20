@@ -45,6 +45,9 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { appUser, signOut } = useAuth();
 
+  const isSuperAdmin =
+    appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin';
+
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logo}>
@@ -54,41 +57,56 @@ export default function Sidebar() {
         </div>
         <div className={styles.logoText}>
           <span className={styles.logoName}>Quick<span style={{ color: 'var(--color-safety-yellow)' }}>Cash</span></span>
-          <span className={styles.logoTag}>Plataforma de Préstamos</span>
+          <span className={styles.logoTag}>
+            {isSuperAdmin ? 'Consola Global' : 'Plataforma de Préstamos'}
+          </span>
         </div>
       </div>
 
       <nav className={styles.nav}>
-        {(appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin') && (
-          <div className={styles.navSection}>
-            <span className={styles.sectionLabel} style={{ color: 'var(--color-safety-yellow)' }}>PLATAFORMA</span>
-            <Link
-              href="/superadmin"
-              className={`${styles.navItem} ${pathname === '/superadmin' ? styles.navItemActive : ''}`}
-            >
-              <span className={styles.navIcon} style={{ color: 'var(--color-safety-yellow)' }}><IconSuperAdmin /></span>
-              <span className={styles.navLabel} style={{ fontWeight: 700, color: 'var(--color-safety-yellow)' }}>SuperAdmin</span>
-            </Link>
-          </div>
+        {isSuperAdmin ? (
+          <>
+            <div className={styles.navSection}>
+              <span className={styles.sectionLabel} style={{ color: 'var(--color-safety-yellow)' }}>PLATAFORMA GLOBAL</span>
+              <Link
+                href="/superadmin"
+                className={`${styles.navItem} ${pathname === '/superadmin' ? styles.navItemActive : ''}`}
+              >
+                <span className={styles.navIcon} style={{ color: 'var(--color-safety-yellow)' }}><IconSuperAdmin /></span>
+                <span className={styles.navLabel} style={{ fontWeight: 700, color: 'var(--color-safety-yellow)' }}>Control SuperAdmin</span>
+              </Link>
+            </div>
+            <div className={styles.navSection}>
+              <span className={styles.sectionLabel}>SISTEMA</span>
+              <Link
+                href="/settings"
+                className={`${styles.navItem} ${pathname === '/settings' ? styles.navItemActive : ''}`}
+              >
+                <span className={styles.navIcon}><IconSettings /></span>
+                <span className={styles.navLabel}>Configuración</span>
+              </Link>
+            </div>
+          </>
+        ) : (
+          NAV_SECTIONS.map((section) => (
+            <div key={section.label} className={styles.navSection}>
+              <span className={styles.sectionLabel}>{section.label}</span>
+              {section.items.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
+                  >
+                    <span className={styles.navIcon}><item.Icon /></span>
+                    <span className={styles.navLabel}>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))
         )}
-        {NAV_SECTIONS.map((section) => (
-          <div key={section.label} className={styles.navSection}>
-            <span className={styles.sectionLabel}>{section.label}</span>
-            {section.items.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
-                >
-                  <span className={styles.navIcon}><item.Icon /></span>
-                  <span className={styles.navLabel}>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        ))}
       </nav>
 
       <div className={styles.userSection}>
