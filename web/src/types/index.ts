@@ -244,3 +244,73 @@ export interface RegisterLenderInput {
   password: string;
   phone?: string | null;
 }
+
+/* ---- Collector Performance & Portfolio Models ---- */
+
+export interface CollectorAssignedRoute {
+  id: string;
+  name: string;
+  zone: string | null;
+  color: string | null;
+}
+
+export interface CollectorPerformanceStats {
+  clientsCount: number;
+  activeLoansCount: number;
+  capitalInStreet: number;
+  totalCollectedToday: number;
+  totalCollectedMonth: number;
+  totalCollectedAllTime: number;
+  expectedInterest: number;
+  collectionEfficiency: number;
+  delinquencyRate: number;
+  greenClients: number;
+  yellowClients: number;
+  redClients: number;
+  lastPaymentDate: string | null;
+  closureStatus: 'open' | 'closed' | 'none';
+  closureAmountToday: number;
+}
+
+export interface CollectorWithMetrics {
+  user: User;
+  assignedRoute: CollectorAssignedRoute | null;
+  stats: CollectorPerformanceStats;
+}
+
+export interface CollectorClientItem {
+  id: string;
+  full_name: string;
+  document_id: string;
+  phone: string | null;
+  address: string | null;
+  risk_status: RiskStatus;
+  active_loan?: {
+    id: string;
+    principal_amount: number;
+    total_amount: number;
+    balance: number;
+    installment_amount: number;
+    paid_installments: number;
+    total_installments: number;
+    frequency: LoanFrequency;
+  } | null;
+  today_payment_status: 'paid' | 'pending' | 'missed' | 'none';
+  today_payment_amount: number;
+}
+
+export interface CollectorRecentPayment {
+  id: string;
+  amount_paid: number;
+  amount_due: number;
+  paid_date: string;
+  installment_number: number;
+  status: PaymentStatus;
+  client_name: string;
+}
+
+export interface CollectorFullDetail extends CollectorWithMetrics {
+  clients: CollectorClientItem[];
+  recentPayments: CollectorRecentPayment[];
+}
+

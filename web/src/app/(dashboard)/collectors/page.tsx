@@ -3,15 +3,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks';
 import {
-  getCollectors,
+  getCollectorsWithMetrics,
   updateCollector,
   getInvitations,
   createInvitation,
   deleteInvitation,
 } from '@/services/collectors.service';
-import { formatDate, getInitials } from '@/lib/utils';
+import { formatCurrency, formatDate, getInitials } from '@/lib/utils';
 import { ConfirmModal, AlertModal } from '@/components/ui/Modal';
-import type { User, Invitation } from '@/types';
+import CollectorDetailModal from '@/components/collectors/CollectorDetailModal';
+import type { CollectorWithMetrics, Invitation, User } from '@/types';
 import styles from './collectors.module.css';
 
 type Tab = 'team' | 'invitations';
@@ -19,10 +20,13 @@ type Tab = 'team' | 'invitations';
 export default function CollectorsPage() {
   const { appUser } = useAuth();
   const [tab, setTab] = useState<Tab>('team');
-  const [collectors, setCollectors] = useState<User[]>([]);
+  const [collectors, setCollectors] = useState<CollectorWithMetrics[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Selected collector for full detail modal
+  const [detailCollectorId, setDetailCollectorId] = useState<string | null>(null);
 
   // Invite form
   const [showInvite, setShowInvite] = useState(false);
@@ -39,27 +43,33 @@ export default function CollectorsPage() {
     if (!appUser?.tenant_id) return;
     setLoading(true);
     const [colls, invs] = await Promise.all([
-      getCollectors(appUser.tenant_id),
-      getInvitations(appUser.tenant_id)
+      getCollectorsWithMetrics(appUser.tenant_id),
+      getInvitations(appUser.tenant_id),
     ]);
     setCollectors(colls);
     setInvitations(invs);
     setLoading(false);
   }, [appUser?.tenant_id]);
 
-  const stats = {
-    total: collectors.length,
-    admins: collectors.filter(c => c.role === 'admin').length,
-    collectors: collectors.filter(c => c.role === 'collector').length,
-    pendingInvs: invitations.filter(i => i.status === 'pending').length
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Totales de rendimiento del equipo
+  const teamStats = {
+    totalCollectedToday: collectors.reduce((sum, c) => sum + c.stats.totalCollectedToday, 0),
+    totalCapitalInStreet: collectors.reduce((sum, c) => sum + c.stats.capitalInStreet, 0),
+    totalClients: collectors.reduce((sum, c) => sum + c.stats.clientsCount, 0),
+    avgEfficiency: collectors.length > 0
+      ? Math.round(collectors.reduce((sum, c) => sum + c.stats.collectionEfficiency, 0) / collectors.length)
+      : 100,
   };
 
-  const filteredCollectors = collectors.filter(c => 
-    c.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCollectors = collectors.filter((c) =>
+    c.user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.user.username && c.user.username.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  useEffect(() => { loadData(); }, [loadData]);
 
   async function handleToggleActive(user: User) {
     if (!appUser?.tenant_id) return;
@@ -104,41 +114,63 @@ export default function CollectorsPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>Cobradores</h2>
-          <p className={styles.pageSubtitle}>{collectors.length} miembros del equipo</p>
+          <h2 className={styles.pageTitle}>Equipo & Cobradores</h2>
+          <p className={styles.pageSubtitle}>
+            Supervisión en vivo de rendimiento, carteras de clientes y arqueos diarios
+          </p>
         </div>
-        <button className="btn btn--primary" onClick={() => { setShowInvite(!showInvite); setTab('invitations'); }}>
+        <button
+          className="btn btn--primary"
+          onClick={() => {
+            setShowInvite(!showInvite);
+            setTab('invitations');
+          }}
+        >
           {showInvite ? 'Cerrar' : '+ Invitar Cobrador'}
         </button>
       </div>
 
-      {/* Mini KPIs Summary */}
+      {/* Mini KPIs de Rendimiento del Equipo */}
       <div className={styles.summaryGrid}>
-        <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>Total Equipo</span>
-          <span className={styles.summaryValue}>{stats.total}</span>
+        <div className={`${styles.summaryCard} ${styles.summaryCardHighlight}`}>
+          <span className={styles.summaryLabel}>Recaudo Hoy Equipo</span>
+          <span className={styles.summaryValue} style={{ color: '#10B981' }}>
+            {formatCurrency(teamStats.totalCollectedToday)}
+          </span>
+          <span className={styles.summarySub}>Ingreso de la jornada</span>
         </div>
         <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>Administradores</span>
-          <span className={styles.summaryValue}>{stats.admins}</span>
+          <span className={styles.summaryLabel}>Capital en Calle</span>
+          <span className={styles.summaryValue}>
+            {formatCurrency(teamStats.totalCapitalInStreet)}
+          </span>
+          <span className={styles.summarySub}>Cartera total asignada</span>
         </div>
         <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>Cobradores</span>
-          <span className={styles.summaryValue}>{stats.collectors}</span>
+          <span className={styles.summaryLabel}>Clientes en Cobro</span>
+          <span className={styles.summaryValue}>{teamStats.totalClients}</span>
+          <span className={styles.summarySub}>{collectors.length} cobradores activos</span>
         </div>
         <div className={styles.summaryCard}>
-          <span className={styles.summaryLabel}>Inv. Pendientes</span>
-          <span className={styles.summaryValue}>{stats.pendingInvs}</span>
+          <span className={styles.summaryLabel}>Efectividad de Cobro</span>
+          <span className={styles.summaryValue}>{teamStats.avgEfficiency}%</span>
+          <span className={styles.summarySub}>Cumplimiento global</span>
         </div>
       </div>
 
+      {/* Toolbar: Tabs & Search */}
       <div className={styles.toolbar}>
-        {/* Tabs */}
         <div className={styles.tabs}>
-          <button className={`${styles.tab} ${tab === 'team' ? styles.tabActive : ''}`} onClick={() => setTab('team')}>
+          <button
+            className={`${styles.tab} ${tab === 'team' ? styles.tabActive : ''}`}
+            onClick={() => setTab('team')}
+          >
             Equipo ({collectors.length})
           </button>
-          <button className={`${styles.tab} ${tab === 'invitations' ? styles.tabActive : ''}`} onClick={() => setTab('invitations')}>
+          <button
+            className={`${styles.tab} ${tab === 'invitations' ? styles.tabActive : ''}`}
+            onClick={() => setTab('invitations')}
+          >
             Invitaciones ({invitations.length})
           </button>
         </div>
@@ -146,12 +178,15 @@ export default function CollectorsPage() {
         {tab === 'team' && (
           <div className={styles.searchContainer}>
             <div className={styles.searchIcon}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
             </div>
-            <input 
-              type="text" 
-              className={styles.searchInput} 
-              placeholder="Buscar por nombre o email..." 
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Buscar por nombre, @usuario o email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -166,7 +201,7 @@ export default function CollectorsPage() {
           {invError && <div className={styles.formError}>{invError}</div>}
           <form onSubmit={handleInvite} className={styles.formRow}>
             <div className={styles.field}>
-              <label className="input-label" htmlFor="invEmail">Email</label>
+              <label className="input-label" htmlFor="invEmail">Email del Cobrador</label>
               <input
                 id="invEmail"
                 className="input"
@@ -189,84 +224,174 @@ export default function CollectorsPage() {
                 <option value="admin">Administrador</option>
               </select>
             </div>
-            <button type="submit" className="btn btn--primary" disabled={invSaving} style={{ alignSelf: 'flex-end' }}>
+            <button type="submit" className="btn btn--primary" disabled={invSaving} style={{ alignSelf: 'flex-end', height: '42px' }}>
               {invSaving ? 'Enviando...' : 'Enviar Invitación'}
             </button>
           </form>
         </div>
       )}
 
+      {/* Contenido Principal */}
       {loading ? (
         <div className={styles.grid}>
-          {[1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 140 }} />)}
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="skeleton" style={{ height: 260, borderRadius: 14 }} />
+          ))}
         </div>
       ) : tab === 'team' ? (
-        /* ---- Team Grid ---- */
-        collectors.length === 0 ? (
+        filteredCollectors.length === 0 ? (
           <div className={styles.empty}>
-            <span><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-gray-300)" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-            <h3>Sin cobradores</h3>
-            <p>Invita a tu primer cobrador para comenzar</p>
+            <span>👥</span>
+            <h3>No se encontraron miembros</h3>
+            <p>No hay cobradores que coincidan con la búsqueda.</p>
           </div>
         ) : (
           <div className={styles.grid}>
-            {filteredCollectors.map((user) => (
-              <div key={user.id} className={`card ${styles.memberCard}`}>
+            {filteredCollectors.map((c) => (
+              <div key={c.user.id} className={styles.memberCard}>
+                {/* Header del Cobrador */}
                 <div className={styles.memberHeader}>
-                  <div className={styles.avatar}>{getInitials(user.full_name)}</div>
+                  <div className={styles.avatar}>{getInitials(c.user.full_name)}</div>
                   <div className={styles.memberInfo}>
-                    <h4 className={styles.memberName}>{user.full_name}</h4>
-                    <span className={styles.memberEmail}>{user.email}</span>
+                    <h4 className={styles.memberName}>{c.user.full_name}</h4>
+                    <div className={styles.memberMeta}>
+                      {c.user.username && (
+                        <span style={{ color: '#2563EB', fontWeight: 700 }}>{c.user.username}</span>
+                      )}
+                      <span>·</span>
+                      <span className={`${styles.roleBadge} ${c.user.role === 'admin' ? styles.role_admin : styles.role_collector}`}>
+                        {c.user.role === 'admin' ? 'Admin' : 'Cobrador'}
+                      </span>
+                    </div>
                   </div>
-                  <span className={`${styles.roleBadge} ${styles[`role_${user.role}`]}`}>
-                    {user.role === 'admin' ? 'Admin' : 'Cobrador'}
+                  <span className={c.user.is_active ? styles.statusActive : styles.statusInactive}>
+                    {c.user.is_active ? '● Activo' : '● Inactivo'}
                   </span>
                 </div>
-                <div className={styles.memberDetails}>
-                  {user.phone && <span>{user.phone}</span>}
-                  <span>Registrado: {formatDate(user.created_at)}</span>
-                </div>
-                <div className={styles.memberFooter}>
-                  <span className={user.is_active ? styles.statusActive : styles.statusInactive}>
-                    {user.is_active ? 'Activo' : 'Inactivo'}
+
+                {/* Ruta Asignada */}
+                <div className={styles.routeChip}>
+                  <span
+                    className={styles.routeDot}
+                    style={{ backgroundColor: c.assignedRoute?.color || '#3B82F6' }}
+                  />
+                  <span>
+                    {c.assignedRoute
+                      ? `${c.assignedRoute.name} (${c.assignedRoute.zone || 'Ruta General'})`
+                      : 'Sin ruta fija asignada'}
                   </span>
-                  {user.id !== appUser?.id && (
-                    <button
-                      className="btn btn--ghost btn--sm"
-                      onClick={() => handleToggleActive(user)}
-                    >
-                      {user.is_active ? 'Desactivar' : 'Activar'}
-                    </button>
-                  )}
+                </div>
+
+                {/* Grid 2x2 de Rendimiento Financiero ("Lo que me genera") */}
+                <div className={styles.kpiPreviewGrid}>
+                  <div className={styles.kpiPreviewItem}>
+                    <span className={styles.kpiPreviewLabel}>Cobrado Hoy</span>
+                    <span className={`${styles.kpiPreviewVal} ${c.stats.totalCollectedToday > 0 ? styles.kpiPreviewValHighlight : ''}`}>
+                      {formatCurrency(c.stats.totalCollectedToday)}
+                    </span>
+                  </div>
+                  <div className={styles.kpiPreviewItem}>
+                    <span className={styles.kpiPreviewLabel}>Cobrado Mes</span>
+                    <span className={styles.kpiPreviewVal}>
+                      {formatCurrency(c.stats.totalCollectedMonth)}
+                    </span>
+                  </div>
+                  <div className={styles.kpiPreviewItem}>
+                    <span className={styles.kpiPreviewLabel}>Capital en Calle</span>
+                    <span className={styles.kpiPreviewVal}>
+                      {formatCurrency(c.stats.capitalInStreet)}
+                    </span>
+                  </div>
+                  <div className={styles.kpiPreviewItem}>
+                    <span className={styles.kpiPreviewLabel}>Clientes / Cartera</span>
+                    <span className={styles.kpiPreviewVal}>
+                      {c.stats.clientsCount} Clientes
+                    </span>
+                  </div>
+                </div>
+
+                {/* Botones de Acción */}
+                <div className={styles.cardActions}>
+                  <button
+                    className={styles.btnViewDetail}
+                    onClick={() => setDetailCollectorId(c.user.id)}
+                  >
+                    <span>📊 Ver Cartera y Rendimiento</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </button>
+
+                  <div className={styles.secondaryActions}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {c.user.phone && (
+                        <>
+                          <a
+                            href={`https://wa.me/${c.user.phone.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={`${styles.btnContactMini} ${styles.btnWhatsapp}`}
+                            title="WhatsApp al Cobrador"
+                          >
+                            💬 WhatsApp
+                          </a>
+                          <a
+                            href={`tel:${c.user.phone}`}
+                            className={`${styles.btnContactMini} ${styles.btnCall}`}
+                            title="Llamar al Cobrador"
+                          >
+                            📞 Llamar
+                          </a>
+                        </>
+                      )}
+                    </div>
+
+                    {c.user.id !== appUser?.id && (
+                      <button
+                        className="btn btn--ghost btn--sm"
+                        onClick={() => handleToggleActive(c.user)}
+                        style={{ fontSize: '0.72rem' }}
+                      >
+                        {c.user.is_active ? 'Pausar' : 'Activar'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )
       ) : (
-        /* ---- Invitations List ---- */
+        /* Pestaña Invitaciones */
         invitations.length === 0 ? (
           <div className={styles.empty}>
-            <span><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-gray-300)" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+            <span>✉️</span>
             <h3>Sin invitaciones pendientes</h3>
+            <p>Invita a un cobrador con su correo electrónico para darle acceso al equipo.</p>
           </div>
         ) : (
           <div className={styles.invList}>
             {invitations.map((inv) => (
-              <div key={inv.id} className={`card ${styles.invCard}`}>
+              <div key={inv.id} className={styles.invCard}>
                 <div className={styles.invInfo}>
                   <strong>{inv.email}</strong>
                   <span className={styles.invMeta}>
-                    {inv.role === 'admin' ? 'Admin' : 'Cobrador'} ·
-                    Enviada: {formatDate(inv.created_at)}
+                    {inv.role === 'admin' ? 'Administrador' : 'Cobrador'} · Enviada: {formatDate(inv.created_at)}
                   </span>
                 </div>
                 <div className={styles.invActions}>
                   <span className={`${styles.invStatus} ${styles[`inv_${inv.status}`]}`}>
                     {inv.status === 'pending' ? 'Pendiente' : inv.status === 'accepted' ? 'Aceptada' : 'Expirada'}
                   </span>
-                  <button className="btn btn--ghost btn--sm" onClick={() => handleDeleteInv(inv.id, inv.email)}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                  <button
+                    className="btn btn--ghost btn--sm"
+                    onClick={() => handleDeleteInv(inv.id, inv.email)}
+                    title="Eliminar invitación"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -274,6 +399,16 @@ export default function CollectorsPage() {
           </div>
         )
       )}
+
+      {/* Modal de Detalle Completo del Cobrador */}
+      <CollectorDetailModal
+        isOpen={!!detailCollectorId}
+        onClose={() => setDetailCollectorId(null)}
+        collectorId={detailCollectorId}
+        tenantId={appUser?.tenant_id || null}
+      />
+
+      {/* Modales de Confirmación y Alerta */}
       <ConfirmModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}

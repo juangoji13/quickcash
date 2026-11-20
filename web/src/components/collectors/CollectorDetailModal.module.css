@@ -1,0 +1,576 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  animation: fadeIn 150ms ease-out;
+}
+
+.modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalSlideUp 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(44, 62, 80, 0.08);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Header */
+.header {
+  padding: 18px 20px 14px 20px;
+  border-bottom: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.collectorHeaderProfile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+  color: #F1C40F;
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-weight: 800;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+}
+
+.profileInfo {
+  min-width: 0;
+}
+
+.collectorName {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collectorMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #64748B;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.handleBadge {
+  font-weight: 700;
+  color: #2563EB;
+}
+
+.roleBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+}
+
+.role_admin {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.role_collector {
+  background: #E2E8F0;
+  color: #334155;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 120ms ease;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+}
+
+/* Route Banner */
+.routeBanner {
+  background: #FFFFFF;
+  padding: 8px 20px;
+  border-bottom: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.routeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.routeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #3B82F6;
+}
+
+.directActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionBtnMini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.btnWhatsapp {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.btnWhatsapp:hover {
+  background: #BBF7D0;
+}
+
+.btnCall {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+/* Segmented Tabs */
+.tabsContainer {
+  display: flex;
+  background: #F1F5F9;
+  padding: 6px 14px;
+  border-bottom: 1px solid #E2E8F0;
+  gap: 6px;
+}
+
+.tabBtn {
+  flex: 1;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.tabBtnActive {
+  background: #0F172A;
+  color: #F1C40F;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+/* Tab Badge */
+.tabCountBadge {
+  background: rgba(241, 196, 15, 0.25);
+  color: #F1C40F;
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 800;
+}
+
+.tabBtn:not(.tabBtnActive) .tabCountBadge {
+  background: #CBD5E1;
+  color: #475569;
+}
+
+/* Modal Body */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tab 1: Clientes List */
+.clientsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.clientCard {
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 150ms ease;
+}
+
+.clientCard:hover {
+  border-color: #CBD5E1;
+}
+
+.clientMainRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.clientIdentity {
+  min-width: 0;
+}
+
+.clientName {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+.clientAddress {
+  font-size: 0.78rem;
+  color: #64748B;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.clientStatusPill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.pillGreen {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+.pillYellow {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.pillRed {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+
+.clientLoanRow {
+  background: #F8FAFC;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  border: 1px solid #F1F5F9;
+}
+
+.loanMetric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.loanMetricLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748B;
+  letter-spacing: 0.04em;
+}
+
+.loanMetricValue {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0F172A;
+  font-variant-numeric: tabular-nums;
+}
+
+.todayIndicator {
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.todayPaid {
+  color: #16A34A;
+}
+
+.todayPending {
+  color: #D97706;
+}
+
+/* Tab 2: Rendimiento & Arqueo */
+.performanceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metricTile {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metricTileHighlight {
+  background: #F0FDF4;
+  border-color: #BBF7D0;
+}
+
+.metricTileLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metricTileValue {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0F172A;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricTileHighlight .metricTileValue {
+  color: #15803D;
+}
+
+.metricTileSub {
+  font-size: 0.72rem;
+  color: #94A3B8;
+  font-weight: 600;
+}
+
+/* Breakdown List */
+.sectionTitle {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 18px 0 10px 0;
+}
+
+.breakdownBox {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdownRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #E2E8F0;
+}
+
+.breakdownRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.breakdownRowLabel {
+  color: #64748B;
+  font-weight: 600;
+}
+
+.breakdownRowValue {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-weight: 800;
+  color: #0F172A;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Closure Box */
+.closureCard {
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px;
+  background: #FFFBEB;
+  border-color: #FDE68A;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.closureHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.closureStatusOpen {
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: #FEF3C7;
+  color: #92400E;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.closureStatusClosed {
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: #DCFCE7;
+  color: #15803D;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+/* Tab 3: Cobros Recientes */
+.paymentsFeed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paymentItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+}
+
+.paymentItemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.paymentClientName {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.paymentDate {
+  font-size: 0.72rem;
+  color: #64748B;
+}
+
+.paymentAmount {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #16A34A;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Empty state */
+.emptyState {
+  text-align: center;
+  padding: 30px 16px;
+  color: #94A3B8;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .performanceGrid {
+    grid-template-columns: 1fr;
+  }
+  .clientLoanRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}
