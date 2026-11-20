@@ -106,8 +106,9 @@ export default function Sidebar() {
             </span>
           </div>
         </div>
-        <button onClick={signOut} className={styles.logoutBtn} title="Cerrar sesión">
+        <button onClick={signOut} className={styles.logoutBtn} title="Cerrar sesión" aria-label="Cerrar sesión">
           <IconLogout />
+          <span>Cerrar Sesión</span>
         </button>
       </div>
     </aside>

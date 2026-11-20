@@ -21,12 +21,28 @@ export type RouteClosure = 'open' | 'closed';
 
 /* ---- Database Models ---- */
 
+export interface TenantSettings {
+  default_interest_rate?: number;
+  default_installments?: number;
+  default_frequency?: LoanFrequency;
+  grace_days?: number;
+  require_gps?: boolean;
+  allow_partial_payments?: boolean;
+  require_daily_closure?: boolean;
+  auto_receipts_whatsapp?: boolean;
+  business_nit?: string;
+  business_phone?: string;
+  business_city?: string;
+  business_address?: string;
+}
+
 export interface Tenant {
   id: string;
   name: string;
   currency: string;
   non_working_days: string[] | unknown; // ['sunday', 'saturday']
   holidays: string[] | unknown;         // ['2026-12-25']
+  settings?: TenantSettings | unknown;
   created_at: string;
   updated_at: string;
 }

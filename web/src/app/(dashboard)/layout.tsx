@@ -27,14 +27,25 @@ function IconBell() {
   );
 }
 
+function IconLogout() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  );
+}
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { session, isLoading, appUser } = useAuth();
+  const { session, isLoading, appUser, signOut } = useAuth();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const router = useRouter();
 
   const toggleNotifications = () => {
@@ -95,10 +106,19 @@ export default function DashboardLayout({
               <IconBell />
               {hasUnread && <span className={styles.notificationDot} />}
             </button>
+            <button
+              className={styles.iconBtn}
+              onClick={() => setIsLogoutModalOpen(true)}
+              title="Cerrar sesión"
+              aria-label="Cerrar sesión"
+              style={{ color: '#E74C3C' }}
+            >
+              <IconLogout />
+            </button>
           </div>
         </header>
 
-        {/* Mobile TopBar: ⚙️ [QuickCash] 🔔 */}
+        {/* Mobile TopBar: [ ⚙️ 🧭 ] [ QuickCash ] [ 🔔 🚪 ] */}
         <header className={`${styles.topBar} ${styles.topBarMobile}`} style={{ position: 'relative', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2 }}>
             <Link href="/settings" className={styles.iconBtn} aria-label="Configuración">
@@ -117,10 +137,21 @@ export default function DashboardLayout({
           <div className={styles.mobileLogo} style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', margin: 0 }}>
             Quick<span>Cash</span>
           </div>
-          <button className={styles.iconBtn} onClick={toggleNotifications} aria-label="Notificaciones" style={{ position: 'relative', zIndex: 2 }}>
-            <IconBell />
-            {hasUnread && <span className={styles.notificationDot} />}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2 }}>
+            <button className={styles.iconBtn} onClick={toggleNotifications} aria-label="Notificaciones">
+              <IconBell />
+              {hasUnread && <span className={styles.notificationDot} />}
+            </button>
+            <button
+              className={styles.iconBtn}
+              onClick={() => setIsLogoutModalOpen(true)}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+              style={{ color: '#E74C3C' }}
+            >
+              <IconLogout />
+            </button>
+          </div>
         </header>
 
         <div className={styles.pageContent}>{children}</div>
@@ -133,9 +164,126 @@ export default function DashboardLayout({
         onClearDot={() => setHasUnread(false)}
       />
 
+      {/* Modal de Cierre de Sesión Global */}
+      {isLogoutModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(44, 62, 80, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '16px',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+          onClick={() => setIsLogoutModalOpen(false)}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '100%',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+              border: '1px solid #E5E7EB',
+              textAlign: 'center',
+              animation: 'slideUp 0.2s ease-out',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: '54px',
+                height: '54px',
+                borderRadius: '50%',
+                backgroundColor: '#FEF2F2',
+                color: '#C0392B',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px auto',
+                border: '2px solid #FEE2E2',
+              }}
+            >
+              <IconLogout />
+            </div>
+            <h3
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: '1.2rem',
+                fontWeight: 800,
+                color: 'var(--color-asphalt)',
+                margin: '0 0 8px 0',
+              }}
+            >
+              ¿Cerrar sesión en QuickCash?
+            </h3>
+            <p
+              style={{
+                fontSize: '0.875rem',
+                color: 'var(--color-gray-400)',
+                lineHeight: 1.5,
+                margin: '0 0 24px 0',
+              }}
+            >
+              Saldrás de tu cuenta en este dispositivo. Tus clientes, cobros y préstamos seguirán respaldados y seguros.
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setIsLogoutModalOpen(false)}
+                style={{
+                  flex: 1,
+                  minHeight: '44px',
+                  padding: '10px',
+                  backgroundColor: '#F3F4F6',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '8px',
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: '#4B5563',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsLogoutModalOpen(false);
+                  await signOut();
+                }}
+                style={{
+                  flex: 1,
+                  minHeight: '44px',
+                  padding: '10px',
+                  backgroundColor: '#C0392B',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                }}
+              >
+                Sí, Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Navigation — solo móvil */}
       <BottomNav />
     </div>
   );
 }
-

@@ -7,6 +7,7 @@ export const tenants = pgTable('tenants', {
   currency: varchar('currency', { length: 10 }).default('COP').notNull(),
   non_working_days: jsonb('non_working_days').default(['sunday']).notNull(),
   holidays: jsonb('holidays').default([]).notNull(),
+  settings: jsonb('settings').default({}).notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
