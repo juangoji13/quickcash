@@ -241,7 +241,7 @@ export default function SuperAdminPage() {
           <input
             type="text"
             className={`input ${styles.searchInput}`}
-            placeholder="Buscar por negocio, admin, @handle o email..."
+            placeholder="Buscar por negocio, administrador o correo..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />

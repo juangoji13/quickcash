@@ -68,21 +68,21 @@ export default function OverviewPage() {
         <KPICard
           label="Intereses por Cobrar"
           value={loading ? null : formatCurrency(kpis?.interest_receivable || 0)}
-          sub="Rendimiento esperado"
+          sub="Ganancia calculada"
           accent="var(--color-green)"
         />
         <KPICard
           label="Recaudo del Día"
           value={loading ? null : formatCurrency(kpis?.today_collected || 0)}
           sub={!loading && kpis && kpis.today_expected > 0
-            ? `de ${formatCurrency(kpis.today_expected)} esperados`
-            : 'Sin cobros programados'}
+            ? `de ${formatCurrency(kpis.today_expected)} esperados hoy`
+            : 'Sin cobros pendientes para hoy'}
           accent="var(--color-blue)"
         />
         <KPICard
           label="Índice de Mora"
           value={loading ? null : `${kpis?.delinquency_rate || 0}%`}
-          sub={loading ? '—' : `${kpis?.total_clients || 0} clientes`}
+          sub={loading ? '—' : `${kpis?.total_clients || 0} clientes registrados`}
           accent="var(--color-red)"
         />
       </div>

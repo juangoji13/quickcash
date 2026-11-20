@@ -8,6 +8,7 @@
 import { db } from '@/lib/db';
 import { tenants, users, loans, payments, clients } from '@/lib/db/schema';
 import { eq, and, sql, desc } from 'drizzle-orm';
+import { requireSuperAdminAuth } from '@/lib/auth-guard';
 import type { SuperAdminKPIs, SuperAdminTenant } from '@/types';
 
 /**
@@ -15,6 +16,7 @@ import type { SuperAdminKPIs, SuperAdminTenant } from '@/types';
  */
 export async function getSuperAdminKPIs(): Promise<SuperAdminKPIs> {
   try {
+    await requireSuperAdminAuth();
     // 1. Tenants totales
     const allTenants = await db.query.tenants.findMany({
       with: {
@@ -88,6 +90,7 @@ export async function getSuperAdminKPIs(): Promise<SuperAdminKPIs> {
  */
 export async function getAllTenants(): Promise<SuperAdminTenant[]> {
   try {
+    await requireSuperAdminAuth();
     const tenantsList = await db.query.tenants.findMany({
       orderBy: [desc(tenants.created_at)],
       with: {
@@ -136,6 +139,7 @@ export async function toggleTenantStatus(
   isActive: boolean
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireSuperAdminAuth();
     if (!tenantId) {
       return { success: false, error: 'tenantId es obligatorio.' };
     }

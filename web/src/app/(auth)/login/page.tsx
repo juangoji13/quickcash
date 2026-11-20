@@ -82,7 +82,7 @@ export default function LoginPage() {
             <div className={styles.formHeader}>
               <h2 className={styles.formTitle}>Iniciar Sesión</h2>
               <p className={styles.formSubtitle}>
-                Ingresa tus credenciales para acceder al panel
+                Ingresa tus datos para acceder a tu cuenta
               </p>
             </div>
 
@@ -105,7 +105,7 @@ export default function LoginPage() {
                 id="identifier"
                 type="text"
                 className="input"
-                placeholder="@usuario o email@empresa.com"
+                placeholder="Tu usuario o correo electrónico"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required

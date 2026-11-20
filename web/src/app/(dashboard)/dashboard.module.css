@@ -5,6 +5,9 @@
 .dashboardLayout {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 100vw;
+  overflow-x: hidden;
   background-color: var(--color-bg-light);
 }
 
@@ -14,6 +17,8 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* ---- TopBar base ---- */
@@ -270,7 +275,10 @@
   .pageContent {
     padding: var(--space-4);
     max-width: 100%;
-    /* Espacio para la bottom nav + safe area de iOS */
-    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    /* Espacio amplio para la barra inferior alta + área segura de botones Android e iOS */
+    padding-bottom: calc(105px + env(safe-area-inset-bottom, 20px));
   }
 }

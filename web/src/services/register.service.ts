@@ -78,46 +78,49 @@ export async function registerLender(
       }
       return {
         success: false,
-        error: 'El nombre de usuario (@handle) ya está en uso. Por favor elige otro.',
+        error: 'El nombre de usuario ya está en uso. Por favor elige otro.',
       };
     }
 
-    // 4. Crear nuevo Tenant (organización) con moneda 'COP' fija
-    const [newTenant] = await db.insert(tenants).values({
-      name: businessName.trim(),
-      currency: 'COP',
-      non_working_days: ['sunday'],
-      holidays: [],
-    }).returning();
-
-    // 5. Hashear contraseña con bcryptjs
+    // 4. Hashear contraseña con bcryptjs
     const password_hash = await bcrypt.hash(password, 10);
 
-    // 6. Crear el usuario Administrador del nuevo Tenant
-    const [newUser] = await db.insert(users).values({
-      tenant_id: newTenant.id,
-      email: normalizedEmail,
-      username: formattedUsername,
-      password_hash,
-      full_name: fullName.trim(),
-      phone: phone?.trim() || null,
-      role: 'admin',
-      is_active: true,
-    }).returning();
+    // 5. Crear Tenant y Usuario en una sola transacción atómica ACID
+    const result = await db.transaction(async (tx) => {
+      const [newTenant] = await tx.insert(tenants).values({
+        name: businessName.trim(),
+        currency: 'COP',
+        non_working_days: ['sunday'],
+        holidays: [],
+      }).returning();
+
+      const [newUser] = await tx.insert(users).values({
+        tenant_id: newTenant.id,
+        email: normalizedEmail,
+        username: formattedUsername,
+        password_hash,
+        full_name: fullName.trim(),
+        phone: phone?.trim() || null,
+        role: 'admin',
+        is_active: true,
+      }).returning();
+
+      return { newTenant, newUser };
+    });
 
     return {
       success: true,
       user: {
-        id: newUser.id,
-        email: newUser.email,
-        username: newUser.username,
-        fullName: newUser.full_name,
-        tenantId: newTenant.id,
+        id: result.newUser.id,
+        email: result.newUser.email,
+        username: result.newUser.username,
+        fullName: result.newUser.full_name,
+        tenantId: result.newTenant.id,
       },
       tenant: {
-        id: newTenant.id,
-        name: newTenant.name,
-        currency: newTenant.currency,
+        id: result.newTenant.id,
+        name: result.newTenant.name,
+        currency: result.newTenant.currency,
       },
     };
   } catch (error: any) {

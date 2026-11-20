@@ -36,7 +36,7 @@ export default function RegistroPage() {
       return;
     }
     if (!username.trim()) {
-      setError('Por favor define tu nombre de usuario (@handle).');
+      setError('Por favor ingresa un nombre de usuario.');
       return;
     }
     if (!email.trim()) {
@@ -51,14 +51,12 @@ export default function RegistroPage() {
     setLoading(true);
 
     try {
-      const cleanHandle = username.trim().startsWith('@')
-        ? username.trim()
-        : `@${username.trim()}`;
+      const cleanUsername = username.trim().replace(/^@+/, '');
 
       const res = await registerLender({
         businessName: businessName.trim(),
         fullName: fullName.trim(),
-        username: cleanHandle,
+        username: cleanUsername,
         email: email.trim().toLowerCase(),
         password,
         phone: phone.trim() || undefined,
@@ -73,7 +71,7 @@ export default function RegistroPage() {
       setSuccessMsg('¡Negocio registrado con éxito! Iniciando tu sesión...');
 
       // Iniciar sesión automáticamente
-      const { error: signInError } = await signIn(cleanHandle, password);
+      const { error: signInError } = await signIn(cleanUsername, password);
 
       if (signInError) {
         // Fallback al login con parámetro para avisar
@@ -109,8 +107,8 @@ export default function RegistroPage() {
                   </svg>
                 </div>
                 <div className={styles.featureText}>
-                  <span className={styles.featureTitle}>Multi-Tenant 100% Autónomo</span>
-                  <span className={styles.featureDesc}>Base de datos aislada, clientes y préstamos privados para tu empresa.</span>
+                  <span className={styles.featureTitle}>Información 100% Privada y Segura</span>
+                  <span className={styles.featureDesc}>Tus clientes, cobros y préstamos son exclusivamente tuyos y nadie más puede verlos.</span>
                 </div>
               </div>
 
@@ -123,8 +121,8 @@ export default function RegistroPage() {
                   </svg>
                 </div>
                 <div className={styles.featureText}>
-                  <span className={styles.featureTitle}>Rutas y Cierres en Asfalto</span>
-                  <span className={styles.featureDesc}>Control diario de recaudo, cuotas atrasadas y semáforo de riesgo en tiempo real.</span>
+                  <span className={styles.featureTitle}>Control Total de Rutas y Cobro</span>
+                  <span className={styles.featureDesc}>Seguimiento diario de recaudo, cuotas al día y cuadre de caja en tiempo real.</span>
                 </div>
               </div>
 
@@ -135,15 +133,15 @@ export default function RegistroPage() {
                   </svg>
                 </div>
                 <div className={styles.featureText}>
-                  <span className={styles.featureTitle}>Operación en Asfalto</span>
-                  <span className={styles.featureDesc}>Cálculos automáticos de interés, pagos parciales y sincronización ágil.</span>
+                  <span className={styles.featureTitle}>Cobranza Rápida sin Papel</span>
+                  <span className={styles.featureDesc}>Cálculo automático de cuotas, abonos parciales y sincronización al instante.</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div className={styles.brandFooter}>
-            QuickCash v2.0 · Identidad Metal y Asfalto
+            QuickCash · Gestión Inteligente de Préstamos y Cobranza
           </div>
         </div>
 
@@ -212,21 +210,18 @@ export default function RegistroPage() {
 
               <div className={styles.fieldGroup}>
                 <label htmlFor="username" className="input-label">
-                  Usuario (@handle) *
+                  Nombre de Usuario *
                 </label>
-                <div className={styles.inputPrefixWrap}>
-                  <span className={styles.inputPrefix}>@</span>
-                  <input
-                    id="username"
-                    type="text"
-                    className={`input ${styles.inputPrefixed}`}
-                    placeholder="carlos_prestamos"
-                    value={username.startsWith('@') ? username.substring(1) : username}
-                    onChange={(e) => setUsername(e.target.value.replace(/^@/, ''))}
-                    required
-                    disabled={loading}
-                  />
-                </div>
+                <input
+                  id="username"
+                  type="text"
+                  className="input"
+                  placeholder="ej. carlos_prestamos"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  disabled={loading}
+                />
               </div>
             </div>
 

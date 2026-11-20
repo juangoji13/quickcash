@@ -268,13 +268,14 @@ export async function getRouteActiveChecklist(routeId: string, tenantId: string)
         if (!p.paid_date) return false;
         const pDate = new Date(p.paid_date);
         pDate.setHours(0, 0, 0, 0);
-        return pDate.getTime() === today.getTime() || (p.is_locked && p.status !== 'pending');
+        return pDate.getTime() === today.getTime();
       });
 
       // 2. Si ya se procesó hoy (ej: cobrado o marcado como novedad sincronizado desde offline)
       if (todayPayment && (todayPayment.status === 'paid' || todayPayment.status === 'partial' || todayPayment.status === 'missed')) {
-        const paid = (activeLoan.paid_installments || 0) * (activeLoan.installment_amount || 0);
-        const remainingBalance = Math.max(0, (activeLoan.total_amount || 0) - paid);
+        const remainingBalance = activeLoan.balance != null
+          ? activeLoan.balance
+          : Math.max(0, (activeLoan.total_amount || 0) - ((activeLoan.paid_installments || 0) * (activeLoan.installment_amount || 0)));
 
         return {
           client_id: client.id,
@@ -313,8 +314,9 @@ export async function getRouteActiveChecklist(routeId: string, tenantId: string)
         return null;
       }
 
-      const paid = (activeLoan.paid_installments || 0) * (activeLoan.installment_amount || 0);
-      const remainingBalance = Math.max(0, (activeLoan.total_amount || 0) - paid);
+      const remainingBalance = activeLoan.balance != null
+        ? activeLoan.balance
+        : Math.max(0, (activeLoan.total_amount || 0) - ((activeLoan.paid_installments || 0) * (activeLoan.installment_amount || 0)));
 
       return {
         client_id: client.id,

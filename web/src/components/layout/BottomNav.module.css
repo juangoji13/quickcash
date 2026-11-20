@@ -10,14 +10,20 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 62px;
+    /* Altura ergonómica con generoso margen inferior para celulares con botones de Android */
+    min-height: 76px;
     background-color: #2C3E50; /* asphalt */
-    border-top: 3px solid #F1C40F; /* acento amarillo — identidad QuickCash */
+    border-top: 3px solid #F1C40F; /* acento amarillo seguridad */
     z-index: 200;
     align-items: center;
     justify-content: space-around;
-    /* iOS safe area */
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-top: 8px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    padding-left: 8px;
+    padding-right: 8px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.35);
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .navItem {
@@ -25,18 +31,27 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: 4px;
     flex: 1;
-    height: 100%;
-    color: rgba(255, 255, 255, 0.45);
+    min-height: 52px;
+    padding: 6px 4px;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.55);
     text-decoration: none;
-    transition: color 150ms ease;
+    transition: all 150ms ease;
     position: relative;
+    touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  .navItem:active {
+    transform: scale(0.96);
+    background-color: rgba(255, 255, 255, 0.06);
   }
 
   .navItemActive {
     color: #F1C40F; /* amarillo seguridad */
+    background-color: rgba(241, 196, 15, 0.12);
   }
 
   .icon {
@@ -52,8 +67,8 @@
 
   .label {
     font-family: 'Rubik', sans-serif;
-    font-size: 10px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     line-height: 1;
@@ -64,10 +79,10 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 32px;
+    width: 38px;
     height: 3px;
     background: #F1C40F;
     border-radius: 0 0 3px 3px;
-    box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.7);
   }
 }

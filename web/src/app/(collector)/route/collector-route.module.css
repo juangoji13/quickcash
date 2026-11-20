@@ -14,7 +14,7 @@
   position: relative;
   overflow-x: hidden;
   font-family: var(--font-body);
-  padding-bottom: 120px; /* Space for fixed bottom thumb zone */
+  padding-bottom: calc(140px + env(safe-area-inset-bottom, 16px)); /* Space for fixed bottom thumb zone */
 }
 
 /* Header Compacto */
@@ -330,8 +330,10 @@
 
 /* Quick Call Action */
 .callBtn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   background-color: rgba(39, 174, 96, 0.12);
   border: 1px solid var(--color-green);
@@ -341,6 +343,7 @@
   justify-content: center;
   flex-shrink: 0;
   text-decoration: none;
+  touch-action: manipulation;
   transition: all var(--transition-fast);
 }
 
@@ -446,7 +449,7 @@
   background-color: #FFFFFF;
   border-top: 3px solid var(--color-safety-yellow);
   box-shadow: 0 -8px 24px rgba(44, 62, 80, 0.18);
-  padding: 10px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  padding: 10px 14px calc(18px + env(safe-area-inset-bottom, 16px));
   z-index: 50;
   display: flex;
   flex-direction: column;

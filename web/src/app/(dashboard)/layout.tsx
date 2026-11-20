@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks';
 import Sidebar from '@/components/layout/Sidebar';
 import BottomNav from '@/components/layout/BottomNav';
+import NotificationsModal from '@/components/layout/NotificationsModal';
 import styles from './dashboard.module.css';
 
 function IconSettings() {
@@ -32,7 +33,16 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { session, isLoading, appUser } = useAuth();
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [hasUnread, setHasUnread] = useState(true);
   const router = useRouter();
+
+  const toggleNotifications = () => {
+    setIsNotifOpen((prev) => !prev);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(20);
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && !session) {
@@ -81,9 +91,9 @@ export default function DashboardLayout({
                 <span>Modo Cobrador</span>
               </Link>
             )}
-            <button className={styles.iconBtn} aria-label="Notificaciones">
+            <button className={styles.iconBtn} onClick={toggleNotifications} aria-label="Notificaciones">
               <IconBell />
-              <span className={styles.notificationDot} />
+              {hasUnread && <span className={styles.notificationDot} />}
             </button>
           </div>
         </header>
@@ -107,14 +117,21 @@ export default function DashboardLayout({
           <div className={styles.mobileLogo} style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', margin: 0 }}>
             Quick<span>Cash</span>
           </div>
-          <button className={styles.iconBtn} aria-label="Notificaciones" style={{ position: 'relative', zIndex: 2 }}>
+          <button className={styles.iconBtn} onClick={toggleNotifications} aria-label="Notificaciones" style={{ position: 'relative', zIndex: 2 }}>
             <IconBell />
-            <span className={styles.notificationDot} />
+            {hasUnread && <span className={styles.notificationDot} />}
           </button>
         </header>
 
         <div className={styles.pageContent}>{children}</div>
       </main>
+
+      {/* Modal de Notificaciones */}
+      <NotificationsModal
+        isOpen={isNotifOpen}
+        onClose={() => setIsNotifOpen(false)}
+        onClearDot={() => setHasUnread(false)}
+      />
 
       {/* Bottom Navigation — solo móvil */}
       <BottomNav />

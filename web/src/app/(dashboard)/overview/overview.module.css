@@ -1,4 +1,10 @@
-.page { animation: fadeIn var(--transition-base) ease-out; }
+.page {
+  animation: fadeIn var(--transition-base) ease-out;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
 
 .pageHeader { margin-bottom: var(--space-6); }
 .greeting {
@@ -39,6 +45,8 @@
   animation: slideUp 0.3s ease-out both;
   position: relative;
   overflow: hidden;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Glow sutil en la esquina superior derecha */
@@ -170,6 +178,8 @@
   background: var(--color-gray-50); border-radius: var(--radius-md);
   padding: var(--space-5); display: flex; flex-direction: column; gap: 4px;
   border: 1px solid var(--color-gray-100);
+  min-width: 0;
+  box-sizing: border-box;
 }
 .quickLabel {
   font-family: var(--font-heading); font-size: 11px; font-weight: 600;
@@ -198,6 +208,8 @@
   font-size: var(--text-sm); font-weight: 600;
   color: var(--color-asphalt);
   box-shadow: var(--shadow-sm);
+  min-width: 0;
+  box-sizing: border-box;
 }
 .actionBtn:hover {
   border-color: var(--color-safety-yellow);

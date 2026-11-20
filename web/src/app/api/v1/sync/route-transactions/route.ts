@@ -162,13 +162,14 @@ export async function POST(request: Request) {
             }
           }
 
-          // Actualizar estatus y saldo del crédito
+          // Actualizar estatus y saldo del crédito de forma matemáticamente exacta
           const newPaidInstallments = currentLoan.paid_installments + (paymentStatus === 'paid' ? 1 : 0);
-          const isCompleted = paymentStatus === 'paid' && newPaidInstallments >= currentLoan.total_installments;
+          const newBalance = Math.max(0, (currentLoan.balance ?? currentLoan.total_amount ?? 0) - amt);
+          const isCompleted = newBalance <= 0 || (paymentStatus === 'paid' && newPaidInstallments >= currentLoan.total_installments);
 
           await tx.update(loans).set({
             paid_installments: newPaidInstallments,
-            balance: (currentLoan.balance || 0) - amt,
+            balance: newBalance,
             status: isCompleted ? 'completed' : 'active',
           }).where(eq(loans.id, currentLoan.id));
 
