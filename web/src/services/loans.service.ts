@@ -131,21 +131,21 @@ export async function registerPayment(
   longitude?: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const currentPayment = await db.query.payments.findFirst({
-      where: and(
-        eq(payments.id, paymentId),
-        eq(payments.tenant_id, tenantId)
-      ),
-    });
+    return await db.transaction(async (tx) => {
+      const currentPayment = await tx.query.payments.findFirst({
+        where: and(
+          eq(payments.id, paymentId),
+          eq(payments.tenant_id, tenantId)
+        ),
+      });
 
-    if (!currentPayment) return { success: false, error: 'Cuota no encontrada' };
-    if (currentPayment.is_locked) return { success: false, error: 'Esta cuota ya ha sido registrada' };
+      if (!currentPayment) return { success: false, error: 'Cuota no encontrada' };
+      if (currentPayment.is_locked) return { success: false, error: 'Esta cuota ya ha sido registrada' };
 
-    let status = 'paid';
-    if (amountPaid === 0) status = 'missed';
-    else if (amountPaid < currentPayment.amount_due) status = 'partial';
+      let status = 'paid';
+      if (amountPaid === 0) status = 'missed';
+      else if (amountPaid < currentPayment.amount_due) status = 'partial';
 
-    await db.transaction(async (tx) => {
       await tx.update(payments).set({
         amount_paid: amountPaid,
         paid_date: new Date(),
@@ -159,7 +159,7 @@ export async function registerPayment(
         where: eq(loans.id, currentPayment.loan_id),
       });
 
-      if (!currentLoan) return;
+      if (!currentLoan) return { success: false, error: 'Préstamo no encontrado' };
 
       // Lógica de traslado de saldo
       if (amountPaid < currentPayment.amount_due) {
@@ -214,9 +214,9 @@ export async function registerPayment(
         balance: (currentLoan.balance || 0) - amountPaid,
         status: isCompleted ? 'completed' : 'active',
       }).where(eq(loans.id, currentLoan.id));
-    });
 
-    return { success: true };
+      return { success: true };
+    });
   } catch (err: any) {
     console.error('Error in registerPayment:', err);
     return { success: false, error: err.message };

@@ -87,6 +87,7 @@ export interface Loan {
   total_amount: number;
   total_installments: number;
   paid_installments: number;
+  balance?: number;
   frequency: LoanFrequency;
   installment_amount: number;
   start_date: string;

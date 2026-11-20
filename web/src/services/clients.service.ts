@@ -213,15 +213,45 @@ export async function updateClient(
 
 export async function deleteClient(id: string, tenantId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    await db.delete(clients).where(
-      and(
-        eq(clients.id, id),
-        eq(clients.tenant_id, tenantId)
-      )
-    );
-    return { success: true };
+    return await db.transaction(async (tx) => {
+      // 1. Obtener cliente y verificar pertenencia al tenant
+      const client = await tx.query.clients.findFirst({
+        where: and(eq(clients.id, id), eq(clients.tenant_id, tenantId)),
+      });
+
+      if (!client) {
+        return { success: false, error: 'Cliente no encontrado o no pertenece a tu cuenta.' };
+      }
+
+      // 2. Localizar todos los préstamos vinculados al cliente
+      const clientLoans = await tx
+        .select({ id: loans.id })
+        .from(loans)
+        .where(and(eq(loans.client_id, id), eq(loans.tenant_id, tenantId)));
+
+      if (clientLoans.length > 0) {
+        const loanIds = clientLoans.map((l) => l.id);
+
+        // Eliminar pagos asociados a todos los préstamos del cliente
+        await tx.delete(payments).where(inArray(payments.loan_id, loanIds));
+
+        // Eliminar préstamos asociados
+        await tx.delete(loans).where(inArray(loans.id, loanIds));
+      }
+
+      // 3. Eliminar el registro del cliente
+      await tx.delete(clients).where(
+        and(
+          eq(clients.id, id),
+          eq(clients.tenant_id, tenantId)
+        )
+      );
+
+      return { success: true };
+    });
   } catch (err: any) {
-    return { success: false, error: err.message };
+    console.error('Error al eliminar cliente:', err);
+    return { success: false, error: err.message || 'Error al eliminar cliente' };
   }
 }
 

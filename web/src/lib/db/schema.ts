@@ -92,7 +92,7 @@ export const loans = pgTable('loans', {
   frequency: varchar('frequency', { length: 20 }).default('daily').notNull(),
   start_date: timestamp('start_date').defaultNow().notNull(),
   end_date: timestamp('end_date').notNull(),
-  client_id: uuid('client_id').references(() => clients.id).notNull(),
+  client_id: uuid('client_id').references(() => clients.id, { onDelete: 'cascade' }).notNull(),
   tenant_id: uuid('tenant_id').references(() => tenants.id).notNull(),
   collector_id: uuid('collector_id').references(() => users.id).notNull(),
   skip_non_working_days: boolean('skip_non_working_days').default(true).notNull(),
@@ -102,7 +102,7 @@ export const loans = pgTable('loans', {
 
 export const payments = pgTable('payments', {
   id: uuid('id').primaryKey().defaultRandom(),
-  loan_id: uuid('loan_id').references(() => loans.id).notNull(),
+  loan_id: uuid('loan_id').references(() => loans.id, { onDelete: 'cascade' }).notNull(),
   installment_number: integer('installment_number').notNull(),
   amount_due: doublePrecision('amount_due').notNull(),
   amount_paid: doublePrecision('amount_paid').default(0).notNull(),
