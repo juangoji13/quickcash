@@ -48,10 +48,15 @@ export default function Sidebar() {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logo}>
-        <div className={styles.logoIcon}>Q</div>
+        <div className={styles.logoIcon}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#1A252F" strokeWidth="2.5" fill="none"/>
+            <path d="M13 4L7 13H12L10 20L17 11H12L14 4H13Z" fill="#1A252F"/>
+          </svg>
+        </div>
         <div className={styles.logoText}>
-          <span className={styles.logoName}>QuickCash</span>
-          <span className={styles.logoTag}>Admin Panel</span>
+          <span className={styles.logoName}>Quick<span style={{ color: 'var(--color-safety-yellow)' }}>Cash</span></span>
+          <span className={styles.logoTag}>Plataforma de Préstamos</span>
         </div>
       </div>
 
