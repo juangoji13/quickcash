@@ -68,8 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
-    await nextAuthSignOut({ redirect: true, callbackUrl: '/login' });
     setAppUser(null);
+    try {
+      await nextAuthSignOut({ redirect: false });
+    } catch (e) {
+      console.error('Sign out error:', e);
+    }
+    // Redirección inmediata y forzada a login
+    window.location.replace('/login');
   }
 
   return (

@@ -46,6 +46,7 @@ export default function DashboardLayout({
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -69,6 +70,19 @@ export default function DashboardLayout({
       }
     }
   }, [session, isLoading, appUser, pathname, router]);
+
+  if (isLoggingOut) {
+    return (
+      <div className={styles.loadingScreen}>
+        <div className={styles.loadingLogo}>
+          Quick<span>Cash</span>
+        </div>
+        <p style={{ marginTop: '16px', color: 'var(--color-gray-400)', fontSize: '0.9rem', fontWeight: 600 }}>
+          Cerrando sesión de forma segura...
+        </p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -279,6 +293,7 @@ export default function DashboardLayout({
                 type="button"
                 onClick={async () => {
                   setIsLogoutModalOpen(false);
+                  setIsLoggingOut(true);
                   await signOut();
                 }}
                 style={{

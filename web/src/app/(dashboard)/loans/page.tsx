@@ -222,12 +222,13 @@ export default function LoansPage() {
 
     setPayTarget(null);
 
-    // Refresh loan details
-    if (selectedLoan && appUser?.tenant_id) {
-      const details = await getLoanById(selectedLoan.id, appUser.tenant_id);
-      setLoanDetail(details);
-      // Actualizar lista para reflejar el avance
+    // Refresh loan details and list data immediately
+    if (appUser?.tenant_id) {
       loadData();
+      if (selectedLoan) {
+        const details = await getLoanById(selectedLoan.id, appUser.tenant_id);
+        setLoanDetail(details);
+      }
     }
   }
 
@@ -489,54 +490,40 @@ export default function LoansPage() {
                   </div>
                   <span className={styles.loanBadge}>{statusLabels[loan.status]}</span>
                 </div>
+                {/* Métricas Principales: Cuota y Saldo Pendiente */}
                 <div className={styles.loanNumbers}>
                   <div className={styles.loanStat}>
-                     {/* El colector necesita saber rápido cuánto debe cobrar hoy (Cuota) y el Balance Total */}
-                    <span className={styles.loanStatLabel}>Cuota</span>
+                    <span className={styles.loanStatLabel}>
+                      Cuota {loan.frequency === 'daily' ? 'Diaria' : loan.frequency === 'weekly' ? 'Semanal' : loan.frequency === 'biweekly' ? 'Quincenal' : 'Mensual'}
+                    </span>
                     <span className={styles.loanStatValue}>{formatCurrency(loan.installment_amount)}</span>
                   </div>
                   <div className={styles.loanStat}>
-                    <span className={styles.loanStatLabel}>Balance</span>
-                    <span className={styles.loanStatValue}>{formatCurrency(loan.total_amount)}</span>
-                  </div>
-                  <div className={styles.loanStat} style={{ textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    {loan.status === 'active' && (
-                      <button 
-                        className="btn btn--primary btn--sm" 
-                        onClick={(e) => { e.stopPropagation(); handleQuickPay(loan); }}
-                        style={{ padding: '6px 14px', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase' }}
-                      >
-                        Cobrar
-                      </button>
-                    )}
-                    <button 
-                      className="btn btn--icon" 
-                      onClick={(e) => { e.stopPropagation(); setExpandedLoan(isExpanded ? null : loan.id); }}
-                      style={{ background: 'var(--color-gray-50)', color: 'var(--color-gray-500)', padding: '6px', width: '30px', height: '30px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
-                    </button>
+                    <span className={styles.loanStatLabel}>Saldo Pendiente</span>
+                    <span className={styles.loanStatValue}>
+                      {formatCurrency(Math.max(0, loan.total_amount - (loan.paid_installments * loan.installment_amount)))}
+                    </span>
                   </div>
                 </div>
-                
+
                 {isExpanded && (
-                  <div className={styles.loanExpanded} style={{ padding: '0 0 var(--space-4) 0', marginBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-gray-100)', animation: 'fadeIn 0.2s ease-out' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', fontSize: 'var(--text-sm)', color: 'var(--color-gray-500)' }}>
+                  <div className={styles.loanExpanded} style={{ padding: 'var(--space-3) 0', marginBottom: 'var(--space-3)', borderBottom: '1px solid var(--color-gray-100)', animation: 'fadeIn 0.2s ease-out' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--color-gray-500)' }}>
                        <div>
-                         <strong style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: 'var(--color-gray-400)', marginBottom: '4px' }}>Capital</strong>
+                         <strong style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-gray-400)', marginBottom: '2px' }}>Capital Prestado</strong>
                          {formatCurrency(loan.principal_amount)}
                        </div>
                        <div>
-                         <strong style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: 'var(--color-gray-400)', marginBottom: '4px' }}>Condiciones</strong>
-                         {loan.frequency === 'daily' ? 'Diario' : loan.frequency === 'weekly' ? 'Semanal' : loan.frequency === 'biweekly' ? 'Quincenal' : 'Mensual'} • {loan.interest_rate}%
+                         <strong style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-gray-400)', marginBottom: '2px' }}>Tasa Interés</strong>
+                         {loan.interest_rate}% total
                        </div>
-                       <div style={{ gridColumn: '1 / -1' }}>
-                         <strong style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: 'var(--color-gray-400)', marginBottom: '4px' }}>Periodo</strong>
-                         {formatDate(loan.start_date)} → {formatDate(loan.end_date)}
+                       <div>
+                         <strong style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-gray-400)', marginBottom: '2px' }}>Vencimiento Final</strong>
+                         {formatDate(loan.end_date)}
                        </div>
-                       <div style={{ gridColumn: '1 / -1' }}>
-                         <strong style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: 'var(--color-gray-400)', marginBottom: '4px' }}>Documento Cliente</strong>
-                         {loan.client?.document_id}
+                       <div>
+                         <strong style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-gray-400)', marginBottom: '2px' }}>Documento</strong>
+                         CC {loan.client?.document_id}
                        </div>
                     </div>
                   </div>
@@ -550,8 +537,56 @@ export default function LoansPage() {
                     />
                   </div>
                   <span className={styles.progressText}>
-                    {loan.paid_installments} / {loan.total_installments} cuotas recaudadas
+                    {loan.paid_installments} de {loan.total_installments} cuotas recaudadas ({Math.round((loan.paid_installments / loan.total_installments) * 100)}%)
                   </span>
+                </div>
+
+                {/* Barra de Acciones Táctil para Móvil */}
+                <div className={styles.loanActionRow} onClick={(e) => e.stopPropagation()}>
+                  {loan.status === 'active' && (
+                    <button 
+                      className="btn btn--primary" 
+                      onClick={(e) => { e.stopPropagation(); handleQuickPay(loan); }}
+                      style={{
+                        flex: 1,
+                        height: '40px',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        borderRadius: 'var(--radius-sm)'
+                      }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                      Cobrar Cuota
+                    </button>
+                  )}
+                  <button 
+                    className="btn btn--ghost" 
+                    onClick={(e) => { e.stopPropagation(); setExpandedLoan(isExpanded ? null : loan.id); }}
+                    style={{
+                      height: '40px',
+                      padding: '0 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: 'var(--color-gray-500)',
+                      gap: '4px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-gray-200)',
+                      background: 'var(--color-white)'
+                    }}
+                    title="Detalles"
+                  >
+                    <span>{isExpanded ? 'Menos' : 'Detalles'}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
                 </div>
               </div>
             )})}
@@ -641,9 +676,13 @@ export default function LoansPage() {
             <div style={{ padding: 'var(--space-5)' }}>
               <div className="skeleton" style={{ height: 200 }} />
             </div>
+          ) : !loanDetail.payments || loanDetail.payments.length === 0 ? (
+            <div style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--color-gray-400)' }}>
+              <p style={{ fontSize: 'var(--text-sm)' }}>No hay cuotas programadas para este préstamo.</p>
+            </div>
           ) : (
-            <div className={styles.scheduleTable} style={{ overflowY: 'auto', maxHeight: 'none', border: 'none' }}>
-              <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+            <div className={styles.scheduleTable} style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: 'none', padding: '0 var(--space-4)' }}>
+              <table style={{ minWidth: '520px', width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--color-gray-200)', color: 'var(--color-gray-500)', fontSize: '0.85rem' }}>
                     <th style={{ padding: '12px 8px' }}>#</th>
