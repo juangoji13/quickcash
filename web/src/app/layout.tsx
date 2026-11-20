@@ -12,13 +12,15 @@ export const metadata: Metadata = {
   applicationName: 'QuickCash',
   icons: {
     icon: [
-      { url: '/favicon.ico' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.ico?v=4' },
+      { url: '/favicon.png?v=4', type: 'image/png' },
+      { url: '/icon.svg?v=4', type: 'image/svg+xml' },
+      { url: '/icon-192x192.png?v=4', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png?v=4', sizes: '512x512', type: 'image/png' },
     ],
     apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-touch-icon.png?v=4', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-touch-icon-precomposed.png?v=4', sizes: '180x180', type: 'image/png' },
     ],
   },
   appleWebApp: {
@@ -46,6 +48,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=4" />
+        <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png?v=4" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=4" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=4" />
+        <link rel="shortcut icon" href="/favicon.ico?v=4" />
+      </head>
       <body>
         <NextAuthProvider>
           <AuthProvider>

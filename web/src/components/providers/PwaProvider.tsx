@@ -126,8 +126,8 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/icon-192x192.png"
-            alt="QuickCash Logo"
+            src="/icon-192x192.png?v=4"
+            alt="QuickCash QC Logo"
             width={44}
             height={44}
             style={{
