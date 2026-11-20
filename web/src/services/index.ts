@@ -6,3 +6,5 @@ export * from './collectors.service';
 export * from './routes.service';
 export * from './reports.service';
 export * from './collection-routes.service';
+export * from './register.service';
+export * from './superadmin.service';

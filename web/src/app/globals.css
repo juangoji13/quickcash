@@ -476,6 +476,7 @@ select.input {
   color: var(--color-asphalt);
   margin-top: var(--space-2);
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-card__change {
@@ -499,6 +500,7 @@ select.input {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
 }
 
 .table th {
@@ -519,6 +521,18 @@ select.input {
   font-size: var(--text-sm);
   color: var(--color-gray-700);
   border-bottom: 1px solid var(--color-gray-100);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tabular numbers for tables, stat values, and monetary figures */
+table,
+.table,
+.table td,
+.stat-card__value,
+.stat-card__change,
+.tabular-nums,
+[data-tabular-nums] {
+  font-variant-numeric: tabular-nums;
 }
 
 .table tr:hover td {
@@ -560,11 +574,6 @@ select.input {
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
-}
-
-@keyframes countUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in { animation: fadeIn var(--transition-base) ease-out; }

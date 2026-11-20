@@ -10,32 +10,7 @@ import { route_closures, users } from '@/lib/db/schema';
 import { eq, and, desc, gte, lte, sql } from 'drizzle-orm';
 import type { RouteClosureRecord } from '@/types';
 
-export async function getRouteClosures(tenantId: string, filters?: {
-  collectorId?: string;
-  dateFrom?: string;
-  dateTo?: string;
-}): Promise<RouteClosureRecord[]> {
-  try {
-    const results = await db.query.route_closures.findMany({
-      with: {
-        collector: true,
-      },
-      where: (closures) => {
-        const conditions = [eq(closures.tenant_id, tenantId)];
-        if (filters?.collectorId) conditions.push(eq(closures.collector_id, filters.collectorId));
-        if (filters?.dateFrom) conditions.push(gte(closures.closure_date, new Date(filters.dateFrom)));
-        if (filters?.dateTo) conditions.push(lte(closures.closure_date, new Date(filters.dateTo)));
-        return and(...conditions);
-      },
-      orderBy: [desc(route_closures.closure_date)],
-    });
-
-    return results as unknown as RouteClosureRecord[];
-  } catch (error) {
-    console.error('Error fetching closures:', error);
-    return [];
-  }
-}
+export { getRouteClosures, verifyRouteClosure } from './collection-routes.service';
 
 export async function getTodayClosure(collectorId: string, tenantId: string): Promise<RouteClosureRecord | null> {
   try {

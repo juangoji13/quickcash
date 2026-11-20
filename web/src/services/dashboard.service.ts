@@ -9,6 +9,7 @@ import { db } from '@/lib/db';
 import { loans, payments, clients } from '@/lib/db/schema';
 import { eq, and, sql, or, inArray } from 'drizzle-orm';
 import type { DashboardKPIs } from '@/types';
+import { getClientsRiskMap, syncClientsRisk } from '@/services/clients.service';
 
 export async function getDashboardKPIs(tenantId: string): Promise<DashboardKPIs> {
   try {
@@ -27,16 +28,16 @@ export async function getDashboardKPIs(tenantId: string): Promise<DashboardKPIs>
     let interestReceivable = 0;
 
     activeLoans.forEach((loan) => {
-      const total = loan.total_amount;
+      const total = loan.total_amount || 0;
       const paid = (loan.paid_installments || 0) * (loan.installment_amount || 0);
-      const remaining = Math.max(0, total - paid);
-      const ratio = total > 0 ? remaining / total : 0;
+      const principalTotal = loan.principal_amount || 0;
       
-      const principalTotal = loan.principal_amount;
-      const interestTotal = total - principalTotal;
+      // Amortización de Capital Primero (Opción B)
+      const remainingPrincipal = Math.max(0, principalTotal - paid);
+      const remainingInterest = Math.max(0, total - paid) - remainingPrincipal;
 
-      capitalInStreet += principalTotal * ratio;
-      interestReceivable += interestTotal * ratio;
+      capitalInStreet += remainingPrincipal;
+      interestReceivable += remainingInterest;
     });
 
     // 2. Recaudo del día
@@ -45,7 +46,7 @@ export async function getDashboardKPIs(tenantId: string): Promise<DashboardKPIs>
     }).from(payments)
       .where(and(
         eq(payments.tenant_id, tenantId),
-        sql`DATE(${payments.paid_date}) = CURRENT_DATE`
+        sql`DATE(${payments.paid_date}) = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE`
       ));
 
     const todayCollected = Number(todayCollectedResult[0]?.sum || 0);
@@ -56,20 +57,29 @@ export async function getDashboardKPIs(tenantId: string): Promise<DashboardKPIs>
     }).from(payments)
       .where(and(
         eq(payments.tenant_id, tenantId),
-        sql`DATE(${payments.due_date}) = CURRENT_DATE`
+        sql`DATE(${payments.due_date}) = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE`
       ));
 
     const todayExpected = Number(todayExpectedResult[0]?.sum || 0);
 
-    // 4. Clientes y Riesgo
-    const allClients = await db.query.clients.findMany({
-      where: eq(clients.tenant_id, tenantId)
-    });
+    // 4. Clientes y Semáforo de Riesgo dinámico
+    // Basado en cuotas vencidas: 0 vencidas = verde, 1-2 = amarillo, 3+ = rojo
+    const [allClients, riskMap] = await Promise.all([
+      db.query.clients.findMany({
+        where: eq(clients.tenant_id, tenantId)
+      }),
+      getClientsRiskMap(tenantId),
+    ]);
+
+    // Opcionalmente mantener sincronizado en BD en segundo plano
+    syncClientsRisk(tenantId).catch(() => {});
+
     const riskDist = { green: 0, yellow: 0, red: 0 };
     
     allClients.forEach((c) => {
-      if (c.risk_status in riskDist) {
-        riskDist[c.risk_status as keyof typeof riskDist]++;
+      const risk = riskMap.get(c.id) || 'green';
+      if (risk in riskDist) {
+        riskDist[risk as keyof typeof riskDist]++;
       }
     });
 

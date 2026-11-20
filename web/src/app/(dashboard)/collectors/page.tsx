@@ -10,7 +10,7 @@ import {
   deleteInvitation,
 } from '@/services/collectors.service';
 import { formatDate, getInitials } from '@/lib/utils';
-import { ConfirmModal } from '@/components/ui/Modal';
+import { ConfirmModal, AlertModal } from '@/components/ui/Modal';
 import type { User, Invitation } from '@/types';
 import styles from './collectors.module.css';
 
@@ -33,6 +33,7 @@ export default function CollectorsPage() {
 
   // Modals
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string } | null>(null);
+  const [errorAlert, setErrorAlert] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!appUser?.tenant_id) return;
@@ -63,7 +64,7 @@ export default function CollectorsPage() {
   async function handleToggleActive(user: User) {
     if (!appUser?.tenant_id) return;
     const { success, error } = await updateCollector(user.id, appUser.tenant_id, { is_active: !user.is_active });
-    if (error) alert(`Error: ${error}`);
+    if (error) setErrorAlert(`Error al actualizar estado: ${error}`);
     else loadData();
   }
 
@@ -280,6 +281,13 @@ export default function CollectorsPage() {
         title="Eliminar Invitación"
         message={`¿Estás seguro de que deseas eliminar la invitación para "${deleteTarget?.email}"?`}
         isDestructive={true}
+      />
+      <AlertModal
+        isOpen={!!errorAlert}
+        onClose={() => setErrorAlert(null)}
+        title="Error"
+        message={errorAlert}
+        isError={true}
       />
     </div>
   );

@@ -1,59 +1,27 @@
 version: '3.8'
 
 services:
-  quickcash-db:
-    image: postgres:16-alpine
-    container_name: quickcash-db
-    restart: always
-    environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=quickcash_pass_2024
-      - POSTGRES_DB=quickcash
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - quickcash-network
-
   quickcash-web:
     build:
       context: ./web
       dockerfile: Dockerfile
     container_name: quickcash-web
     restart: always
-    depends_on:
-      - quickcash-db
     ports:
       - "3005:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://admin:quickcash_pass_2024@quickcash-db:5432/quickcash?schema=public
-      - NEXTAUTH_URL=http://149.130.165.146:3005
-      - NEXTAUTH_SECRET=quickcash_secret_key_777_change_me
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://quickcash.jghermanos.xyz}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
     networks:
       - quickcash-network
-
-  quickcash-bot:
-    build:
-      context: ./web
-      dockerfile: Dockerfile
-    container_name: quickcash-bot
-    restart: always
-    depends_on:
-      - quickcash-db
-    command: npm run bot:start
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://admin:quickcash_pass_2024@quickcash-db:5432/quickcash?schema=public
-      - BOT_TOKEN=${BOT_TOKEN}
-      - OWNER_ID=${OWNER_ID}
-    networks:
-      - quickcash-network
-
-volumes:
-  postgres_data:
+      - supabase-network
 
 networks:
   quickcash-network:
-    driver: bridge
+    name: quickcash_quickcash-network
+    external: true
+  supabase-network:
+    name: supabase_default
+    external: true

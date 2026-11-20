@@ -9,12 +9,11 @@
     "lint": "eslint",
     "db:push": "drizzle-kit push",
     "db:seed": "npx tsx src/lib/db/seed.ts",
-    "bot:start": "npx tsx src/scripts/bot.ts"
+    "db:seed:superadmin": "npx tsx src/scripts/seed-superadmin.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
     "@capacitor/core": "^8.3.0",
-    "@supabase/supabase-js": "^2.101.1",
     "@types/pg": "^8.20.0",
     "bcryptjs": "^3.0.3",
     "drizzle-kit": "^0.31.10",
@@ -24,7 +23,6 @@
     "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "telegraf": "^4.16.3",
     "tsx": "^4.19.3"
   },
   "devDependencies": {

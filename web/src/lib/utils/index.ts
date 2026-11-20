@@ -79,6 +79,18 @@ export function getRiskLabel(status: 'green' | 'yellow' | 'red'): string {
 }
 
 /**
+ * Calcula el estado del semáforo de riesgo basado en el número de cuotas vencidas:
+ * - 0 cuotas vencidas: green (verde)
+ * - 1-2 cuotas vencidas: yellow (amarillo)
+ * - 3+ cuotas vencidas: red (rojo)
+ */
+export function calculateRiskStatus(overdueCount: number): 'green' | 'yellow' | 'red' {
+  if (overdueCount >= 3) return 'red';
+  if (overdueCount >= 1) return 'yellow';
+  return 'green';
+}
+
+/**
  * Devuelve el label del estado de un préstamo
  */
 export function getLoanStatusLabel(status: string): string {

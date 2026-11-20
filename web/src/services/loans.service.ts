@@ -95,7 +95,7 @@ export async function createLoan(
         status: 'active',
         start_date: new Date(loanData.start_date),
         end_date: new Date(loanData.end_date),
-        skip_non_working_days: loanData.skip_non_working_days || false,
+        skip_non_working_days: loanData.skip_non_working_days !== undefined ? Boolean(loanData.skip_non_working_days) : true,
       }).returning();
 
       // 2. Insertar cuotas

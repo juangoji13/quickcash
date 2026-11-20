@@ -6,7 +6,7 @@ import { getClients, createClient, deleteClient, searchClients } from '@/service
 import { getLoansByClientId } from '@/services/loans.service';
 import { formatDate, getRiskBadgeClass, getRiskLabel, getInitials, formatCurrency } from '@/lib/utils';
 import type { Client } from '@/types';
-import { ConfirmModal } from '@/components/ui/Modal';
+import { ConfirmModal, AlertModal } from '@/components/ui/Modal';
 import styles from './clients.module.css';
 
 export default function ClientsPage() {
@@ -22,6 +22,7 @@ export default function ClientsPage() {
 
   // Modals state
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [errorAlert, setErrorAlert] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -103,7 +104,7 @@ export default function ClientsPage() {
     
     const { error } = await deleteClient(id, appUser.tenant_id);
     if (error) {
-      alert(`Error: ${error}`);
+      setErrorAlert(`Error al eliminar cliente: ${error}`);
       loadClients(); // Revertir
     }
   }
@@ -400,6 +401,13 @@ export default function ClientsPage() {
         title="Eliminar Cliente"
         message={`¿Estás seguro de que deseas eliminar a "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
         isDestructive={true}
+      />
+      <AlertModal
+        isOpen={!!errorAlert}
+        onClose={() => setErrorAlert(null)}
+        title="Error"
+        message={errorAlert}
+        isError={true}
       />
     </>
   );

@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { formatCurrency } from '@/lib/utils';
 import styles from './Modal.module.css';
 
 interface ModalProps {
@@ -45,6 +46,10 @@ interface ConfirmModalProps {
   confirmLabel?: string;
   cancelLabel?: string;
   isDestructive?: boolean;
+  hideCancel?: boolean;
+  isLoading?: boolean;
+  confirmDisabled?: boolean;
+  width?: string;
 }
 
 export function ConfirmModal({
@@ -55,26 +60,122 @@ export function ConfirmModal({
   message,
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
-  isDestructive = false
+  isDestructive = false,
+  hideCancel = false,
+  isLoading = false,
+  confirmDisabled = false,
+  width = '480px',
 }: ConfirmModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <Modal isOpen={isOpen} onClose={onClose} title={title} width={width}>
       <div className={styles.messageBox}>{message}</div>
       <div className={styles.footerBtns}>
-        <button className="btn btn--ghost" onClick={onClose}>
-          {cancelLabel}
-        </button>
+        {!hideCancel && (
+          <button type="button" className="btn btn--ghost" onClick={onClose} disabled={isLoading}>
+            {cancelLabel}
+          </button>
+        )}
         <button 
-          className={`btn ${isDestructive ? 'btn--danger' : 'btn--primary'}`} 
+          type="button"
+          className={`btn ${isDestructive ? 'btn--danger' : 'btn--primary'} ${styles.massiveBtn}`} 
+          disabled={confirmDisabled || isLoading}
           onClick={() => {
             onConfirm();
-            onClose();
           }}
         >
-          {confirmLabel}
+          {isLoading ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <span className={styles.btnSpinner} />
+              Cargando...
+            </span>
+          ) : (
+            confirmLabel
+          )}
         </button>
       </div>
     </Modal>
+  );
+}
+
+/* ============================================
+ * Vistas Enriquecidas de Arqueo y Conciliación
+ * Identidad: "Metal y Asfalto" con Tabular Nums
+ * ============================================ */
+
+export function ArqueoHero({ label, amount }: { label: string; amount: number | string }) {
+  return (
+    <div className={styles.arqueoHero}>
+      <span className={styles.arqueoHeroLabel}>{label}</span>
+      <span className={styles.arqueoHeroAmount}>
+        {typeof amount === 'number' ? formatCurrency(amount) : amount}
+      </span>
+    </div>
+  );
+}
+
+export function ArqueoRow({
+  label,
+  value,
+  highlight = false,
+}: {
+  label: string;
+  value: ReactNode;
+  highlight?: boolean;
+}) {
+  return (
+    <div className={styles.arqueoRow}>
+      <span className={styles.arqueoLabel}>{label}</span>
+      <span
+        className={styles.arqueoValue}
+        style={
+          highlight
+            ? {
+                color: 'var(--color-safety-yellow)',
+                backgroundColor: 'var(--color-asphalt)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+              }
+            : undefined
+        }
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+export function ArqueoDivider() {
+  return <div className={styles.arqueoDivider} />;
+}
+
+interface AlertModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  message: ReactNode;
+  buttonLabel?: string;
+  isError?: boolean;
+}
+
+export function AlertModal({
+  isOpen,
+  onClose,
+  title = 'Aviso',
+  message,
+  buttonLabel = 'Entendido',
+  isError = false
+}: AlertModalProps) {
+  return (
+    <ConfirmModal
+      isOpen={isOpen}
+      onClose={onClose}
+      onConfirm={onClose}
+      title={title}
+      message={message}
+      confirmLabel={buttonLabel}
+      hideCancel={true}
+      isDestructive={isError}
+    />
   );
 }
 

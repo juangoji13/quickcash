@@ -326,6 +326,100 @@
   margin-bottom: var(--space-4);
 }
 
+.fieldFull {
+  margin-bottom: var(--space-4);
+  width: 100%;
+}
+
+.calendarOptionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .calendarOptionsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.calendarOptionCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-gray-200);
+  background-color: var(--color-card-white);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+  outline: none;
+}
+
+.calendarOptionCard:hover {
+  border-color: var(--color-asphalt);
+  background-color: #FAFCFD;
+}
+
+.calendarOptionSelected {
+  border-color: var(--color-safety-yellow);
+  background-color: rgba(241, 196, 15, 0.06);
+  box-shadow: 0 0 0 1px var(--color-safety-yellow);
+}
+
+.calendarRadio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--color-gray-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.calendarOptionSelected .calendarRadio {
+  border-color: var(--color-asphalt);
+}
+
+.radioDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: transparent;
+  transition: all var(--transition-fast);
+}
+
+.radioDotSelected {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-safety-yellow);
+}
+
+.calendarOptionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.calendarOptionTitle {
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-asphalt);
+}
+
+.calendarOptionDesc {
+  font-size: 11px;
+  color: var(--color-gray-400);
+  line-height: 1.35;
+}
+
 .toggleContainer {
   display: flex;
   align-items: center;

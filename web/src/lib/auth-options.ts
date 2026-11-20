@@ -29,6 +29,10 @@ export const authOptions: NextAuthOptions = {
 
         if (!user) return null;
 
+        if (!user.is_active) {
+          throw new Error('Esta cuenta ha sido desactivada. Comunícate con el administrador.');
+        }
+
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.password_hash
@@ -36,12 +40,14 @@ export const authOptions: NextAuthOptions = {
 
         if (!isPasswordValid) return null;
 
+        const userRole = user.role === 'super_admin' ? 'superadmin' : user.role;
+
         return {
           id: user.id,
           email: user.email,
           username: user.username,
           name: user.full_name,
-          role: user.role,
+          role: userRole,
           tenantId: user.tenant_id,
         };
       }
@@ -51,16 +57,25 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
+        token.role = (user as any).role === 'super_admin' ? 'superadmin' : (user as any).role;
         token.tenantId = (user as any).tenantId;
+        token.username = (user as any).username;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.id) {
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, token.id as string),
+        });
+        if (!user || !user.is_active) {
+          return {} as any; // Invalidar sesión si el usuario no existe o está inactivo
+        }
         (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
+        const normalizedRole = user.role === 'super_admin' ? 'superadmin' : (token.role || user.role);
+        (session.user as any).role = normalizedRole;
         (session.user as any).tenantId = token.tenantId;
+        (session.user as any).username = user.username || token.username;
       }
       return session;
     }

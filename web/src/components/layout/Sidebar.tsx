@@ -13,6 +13,7 @@ function IconCollectors() { return <svg width="18" height="18" viewBox="0 0 24 2
 function IconRoutes() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15"/><circle cx="18" cy="5" r="3"/></svg>; }
 function IconReports() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>; }
 function IconSettings() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>; }
+function IconSuperAdmin() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>; }
 function IconLogout() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>; }
 
 const NAV_SECTIONS = [
@@ -28,6 +29,7 @@ const NAV_SECTIONS = [
     label: 'GESTIÓN',
     items: [
       { href: '/collectors', label: 'Cobradores', Icon: IconCollectors },
+      { href: '/routes', label: 'Rutas', Icon: IconRoutes },
       { href: '/reports', label: 'Reportes', Icon: IconReports },
     ],
   },
@@ -54,6 +56,18 @@ export default function Sidebar() {
       </div>
 
       <nav className={styles.nav}>
+        {(appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin') && (
+          <div className={styles.navSection}>
+            <span className={styles.sectionLabel} style={{ color: 'var(--color-safety-yellow)' }}>PLATAFORMA</span>
+            <Link
+              href="/superadmin"
+              className={`${styles.navItem} ${pathname === '/superadmin' ? styles.navItemActive : ''}`}
+            >
+              <span className={styles.navIcon} style={{ color: 'var(--color-safety-yellow)' }}><IconSuperAdmin /></span>
+              <span className={styles.navLabel} style={{ fontWeight: 700, color: 'var(--color-safety-yellow)' }}>SuperAdmin</span>
+            </Link>
+          </div>
+        )}
         {NAV_SECTIONS.map((section) => (
           <div key={section.label} className={styles.navSection}>
             <span className={styles.sectionLabel}>{section.label}</span>
@@ -84,7 +98,11 @@ export default function Sidebar() {
               {appUser?.full_name || 'Usuario'}
             </span>
             <span className={styles.userRole}>
-              {appUser?.role === 'admin' ? 'Administrador' : appUser?.role || ''}
+              {appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin'
+                ? 'Súper Admin'
+                : appUser?.role === 'admin'
+                ? 'Administrador'
+                : appUser?.role || ''}
             </span>
           </div>
         </div>

@@ -8,7 +8,7 @@ import { getClients } from '@/services/clients.service';
 import { getTenant } from '@/services/tenant.service';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { LoanWithClient, Client, Tenant, InstallmentScheduleItem } from '@/types';
-import { ConfirmModal, PromptModal, Modal } from '@/components/ui/Modal';
+import { ConfirmModal, PromptModal, Modal, AlertModal } from '@/components/ui/Modal';
 import styles from './loans.module.css';
 
 type ViewMode = 'list' | 'create' | 'detail';
@@ -32,6 +32,7 @@ export default function LoansPage() {
   const [payOffTarget, setPayOffTarget] = useState<{ loanId: string; remainingAmount: number } | null>(null);
   const [graceTarget, setGraceTarget] = useState<{ paymentId: string; label: string } | null>(null);
   const [renewTarget, setRenewTarget] = useState<{ loan: LoanWithClient; remainingBalance: number } | null>(null);
+  const [alertInfo, setAlertInfo] = useState<{ title: string; message: string; isError?: boolean } | null>(null);
 
   // Renovation specific form
   const [renewPrincipal, setRenewPrincipal] = useState('');
@@ -193,7 +194,7 @@ export default function LoansPage() {
     
     const { success, error } = await deleteLoan(currentId, appUser.tenant_id);
     if (!success) {
-      alert(`Error al eliminar: ${error}`);
+      setAlertInfo({ title: 'Error al eliminar', message: error || 'No se pudo eliminar el préstamo.', isError: true });
       loadData(); // Revertir
     }
   }
@@ -208,11 +209,14 @@ export default function LoansPage() {
     if (!payTarget || !appUser) return;
     
     const amt = parseFloat(amountStr);
-    if (isNaN(amt) || amt <= 0) return alert('Monto inválido');
+    if (isNaN(amt) || amt <= 0) {
+      setAlertInfo({ title: 'Monto inválido', message: 'Por favor ingresa un monto mayor a 0.', isError: true });
+      return;
+    }
     
     const { success, error } = await registerPayment(payTarget.id, appUser.tenant_id, amt);
     if (!success) {
-      alert(`Error al registrar pago: ${error}`);
+      setAlertInfo({ title: 'Error al registrar pago', message: error || 'No se pudo registrar el pago.', isError: true });
       return;
     }
 
@@ -235,13 +239,16 @@ export default function LoansPage() {
     if (!appUser?.tenant_id) return;
     // Buscar la primera cuota vencida o pendiente
     const details = await getLoanById(loan.id, appUser.tenant_id);
-    if (!details) return alert('No se pudo cargar el detalle del préstamo.');
+    if (!details) {
+      setAlertInfo({ title: 'Error', message: 'No se pudo cargar el detalle del préstamo.', isError: true });
+      return;
+    }
     
     const nextPayable = details.payments?.find((p: any) => p.status === 'missed' || p.status === 'pending' || p.status === 'partial');
     if (nextPayable) {
       setPayTarget({ id: nextPayable.id, label: `Cuota #${nextPayable.installment_number}`, amount: nextPayable.amount_due });
     } else {
-      alert('Todas las cuotas de este préstamo están al día.');
+      setAlertInfo({ title: 'Préstamo al Día', message: 'Todas las cuotas de este préstamo están al día.', isError: false });
     }
   }
 
@@ -256,7 +263,7 @@ export default function LoansPage() {
     const { success, error } = await payOffLoan(payOffTarget.loanId, appUser.tenant_id);
     setPayOffTarget(null);
     if (!success) {
-      alert(`Error al saldar: ${error}`);
+      setAlertInfo({ title: 'Error al saldar', message: error || 'No se pudo saldar el préstamo.', isError: true });
       return;
     }
     // Refrescar detalle y lista
@@ -283,19 +290,23 @@ export default function LoansPage() {
     const np = parseFloat(renewPrincipal);
     const ni = parseFloat(renewInterestRate);
     const ninst = parseInt(renewInstallments);
-    if (isNaN(np) || isNaN(ni) || isNaN(ninst)) return alert('Valores inválidos.');
+    if (isNaN(np) || isNaN(ni) || isNaN(ninst)) {
+      setAlertInfo({ title: 'Valores inválidos', message: 'Verifica los valores numéricos ingresados para la renovación.', isError: true });
+      return;
+    }
 
     const { remainingBalance, netToDiburse, newTotalAmount } = calculateRenewal(selectedLoan, np, ni, ninst);
     
     if (netToDiburse <= 0) {
-      return alert('El nuevo capital debe ser mayor a la deuda restante.');
+      setAlertInfo({ title: 'Capital insuficiente', message: 'El nuevo capital debe ser mayor a la deuda restante para generar un desembolso positivo.', isError: true });
+      return;
     }
 
     setSaving(true);
     // 1. Pay off existing loan temporarily logically closing it
     const payOffRes = await payOffLoan(selectedLoan.id, appUser.tenant_id);
     if (!payOffRes.success) {
-      alert('Error cerrando préstamo anterior: ' + payOffRes.error);
+      setAlertInfo({ title: 'Error al renovar', message: 'Error cerrando préstamo anterior: ' + payOffRes.error, isError: true });
       setSaving(false);
       return;
     }
@@ -314,7 +325,7 @@ export default function LoansPage() {
     });
 
     if (!appUser) {
-        alert("Error: Sesión no válida");
+        setAlertInfo({ title: 'Sesión no válida', message: 'Tu sesión no es válida.', isError: true });
         setSaving(false);
         return;
     }
@@ -342,7 +353,7 @@ export default function LoansPage() {
       setSelectedLoan(null);
       loadData();
     } else {
-      alert('Error creando préstamo de renovación: ' + error);
+      setAlertInfo({ title: 'Error en renovación', message: 'Error creando préstamo de renovación: ' + error, isError: true });
     }
   }
 
@@ -354,7 +365,7 @@ export default function LoansPage() {
     setGraceTarget(null);
 
     if (!success) {
-      alert(`Error al registrar Día de Gracia: ${error}`);
+      setAlertInfo({ title: 'Error al registrar', message: `Error al registrar Día de Gracia: ${error}`, isError: true });
       return;
     }
 
@@ -544,6 +555,23 @@ export default function LoansPage() {
         message="¿Estás seguro de que deseas eliminar este préstamo y todo su historial de pagos? Esta acción es irreversible."
         isDestructive={true}
       />
+      <PromptModal
+        isOpen={!!payTarget}
+        onClose={() => setPayTarget(null)}
+        onConfirm={confirmPayInstallment}
+        title="Cobrar Cuota"
+        label={`Monto a cobrar para la ${payTarget?.label}`}
+        placeholder="Ej. 10000"
+        defaultValue={payTarget?.amount.toString()}
+        type="number"
+      />
+      <AlertModal
+        isOpen={!!alertInfo}
+        onClose={() => setAlertInfo(null)}
+        title={alertInfo?.title || 'Aviso'}
+        message={alertInfo?.message}
+        isError={alertInfo?.isError}
+      />
     </>
     );
   }
@@ -671,6 +699,13 @@ export default function LoansPage() {
         placeholder="Ej. 10000"
         defaultValue={payTarget?.amount.toString()}
         type="number"
+      />
+      <AlertModal
+        isOpen={!!alertInfo}
+        onClose={() => setAlertInfo(null)}
+        title={alertInfo?.title || 'Aviso'}
+        message={alertInfo?.message}
+        isError={alertInfo?.isError}
       />
       <ConfirmModal
         isOpen={!!payOffTarget}
@@ -862,22 +897,24 @@ export default function LoansPage() {
             </div>
           </div>
 
-          <div className={styles.formRow}>
-            <div className={styles.field}>
-              <label className="input-label" htmlFor="startDate">Fecha de Inicio *</label>
-              <input
-                id="startDate"
-                className="input"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
-            </div>
-            <div className={styles.field}>
-              <label className="input-label">Omitir Festivos</label>
-              <div className={styles.toggleContainer}>
-                <label className={styles.toggle}>
+          <div className={styles.field}>
+            <label className="input-label" htmlFor="startDate">Fecha de Inicio *</label>
+            <input
+              id="startDate"
+              className="input"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Calendario de Cobro: Selector Flexible */}
+          <div className={styles.fieldFull}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label className="input-label" style={{ marginBottom: 0 }}>Calendario de Cobro *</label>
+              <div className={styles.toggleContainer} style={{ marginTop: 0 }}>
+                <label className={styles.toggle} title="Conmutar omisión de festivos y domingos">
                   <input
                     type="checkbox"
                     checked={skipNonWorking}
@@ -885,8 +922,50 @@ export default function LoansPage() {
                   />
                   <span className={styles.toggleSlider}></span>
                 </label>
-                <span className={styles.toggleLabel}>{skipNonWorking ? 'Activado' : 'Desactivado'}</span>
+                <span className={styles.toggleLabel}>
+                  {skipNonWorking ? 'Laborable' : 'Corrido'}
+                </span>
               </div>
+            </div>
+
+            <div className={styles.calendarOptionsGrid}>
+              {/* Opción A */}
+              <button
+                type="button"
+                className={`${styles.calendarOptionCard} ${skipNonWorking ? styles.calendarOptionSelected : ''}`}
+                onClick={() => setSkipNonWorking(true)}
+              >
+                <div className={styles.calendarRadio}>
+                  <span className={skipNonWorking ? styles.radioDotSelected : styles.radioDot} />
+                </div>
+                <div className={styles.calendarOptionContent}>
+                  <div className={styles.calendarOptionTitle}>
+                    Días laborables (omite domingos y festivos)
+                  </div>
+                  <div className={styles.calendarOptionDesc}>
+                    Omite domingos y festivos. Recomendado para cobro de lunes a sábado.
+                  </div>
+                </div>
+              </button>
+
+              {/* Opción B */}
+              <button
+                type="button"
+                className={`${styles.calendarOptionCard} ${!skipNonWorking ? styles.calendarOptionSelected : ''}`}
+                onClick={() => setSkipNonWorking(false)}
+              >
+                <div className={styles.calendarRadio}>
+                  <span className={!skipNonWorking ? styles.radioDotSelected : styles.radioDot} />
+                </div>
+                <div className={styles.calendarOptionContent}>
+                  <div className={styles.calendarOptionTitle}>
+                    Días corridos (cobra todos los días continuos)
+                  </div>
+                  <div className={styles.calendarOptionDesc}>
+                    Cobra todos los 7 días continuos sin saltar domingos ni feriados.
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -958,6 +1037,14 @@ export default function LoansPage() {
           </div>
         </div>
       </div>
+
+      <AlertModal
+        isOpen={!!alertInfo}
+        onClose={() => setAlertInfo(null)}
+        title={alertInfo?.title || 'Aviso'}
+        message={alertInfo?.message}
+        isError={alertInfo?.isError}
+      />
     </div>
   );
 }

@@ -17,6 +17,14 @@ dist/
 .env.*.local
 supabase/.env
 
+# Keys & Secrets
+*.key
+*.key.pub
+*.pem
+id_rsa*
+id_ed25519*
+ssh-key-*
+
 # Debug
 npm-debug.log*
 yarn-debug.log*

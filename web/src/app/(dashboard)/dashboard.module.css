@@ -91,6 +91,51 @@
   gap: var(--space-3);
 }
 
+.collectorModeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: var(--color-asphalt);
+  color: var(--color-safety-yellow);
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-safety-yellow);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.collectorModeBtn:hover {
+  background-color: var(--color-asphalt-dark);
+  color: var(--color-white);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(44, 62, 80, 0.2);
+}
+
+.mobileCollectorBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-asphalt);
+  color: var(--color-safety-yellow);
+  border: 1px solid var(--color-safety-yellow);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.mobileCollectorBtn:hover {
+  background-color: var(--color-asphalt-dark);
+  color: var(--color-white);
+}
+
 .iconBtn {
   width: 40px;
   height: 40px;

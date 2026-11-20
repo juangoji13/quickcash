@@ -58,6 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (result?.error) {
+      if (result.error.includes('desactivada') || result.error.includes('inactive') || result.error.includes('user_inactive')) {
+        return { error: 'Esta cuenta ha sido desactivada. Comunícate con el administrador.' };
+      }
       return { error: 'Credenciales inválidas. Revisa tu usuario/email y contraseña.' };
     }
 

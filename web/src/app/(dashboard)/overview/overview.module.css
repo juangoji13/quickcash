@@ -75,6 +75,7 @@
   color: var(--color-asphalt);
   line-height: 1.1;
   margin-top: 2px;
+  font-variant-numeric: tabular-nums;
 }
 
 .kpiSub {
@@ -158,6 +159,7 @@
 .riskCount {
   font-family: var(--font-heading); font-weight: 700;
   font-size: var(--text-sm); width: 24px; text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Quick Stats */
@@ -176,6 +178,7 @@
 .quickValue {
   font-family: var(--font-heading); font-size: var(--text-3xl); font-weight: 800;
   color: var(--color-asphalt);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Actions */
@@ -265,7 +268,7 @@
 .paymentStatus.partial  { background: #FFF3E0; color: #F57C00; }
 
 .upcomingDetails { text-align: right; display: flex; flex-direction: column; gap: 2px; }
-.paymentAmount { font-family: var(--font-heading); font-weight: 800; color: var(--color-asphalt); font-size: var(--text-base); }
+.paymentAmount { font-family: var(--font-heading); font-weight: 800; color: var(--color-asphalt); font-size: var(--text-base); font-variant-numeric: tabular-nums; }
 .paymentDate { font-size: var(--text-xs); color: var(--color-gray-300); font-weight: 500; }
 
 .emptyCollections {

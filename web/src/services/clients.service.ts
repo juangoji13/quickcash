@@ -6,34 +6,161 @@
  * ============================================ */
 
 import { db } from '@/lib/db';
-import { clients, loans, users } from '@/lib/db/schema';
-import { eq, or, ilike, desc, and } from 'drizzle-orm';
-import type { Client, ClientWithLoans } from '@/types';
+import { clients, loans, users, payments } from '@/lib/db/schema';
+import { eq, or, ilike, desc, and, sql, inArray } from 'drizzle-orm';
+import type { Client, ClientWithLoans, RiskStatus } from '@/types';
+import { calculateRiskStatus as computeRiskStatus } from '@/lib/utils';
+
+/**
+ * Semáforo de Riesgo dinámico (Server Action):
+ * - 0 cuotas vencidas: green (verde)
+ * - 1-2 cuotas vencidas: yellow (amarillo)
+ * - 3+ cuotas vencidas: red (rojo)
+ */
+export async function calculateRiskStatus(overdueCount: number): Promise<RiskStatus> {
+  return computeRiskStatus(overdueCount);
+}
+
+/**
+ * Obtiene el mapa de riesgo de todos los clientes de un tenant
+ */
+export async function getClientsRiskMap(tenantId: string): Promise<Map<string, RiskStatus>> {
+  try {
+    const overdueCounts = await db
+      .select({
+        clientId: clients.id,
+        overdueCount: sql<number>`count(${payments.id})::int`,
+      })
+      .from(clients)
+      .leftJoin(
+        loans,
+        and(
+          eq(loans.client_id, clients.id),
+          eq(loans.tenant_id, tenantId),
+          inArray(loans.status, ['active', 'defaulted'])
+        )
+      )
+      .leftJoin(
+        payments,
+        and(
+          eq(payments.loan_id, loans.id),
+          eq(payments.tenant_id, tenantId),
+          sql`${payments.status} != 'paid'`,
+          sql`(${payments.status} = 'missed' OR DATE(${payments.due_date}) < (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE)`
+        )
+      )
+      .where(eq(clients.tenant_id, tenantId))
+      .groupBy(clients.id);
+
+    const riskMap = new Map<string, RiskStatus>();
+    for (const row of overdueCounts) {
+      riskMap.set(row.clientId, computeRiskStatus(Number(row.overdueCount || 0)));
+    }
+    return riskMap;
+  } catch (err) {
+    console.error('Error calculating clients risk map:', err);
+    return new Map<string, RiskStatus>();
+  }
+}
+
+/**
+ * Sincroniza el estado de riesgo en la base de datos para persistencia consistente
+ */
+export async function syncClientsRisk(tenantId: string): Promise<void> {
+  try {
+    await db.execute(sql`
+      WITH overdue_data AS (
+        SELECT 
+          c.id AS client_id,
+          count(p.id) AS overdue_count
+        FROM clients c
+        LEFT JOIN loans l ON l.client_id = c.id AND l.tenant_id = c.tenant_id AND l.status IN ('active', 'defaulted')
+        LEFT JOIN payments p ON p.loan_id = l.id 
+          AND p.tenant_id = c.tenant_id 
+          AND p.status != 'paid' 
+          AND (p.status = 'missed' OR DATE(p.due_date) < (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE)
+        WHERE c.tenant_id = ${tenantId}
+        GROUP BY c.id
+      )
+      UPDATE clients
+      SET risk_status = CASE
+        WHEN overdue_data.overdue_count >= 3 THEN 'red'
+        WHEN overdue_data.overdue_count >= 1 THEN 'yellow'
+        ELSE 'green'
+      END
+      FROM overdue_data
+      WHERE clients.id = overdue_data.client_id AND clients.tenant_id = ${tenantId}
+    `);
+  } catch (err) {
+    console.error('Error syncing clients risk status:', err);
+  }
+}
 
 export async function getClients(tenantId: string): Promise<Client[]> {
   try {
-    const results = await db.query.clients.findMany({
-      where: eq(clients.tenant_id, tenantId),
-      orderBy: [desc(clients.created_at)],
-    });
-    return results as unknown as Client[];
+    const [riskMap, results] = await Promise.all([
+      getClientsRiskMap(tenantId),
+      db.query.clients.findMany({
+        where: eq(clients.tenant_id, tenantId),
+        orderBy: [desc(clients.created_at)],
+      }),
+    ]);
+
+    return results.map((c) => ({
+      ...c,
+      risk_status: riskMap.get(c.id) || (c.risk_status as RiskStatus) || 'green',
+    })) as unknown as Client[];
   } catch (error) {
     console.error('Error fetching clients:', error);
     return [];
   }
 }
 
-export async function getClientById(id: string): Promise<ClientWithLoans | null> {
+export async function getClientById(id: string, tenantId: string): Promise<ClientWithLoans | null> {
   try {
     const result = await db.query.clients.findFirst({
-      where: eq(clients.id, id),
+      where: and(
+        eq(clients.id, id),
+        eq(clients.tenant_id, tenantId)
+      ),
       with: {
         loans: true,
         collector: true,
       },
     });
 
-    return result as unknown as ClientWithLoans;
+    if (!result) return null;
+
+    // Calcular cuotas vencidas para este cliente
+    const overdueRes = await db
+      .select({
+        count: sql<number>`count(${payments.id})::int`,
+      })
+      .from(loans)
+      .innerJoin(
+        payments,
+        and(
+          eq(payments.loan_id, loans.id),
+          eq(payments.tenant_id, tenantId),
+          sql`${payments.status} != 'paid'`,
+          sql`(${payments.status} = 'missed' OR DATE(${payments.due_date}) < (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE)`
+        )
+      )
+      .where(
+        and(
+          eq(loans.client_id, id),
+          eq(loans.tenant_id, tenantId),
+          inArray(loans.status, ['active', 'defaulted'])
+        )
+      );
+
+    const overdueCount = Number(overdueRes[0]?.count || 0);
+    const dynamicRisk = computeRiskStatus(overdueCount);
+
+    return {
+      ...result,
+      risk_status: dynamicRisk,
+    } as unknown as ClientWithLoans;
   } catch (error) {
     console.error('Error fetching client:', error);
     return null;
@@ -64,12 +191,20 @@ export async function createClient(
 
 export async function updateClient(
   id: string,
+  tenantId: string,
   updates: Partial<Client>
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const { id: _id, tenant_id: _tenantId, ...safeUpdates } = updates as any;
+
     await db.update(clients)
-      .set(updates as any)
-      .where(eq(clients.id, id));
+      .set(safeUpdates)
+      .where(
+        and(
+          eq(clients.id, id),
+          eq(clients.tenant_id, tenantId)
+        )
+      );
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -92,18 +227,25 @@ export async function deleteClient(id: string, tenantId: string): Promise<{ succ
 
 export async function searchClients(query: string, tenantId: string): Promise<Client[]> {
   try {
-    const results = await db.query.clients.findMany({
-      where: and(
-        eq(clients.tenant_id, tenantId),
-        or(
-          ilike(clients.full_name, `%${query}%`),
-          ilike(clients.document_id, `%${query}%`),
-          ilike(clients.phone, `%${query}%`)
-        )
-      ),
-      orderBy: [clients.full_name],
-    });
-    return results as unknown as Client[];
+    const [riskMap, results] = await Promise.all([
+      getClientsRiskMap(tenantId),
+      db.query.clients.findMany({
+        where: and(
+          eq(clients.tenant_id, tenantId),
+          or(
+            ilike(clients.full_name, `%${query}%`),
+            ilike(clients.document_id, `%${query}%`),
+            ilike(clients.phone, `%${query}%`)
+          )
+        ),
+        orderBy: [clients.full_name],
+      }),
+    ]);
+
+    return results.map((c) => ({
+      ...c,
+      risk_status: riskMap.get(c.id) || (c.risk_status as RiskStatus) || 'green',
+    })) as unknown as Client[];
   } catch (error) {
     console.error('Error searching clients:', error);
     return [];

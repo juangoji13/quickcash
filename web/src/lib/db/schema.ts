@@ -57,7 +57,8 @@ export const route_closures = pgTable('route_closures', {
   total_collected: doublePrecision('total_collected').default(0).notNull(),
   total_expected: doublePrecision('total_expected').default(0).notNull(),
   total_visits: integer('total_visits').default(0).notNull(),
-  status: varchar('status', { length: 20 }).default('open').notNull(), // open, closed
+  status: varchar('status', { length: 20 }).default('open').notNull(), // open, closed, verified
+  notes: text('notes'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 

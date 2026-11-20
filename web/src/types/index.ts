@@ -5,7 +5,7 @@
 
 /* ---- Enums ---- */
 
-export type UserRole = 'super_admin' | 'admin' | 'collector';
+export type UserRole = 'superadmin' | 'super_admin' | 'admin' | 'collector';
 
 export type LoanFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly';
 
@@ -185,4 +185,43 @@ export interface CollectionRouteWithDetails extends CollectionRoute {
   clients?: Client[];
   total_daily_quota?: number;
   total_collected_today?: number;
+}
+
+/* ---- SuperAdmin & Registration Models ---- */
+
+export interface SuperAdminTenant {
+  id: string;
+  name: string;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  admin: {
+    id: string;
+    full_name: string | null;
+    email: string;
+    username: string | null;
+    phone: string | null;
+    is_active: boolean;
+  } | null;
+  total_clients: number;
+  total_loans: number;
+  active_loans_count: number;
+}
+
+export interface SuperAdminKPIs {
+  total_tenants: number;
+  active_tenants: number;
+  total_capital_in_street: number;
+  total_today_collected: number;
+  total_collectors: number;
+}
+
+export interface RegisterLenderInput {
+  businessName: string;
+  fullName: string;
+  username: string;
+  email: string;
+  password: string;
+  phone?: string | null;
 }

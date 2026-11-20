@@ -71,6 +71,16 @@ export default function DashboardLayout({
             Quick<span>Cash</span>
           </div>
           <div className={styles.topActions}>
+            {appUser?.role === 'admin' && (
+              <Link href="/routes" className={styles.collectorModeBtn} title="Ir a Gestión de Rutas y Cobro">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="6" cy="19" r="3"/>
+                  <path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15"/>
+                  <circle cx="18" cy="5" r="3"/>
+                </svg>
+                <span>Modo Cobrador</span>
+              </Link>
+            )}
             <button className={styles.iconBtn} aria-label="Notificaciones">
               <IconBell />
               <span className={styles.notificationDot} />
@@ -80,13 +90,24 @@ export default function DashboardLayout({
 
         {/* Mobile TopBar: ⚙️ [QuickCash] 🔔 */}
         <header className={`${styles.topBar} ${styles.topBarMobile}`} style={{ position: 'relative', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/settings" className={styles.iconBtn} aria-label="Configuración">
-            <IconSettings />
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2 }}>
+            <Link href="/settings" className={styles.iconBtn} aria-label="Configuración">
+              <IconSettings />
+            </Link>
+            {appUser?.role === 'admin' && (
+              <Link href="/routes" className={styles.mobileCollectorBtn} title="Modo Cobrador" aria-label="Modo Cobrador">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="6" cy="19" r="3"/>
+                  <path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15"/>
+                  <circle cx="18" cy="5" r="3"/>
+                </svg>
+              </Link>
+            )}
+          </div>
           <div className={styles.mobileLogo} style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', margin: 0 }}>
             Quick<span>Cash</span>
           </div>
-          <button className={styles.iconBtn} aria-label="Notificaciones" style={{ position: 'relative' }}>
+          <button className={styles.iconBtn} aria-label="Notificaciones" style={{ position: 'relative', zIndex: 2 }}>
             <IconBell />
             <span className={styles.notificationDot} />
           </button>

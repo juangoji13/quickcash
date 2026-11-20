@@ -23,11 +23,22 @@ export interface FinancialReport {
 
 export async function getCollectionReport(dateFrom: string, dateTo: string, tenantId: string): Promise<FinancialReport> {
   try {
-    const from = new Date(dateFrom);
-    const to = new Date(dateTo);
+    const from = new Date(dateFrom.includes('T') ? dateFrom : `${dateFrom}T00:00:00.000`);
+    const to = new Date(dateTo.includes('T') ? dateTo : `${dateTo}T23:59:59.999`);
 
-    // Pagos en el periodo
-    const periodPayments = await db.query.payments.findMany({
+    // Recaudo del periodo bajo criterio de caja (flujo real de dinero por paid_date)
+    const paidPayments = await db.query.payments.findMany({
+      where: and(
+        eq(payments.tenant_id, tenantId),
+        gte(payments.paid_date, from),
+        lte(payments.paid_date, to)
+      ),
+    });
+
+    const totalCollected = paidPayments.reduce((sum, p) => sum + Number(p.amount_paid), 0);
+
+    // Cuotas esperadas en el periodo por calendario de vencimientos (due_date)
+    const expectedPayments = await db.query.payments.findMany({
       where: and(
         eq(payments.tenant_id, tenantId),
         gte(payments.due_date, from),
@@ -35,8 +46,7 @@ export async function getCollectionReport(dateFrom: string, dateTo: string, tena
       ),
     });
 
-    const totalCollected = periodPayments.reduce((sum, p) => sum + Number(p.amount_paid), 0);
-    const totalExpected = periodPayments.reduce((sum, p) => sum + Number(p.amount_due), 0);
+    const totalExpected = expectedPayments.reduce((sum, p) => sum + Number(p.amount_due), 0);
 
     // Préstamos creados en el periodo
     const newLoansList = await db.query.loans.findMany({
@@ -90,11 +100,21 @@ export async function getCollectorPerformance(tenantId: string): Promise<Collect
     const results: CollectorPerformance[] = [];
 
     for (const collector of collectors) {
-      const todayPayments = await db.query.payments.findMany({
+      // Recaudo del día (flujo real por paid_date)
+      const todayCollectedPayments = await db.query.payments.findMany({
         where: and(
           eq(payments.collector_id, collector.id),
           eq(payments.tenant_id, tenantId),
-          sql`DATE(${payments.due_date}) = CURRENT_DATE`
+          sql`DATE(${payments.paid_date}) = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE`
+        ),
+      });
+
+      // Cobro esperado del día (por due_date)
+      const todayExpectedPayments = await db.query.payments.findMany({
+        where: and(
+          eq(payments.collector_id, collector.id),
+          eq(payments.tenant_id, tenantId),
+          sql`DATE(${payments.due_date}) = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE`
         ),
       });
 
@@ -113,8 +133,8 @@ export async function getCollectorPerformance(tenantId: string): Promise<Collect
         ),
       });
 
-      const totalCollected = todayPayments.reduce((s, p) => s + Number(p.amount_paid), 0);
-      const totalExpected = todayPayments.reduce((s, p) => s + Number(p.amount_due), 0);
+      const totalCollected = todayCollectedPayments.reduce((s, p) => s + Number(p.amount_paid), 0);
+      const totalExpected = todayExpectedPayments.reduce((s, p) => s + Number(p.amount_due), 0);
 
       results.push({
         collector_id: collector.id,
