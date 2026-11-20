@@ -383,11 +383,23 @@ export default function LoansPage() {
     return matchesFilter && matchesSearch;
   });
 
+  const activeLoans = loans.filter((l) => l.status === 'active');
+  const capitalInStreet = activeLoans.reduce((acc, l) => {
+    const paid = (l.paid_installments || 0) * (l.installment_amount || 0);
+    return acc + Math.max(0, l.principal_amount - paid);
+  }, 0);
+  const totalDisbursed = loans.reduce((acc, l) => acc + l.principal_amount, 0);
+  const totalCollected = loans.reduce((acc, l) => acc + ((l.paid_installments || 0) * (l.installment_amount || 0)), 0);
+  const avgInterest = loans.length > 0
+    ? (loans.reduce((acc, l) => acc + l.interest_rate, 0) / loans.length).toFixed(1)
+    : 0;
+
   const stats = {
-    active: loans.filter(l => l.status === 'active').length,
-    totalPrincipal: loans.reduce((acc, l) => acc + l.principal_amount, 0),
-    totalCollected: loans.reduce((acc, l) => acc + (l.paid_installments * l.installment_amount), 0),
-    avgInterest: loans.length > 0 ? (loans.reduce((acc, l) => acc + l.interest_rate, 0) / loans.length).toFixed(1) : 0
+    active: activeLoans.length,
+    capitalInStreet,
+    totalDisbursed,
+    totalCollected,
+    avgInterest
   };
 
   /* ============ LIST VIEW ============ */
@@ -399,7 +411,7 @@ export default function LoansPage() {
           <div>
             <h2 className={styles.pageTitle}>Préstamos</h2>
             <p className={styles.pageSubtitle}>
-              {loans.length} préstamos ({loans.filter((l) => l.status === 'active').length} activos)
+              {loans.length} préstamos ({stats.active} activos)
             </p>
           </div>
           <button className="btn btn--primary" onClick={() => setView('create')}>
@@ -407,23 +419,23 @@ export default function LoansPage() {
           </button>
         </div>
 
-        {/* Mini KPIs Summary */}
+        {/* Mini KPIs Summary - Armonizado con Métricas de Inicio */}
         <div className={styles.summaryGrid}>
           <div className={styles.summaryCard}>
             <span className={styles.summaryLabel}>Capital en Calle</span>
-            <span className={styles.summaryValue}>{formatCurrency(stats.totalPrincipal)}</span>
+            <span className={styles.summaryValue}>{formatCurrency(stats.capitalInStreet)}</span>
           </div>
           <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Recaudado</span>
+            <span className={styles.summaryLabel}>Total Desembolsado</span>
+            <span className={styles.summaryValue}>{formatCurrency(stats.totalDisbursed)}</span>
+          </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Total Recaudado</span>
             <span className={styles.summaryValue}>{formatCurrency(stats.totalCollected)}</span>
           </div>
           <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Activos</span>
-            <span className={styles.summaryValue}>{stats.active}</span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryLabel}>Interés Promedio</span>
-            <span className={styles.summaryValue}>{stats.avgInterest}%</span>
+            <span className={styles.summaryLabel}>Préstamos Activos</span>
+            <span className={styles.summaryValue}>{stats.active} <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--color-gray-400)' }}>({stats.avgInterest}% int.)</span></span>
           </div>
         </div>
 

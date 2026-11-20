@@ -1,12 +1,13 @@
-const CACHE_NAME = 'quickcash-cache-v1';
+const CACHE_NAME = 'quickcash-cache-v3';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
   '/icon.svg',
   '/icon-192x192.png',
   '/icon-512x512.png',
-  '/login',
-  '/collector/route'
+  '/apple-touch-icon.png',
+  '/apple-touch-icon-precomposed.png',
+  '/login'
 ];
 
 // Install: Pre-cache core app shell assets
