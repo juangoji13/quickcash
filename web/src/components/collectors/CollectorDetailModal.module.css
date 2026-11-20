@@ -274,6 +274,19 @@
   flex-direction: column;
   gap: 10px;
   transition: border-color 150ms ease;
+  border-left-width: 4px;
+}
+
+.cardRiskGreen {
+  border-left-color: #16A34A;
+}
+
+.cardRiskYellow {
+  border-left-color: #F59E0B;
+}
+
+.cardRiskRed {
+  border-left-color: #DC2626;
 }
 
 .clientCard:hover {

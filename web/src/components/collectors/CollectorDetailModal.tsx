@@ -47,6 +47,13 @@ export default function CollectorDetailModal({
 
   if (!isOpen) return null;
 
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(15);
+    }
+  };
+
   const filteredClients = (data?.clients || []).filter(c => 
     c.full_name.toLowerCase().includes(clientSearch.toLowerCase()) ||
     c.document_id.includes(clientSearch)
@@ -125,20 +132,20 @@ export default function CollectorDetailModal({
         <div className={styles.tabsContainer}>
           <button 
             className={`${styles.tabBtn} ${activeTab === 'clients' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('clients')}
+            onClick={() => handleTabChange('clients')}
           >
             👥 Clientes Asignados
             <span className={styles.tabCountBadge}>{data?.clients.length || 0}</span>
           </button>
           <button 
             className={`${styles.tabBtn} ${activeTab === 'performance' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('performance')}
+            onClick={() => handleTabChange('performance')}
           >
             💰 Rendimiento & Caja
           </button>
           <button 
             className={`${styles.tabBtn} ${activeTab === 'history' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('history')}
+            onClick={() => handleTabChange('history')}
           >
             🧾 Cobros Recientes
             <span className={styles.tabCountBadge}>{data?.recentPayments.length || 0}</span>
@@ -177,7 +184,13 @@ export default function CollectorDetailModal({
               ) : (
                 <div className={styles.clientsList}>
                   {filteredClients.map((c) => (
-                    <div key={c.id} className={styles.clientCard}>
+                    <div 
+                      key={c.id} 
+                      className={`${styles.clientCard} ${
+                        c.risk_status === 'green' ? styles.cardRiskGreen :
+                        c.risk_status === 'yellow' ? styles.cardRiskYellow : styles.cardRiskRed
+                      }`}
+                    >
                       <div className={styles.clientMainRow}>
                         <div className={styles.clientIdentity}>
                           <h4 className={styles.clientName}>{c.full_name}</h4>
