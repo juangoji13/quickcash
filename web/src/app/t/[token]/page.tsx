@@ -15,6 +15,7 @@ export default function PublicTalonarioPage() {
   const [isOffline, setIsOffline] = useState(false);
   const [cachedTime, setCachedTime] = useState<string | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'paid'>('all');
 
   useEffect(() => {
     if (!token) return;
@@ -96,6 +97,15 @@ export default function PublicTalonarioPage() {
     );
   }
 
+  // Filtrado de cuotas (Ideal para 4, 15, 20, 24 o 30 cuotas)
+  const filteredInstallments = (data.installments || []).filter((inst) => {
+    if (filter === 'paid') return inst.status === 'paid';
+    if (filter === 'pending') {
+      return inst.status === 'today' || inst.status === 'pending' || inst.status === 'missed';
+    }
+    return true;
+  });
+
   return (
     <div className={styles.pageContainer}>
       <div className={styles.contentWrapper}>
@@ -127,7 +137,7 @@ export default function PublicTalonarioPage() {
             />
           </svg>
 
-          {/* Header: QC Logo | QuickCash / Talonario de Cuotas */}
+          {/* Header: QC Logo | QuickCash / Talonario de Jose */}
           <header className={styles.header}>
             <div className={styles.brandRow}>
               <div className={styles.brandLogo}>QC</div>
@@ -214,55 +224,151 @@ export default function PublicTalonarioPage() {
                 </div>
               </section>
 
+              {/* Filtro por Pestañas (Segmented Control para 4, 15, 20 o 30 cuotas) */}
+              <div className={styles.filterTabs} role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === 'all'}
+                  className={`${styles.filterTab} ${filter === 'all' ? styles.filterTabActive : ''}`}
+                  onClick={() => setFilter('all')}
+                >
+                  Todas ({data.total_installments || 0})
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === 'pending'}
+                  className={`${styles.filterTab} ${filter === 'pending' ? styles.filterTabActive : ''}`}
+                  onClick={() => setFilter('pending')}
+                >
+                  Por Pagar ({data.remaining_installments || 0})
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === 'paid'}
+                  className={`${styles.filterTab} ${filter === 'paid' ? styles.filterTabActive : ''}`}
+                  onClick={() => setFilter('paid')}
+                >
+                  Pagadas ({data.paid_installments || 0})
+                </button>
+              </div>
+
               {/* LISTA DE CUOTAS (Filas estilo mockup) */}
               <section className={styles.cuotasList}>
-                {data.installments.map((inst) => {
-                  const isPaid = inst.status === 'paid';
-                  const isToday = inst.status === 'today';
-                  const isMissed = inst.status === 'missed';
+                {filteredInstallments.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    {filter === 'pending'
+                      ? '🎉 ¡No tienes cuotas pendientes por pagar!'
+                      : 'Aún no registras cuotas en este estado.'}
+                  </div>
+                ) : (
+                  filteredInstallments.map((inst) => {
+                    const isPaid = inst.status === 'paid';
+                    const isToday = inst.status === 'today';
+                    const isMissed = inst.status === 'missed';
 
-                  // Fila: Cuota Pagada (Verde)
-                  if (isPaid) {
+                    // Fila: Cuota Pagada (Verde)
+                    if (isPaid) {
+                      return (
+                        <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaPaid}`}>
+                          <div className={styles.iconBoxPaid}>
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#0B6A30"
+                              strokeWidth="3.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          </div>
+                          <div className={styles.cuotaInfo}>
+                            <span className={styles.cuotaTitle}>Cuota #{inst.number}</span>
+                            <span className={styles.cuotaSub}>
+                              {inst.paid_date || 'Pagada'}
+                            </span>
+                          </div>
+                          <span className={styles.badgePaid}>Pagada</span>
+                        </div>
+                      );
+                    }
+
+                    // Fila: Cuota de Hoy / Por Pagar (Ámbar)
+                    if (isToday) {
+                      return (
+                        <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaToday}`}>
+                          <div className={styles.iconBoxToday}>
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#B47012"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <circle cx="12" cy="12" r="9"></circle>
+                              <polyline points="12 7 12 12 15 15"></polyline>
+                            </svg>
+                          </div>
+                          <div className={styles.cuotaInfo}>
+                            <span className={styles.cuotaTitle}>Cuota #{inst.number}</span>
+                            <span className={styles.cuotaSubToday}>Por pagar</span>
+                          </div>
+                          <span className={styles.badgeToday}>Pendiente</span>
+                        </div>
+                      );
+                    }
+
+                    // Fila: Cuota Atrasada (Rojo)
+                    if (isMissed) {
+                      return (
+                        <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaMissed}`}>
+                          <div className={styles.iconBoxMissed}>
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#DC2626"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <circle cx="12" cy="12" r="9"></circle>
+                              <line x1="12" y1="8" x2="12" y2="12"></line>
+                              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                          </div>
+                          <div className={styles.cuotaInfo}>
+                            <span className={styles.cuotaTitle}>Cuota #{inst.number}</span>
+                            <span className={styles.cuotaSubMissed}>Atrasada</span>
+                          </div>
+                          <span className={styles.badgeMissed}>Atrasada</span>
+                        </div>
+                      );
+                    }
+
+                    // Fila: Cuota Pendiente Futura (Gris suave)
                     return (
-                      <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaPaid}`}>
-                        <div className={styles.iconBoxPaid}>
+                      <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaPending}`}>
+                        <div className={styles.iconBoxPending}>
                           <svg
                             width="22"
                             height="22"
                             viewBox="0 0 24 24"
                             fill="none"
-                            stroke="#0B6A30"
-                            strokeWidth="3.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        </div>
-                        <div className={styles.cuotaInfo}>
-                          <span className={styles.cuotaTitle}>Cuota #{inst.number}</span>
-                          <span className={styles.cuotaSub}>
-                            {inst.paid_date || 'Pagada'}
-                          </span>
-                        </div>
-                        <span className={styles.badgePaid}>Pagada</span>
-                      </div>
-                    );
-                  }
-
-                  // Fila: Cuota de Hoy / Por Pagar (Ámbar)
-                  if (isToday) {
-                    return (
-                      <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaToday}`}>
-                        <div className={styles.iconBoxToday}>
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#B47012"
-                            strokeWidth="2.5"
+                            stroke="#94A3B8"
+                            strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             aria-hidden="true"
@@ -272,71 +378,14 @@ export default function PublicTalonarioPage() {
                           </svg>
                         </div>
                         <div className={styles.cuotaInfo}>
-                          <span className={styles.cuotaTitle}>Cuota #{inst.number}</span>
-                          <span className={styles.cuotaSubToday}>Por pagar</span>
+                          <span className={styles.cuotaTitlePending}>Cuota #{inst.number}</span>
+                          <span className={styles.cuotaSub}>Pendiente</span>
                         </div>
-                        <span className={styles.badgeToday}>Pendiente</span>
+                        <span className={styles.badgePending}>Pendiente</span>
                       </div>
                     );
-                  }
-
-                  // Fila: Cuota Atrasada (Rojo)
-                  if (isMissed) {
-                    return (
-                      <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaMissed}`}>
-                        <div className={styles.iconBoxMissed}>
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#DC2626"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <circle cx="12" cy="12" r="9"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                          </svg>
-                        </div>
-                        <div className={styles.cuotaInfo}>
-                          <span className={styles.cuotaTitle}>Cuota #{inst.number}</span>
-                          <span className={styles.cuotaSubMissed}>Atrasada</span>
-                        </div>
-                        <span className={styles.badgeMissed}>Atrasada</span>
-                      </div>
-                    );
-                  }
-
-                  // Fila: Cuota Pendiente Futura (Gris suave)
-                  return (
-                    <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaPending}`}>
-                      <div className={styles.iconBoxPending}>
-                        <svg
-                          width="22"
-                          height="22"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="#94A3B8"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <circle cx="12" cy="12" r="9"></circle>
-                          <polyline points="12 7 12 12 15 15"></polyline>
-                        </svg>
-                      </div>
-                      <div className={styles.cuotaInfo}>
-                        <span className={styles.cuotaTitlePending}>Cuota #{inst.number}</span>
-                        <span className={styles.cuotaSub}>Pendiente</span>
-                      </div>
-                      <span className={styles.badgePending}>Pendiente</span>
-                    </div>
-                  );
-                })}
+                  })
+                )}
               </section>
             </>
           )}
@@ -347,38 +396,66 @@ export default function PublicTalonarioPage() {
           </footer>
         </main>
 
-        {/* Tutorial Táctil Amigable (PWA / Guardar en inicio) debajo de la tarjeta */}
-        <section className={styles.tutorialContainer}>
-          <button
-            type="button"
-            className={styles.tutorialButton}
+        {/* TARJETA DE ACCESO RÁPIDO / INSTALACIÓN PWA (Diseño Premium & Textos Claros) */}
+        <section className={styles.installCard}>
+          <div
+            className={styles.installHeader}
             onClick={() => setTutorialOpen(!tutorialOpen)}
+            role="button"
+            tabIndex={0}
             aria-expanded={tutorialOpen}
           >
-            <span>📲 Ten tu tarjeta siempre a la mano</span>
-            <span className={styles.tutorialToggle}>
-              {tutorialOpen ? '▲ Ocultar' : '▼ Ver cómo'}
+            <div className={styles.installLeft}>
+              <div className={styles.installIconBox}>
+                <span>📲</span>
+              </div>
+              <div className={styles.installTextGroup}>
+                <span className={styles.installTitle}>Guarda tu Talonario en el Celular</span>
+                <span className={styles.installSubtitle}>
+                  Ábrelo en 1 toque directo sin buscar enlaces y sin gastar datos
+                </span>
+              </div>
+            </div>
+            <span className={styles.installToggleBadge}>
+              {tutorialOpen ? '▲ Ocultar' : '⚡ Ver cómo'}
             </span>
-          </button>
+          </div>
 
           {tutorialOpen && (
-            <div className={styles.tutorialSteps}>
-              <div className={styles.stepTile}>
-                <div className={styles.stepPlatform}>🤖 Android (Chrome)</div>
-                <p className={styles.stepText}>
-                  1. Toca los tres puntos <strong>(⋮)</strong> arriba.
-                  <br />
-                  2. Elige <strong>«Agregar a la pantalla principal»</strong>.
-                </p>
+            <div className={styles.installBody}>
+              <p className={styles.installIntro}>
+                No necesitas descargar nada pesado de la tienda. Puedes anclar esta tarjeta a tu pantalla de inicio como si fuera una aplicación (Nequi, WhatsApp, etc.):
+              </p>
+
+              <div className={styles.installPlatformsGrid}>
+                <div className={styles.platformTile}>
+                  <div className={styles.platformHeader}>
+                    <span>🤖</span>
+                    <span>Android (Chrome)</span>
+                  </div>
+                  <p className={styles.platformStep}>
+                    1. Toca los tres puntos <strong>(⋮)</strong> arriba a la derecha.
+                    <br />
+                    2. Selecciona <strong>«Agregar a la pantalla principal»</strong>.
+                  </p>
+                </div>
+
+                <div className={styles.platformTile}>
+                  <div className={styles.platformHeader}>
+                    <span>🍏</span>
+                    <span>iPhone (Safari)</span>
+                  </div>
+                  <p className={styles.platformStep}>
+                    1. Toca el botón Compartir <strong>(⬆)</strong> en la barra inferior.
+                    <br />
+                    2. Desliza hacia abajo y toca <strong>«Agregar al inicio»</strong>.
+                  </p>
+                </div>
               </div>
 
-              <div className={styles.stepTile}>
-                <div className={styles.stepPlatform}>🍏 iPhone (Safari)</div>
-                <p className={styles.stepText}>
-                  1. Toca el botón Compartir <strong>(⬆)</strong> abajo.
-                  <br />
-                  2. Elige <strong>«Agregar al inicio»</strong>.
-                </p>
+              <div className={styles.installFeaturePill}>
+                <span>🔒</span>
+                <span>100% privado · Guarda una copia local que abre incluso sin internet</span>
               </div>
             </div>
           )}

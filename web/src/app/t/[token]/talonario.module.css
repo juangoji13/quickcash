@@ -23,7 +23,7 @@
   max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 /* Offline Banner */
@@ -229,6 +229,44 @@
   white-space: nowrap;
 }
 
+/* Filtro por Pestañas (Segmented Control para préstamos de 10, 15, 20 o más cuotas) */
+.filterTabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #F1F5F9;
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.filterTab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 7px 6px;
+  border-radius: 9px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 160ms ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.filterTab:hover {
+  color: #0F172A;
+}
+
+.filterTabActive {
+  background: #FFFFFF;
+  color: #0C2237;
+  box-shadow: 0 1px 4px rgba(12, 34, 55, 0.1);
+}
+
 /* Cuotas List Stack */
 .cuotasList {
   display: flex;
@@ -408,6 +446,14 @@
   color: #DC2626;
 }
 
+/* Empty filter state */
+.emptyState {
+  text-align: center;
+  padding: 24px 12px;
+  color: #64748B;
+  font-size: 0.85rem;
+}
+
 /* Footer */
 .footer {
   text-align: center;
@@ -419,59 +465,151 @@
   z-index: 2;
 }
 
-/* PWA Tutorial Drawer Below Card */
-.tutorialContainer {
-  margin-top: 2px;
+/* ==============================================================================
+ * Tarjeta Acompañante de Instalación / Acceso Rápido PWA (Rediseñada)
+ * ============================================================================== */
+.installCard {
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: 16px 18px;
+  box-shadow: 0 10px 30px -5px rgba(12, 34, 55, 0.06), 0 2px 8px rgba(12, 34, 55, 0.02);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 200ms ease;
 }
 
-.tutorialButton {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  padding: 10px 14px;
-  width: 100%;
+.installHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #475569;
+  gap: 12px;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  user-select: none;
 }
 
-.tutorialToggle {
-  font-size: 0.76rem;
-  color: #0284C7;
+.installLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.installIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+  border: 1px solid #BFDBFE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.1);
+}
+
+.installTextGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.installTitle {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.92rem;
   font-weight: 800;
+  color: #0C2237;
+  line-height: 1.2;
 }
 
-.tutorialSteps {
-  margin-top: 8px;
+.installSubtitle {
+  font-size: 0.75rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 2px;
+  line-height: 1.25;
+}
+
+.installToggleBadge {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #0284C7;
+  background: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  padding: 5px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.installBody {
+  border-top: 1px dashed #E2E8F0;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.installIntro {
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.installPlatformsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
-.stepTile {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  padding: 10px 12px;
+@media (max-width: 380px) {
+  .installPlatformsGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.stepPlatform {
-  font-size: 0.78rem;
+.platformTile {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.platformHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
   font-weight: 800;
   color: #0F172A;
-  margin-bottom: 4px;
 }
 
-.stepText {
+.platformStep {
   font-size: 0.72rem;
   color: #475569;
-  line-height: 1.35;
+  line-height: 1.4;
   margin: 0;
+}
+
+.installFeaturePill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #166534;
+  text-align: center;
 }
 
 /* Loading & Empty States */
