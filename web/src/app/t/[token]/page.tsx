@@ -298,8 +298,11 @@ export default function PublicTalonarioPage() {
                 {installmentsToRender.map((slot, index) => {
                   const inst = slot.installment;
                   const isPaid = inst.status === 'paid';
-                  const isToday = inst.status === 'today';
                   const isMissed = inst.status === 'missed';
+                  const isCurrentToPay =
+                    !isPaid &&
+                    !isMissed &&
+                    (inst.status === 'today' || inst.number === (data.paid_installments || 0) + 1);
                   const isLastGoal = slot.isLastGoal && !viewAll;
 
                   // ¿Insertar el separador de cuotas intermedias antes del último slot?
@@ -350,7 +353,7 @@ export default function PublicTalonarioPage() {
                       )}
 
                       {/* FILA: Hoy / Pendiente activa (Amarillo) */}
-                      {isToday && (
+                      {isCurrentToPay && (
                         <div className={`${styles.cuotaRow} ${styles.cuotaToday}`}>
                           <div className={styles.iconBoxToday}>
                             <svg
@@ -405,7 +408,7 @@ export default function PublicTalonarioPage() {
                       )}
 
                       {/* FILA: Futura Pendiente (Gris) */}
-                      {!isPaid && !isToday && !isMissed && (
+                      {!isPaid && !isCurrentToPay && !isMissed && (
                         <div className={`${styles.cuotaRow} ${styles.cuotaPending}`}>
                           <div className={styles.iconBoxPending}>
                             <svg
