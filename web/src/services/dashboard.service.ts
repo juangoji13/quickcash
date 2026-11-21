@@ -6,8 +6,8 @@
  * ============================================ */
 
 import { db } from '@/lib/db';
-import { loans, payments, clients } from '@/lib/db/schema';
-import { eq, and, sql, or, inArray } from 'drizzle-orm';
+import { loans, payments, clients, tenants } from '@/lib/db/schema';
+import { eq, and, sql, or, inArray, desc } from 'drizzle-orm';
 import type { DashboardKPIs } from '@/types';
 import { getClientsRiskMap, syncClientsRisk } from '@/services/clients.service';
 
@@ -153,4 +153,168 @@ export async function getUpcomingPayments(tenantId: string, limit: number = 5) {
     console.error('Error fetching upcoming payments:', error);
     return [];
   }
+}
+
+export interface PreviewPaymentItem {
+  id: string;
+  amount: number;
+  dueDate: string;
+  clientName: string;
+  clientPhone: string | null;
+  clientToken: string | null;
+  status: 'paid' | 'today' | 'missed' | 'pending';
+  installmentNumber: number;
+}
+
+export interface PreviewDashboardData {
+  capital_in_street: number;
+  interest_receivable: number;
+  today_collected: number;
+  today_expected: number;
+  today_progress_pct: number;
+  today_paid_count: number;
+  today_total_due_count: number;
+  delinquency_rate: number;
+  total_active_loans: number;
+  total_clients: number;
+  risk_distribution: { green: number; yellow: number; red: number };
+  today_payments: PreviewPaymentItem[];
+  membership: {
+    status: 'active' | 'grace' | 'locked';
+    days_left: number;
+    expires_at: string | null;
+    is_free_mode: boolean;
+  };
+}
+
+/**
+ * Obtiene los datos completos para el nuevo Dashboard de Prestamista (Fase 2 Preview).
+ * NO altera el comportamiento de producción de /overview.
+ */
+export async function getPreviewDashboardData(tenantId: string): Promise<PreviewDashboardData> {
+  const kpis = await getDashboardKPIs(tenantId);
+
+  // 1. Calcular conteo de cuotas cobradas y esperadas hoy
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const [paidTodayList, dueTodayList] = await Promise.all([
+    db.query.payments.findMany({
+      where: and(
+        eq(payments.tenant_id, tenantId),
+        eq(payments.status, 'paid'),
+        sql`DATE(${payments.paid_date}) = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE`
+      ),
+    }),
+    db.query.payments.findMany({
+      where: and(
+        eq(payments.tenant_id, tenantId),
+        sql`DATE(${payments.due_date}) = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE`
+      ),
+    }),
+  ]);
+
+  const todayPaidCount = paidTodayList.length;
+  const todayTotalDueCount = Math.max(dueTodayList.length, todayPaidCount);
+
+  let progressPct = 0;
+  if (kpis.today_expected > 0) {
+    progressPct = Math.min(100, Math.round((kpis.today_collected / kpis.today_expected) * 100));
+  } else if (kpis.today_collected > 0) {
+    progressPct = 100;
+  }
+
+  // 2. Pagos de hoy y cobranzas prioritarias
+  const candidatePayments = await db.query.payments.findMany({
+    where: and(
+      eq(payments.tenant_id, tenantId),
+      or(
+        eq(payments.status, 'missed'),
+        and(
+          eq(payments.status, 'pending'),
+          sql`DATE(${payments.due_date}) <= (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE`
+        ),
+        and(
+          eq(payments.status, 'paid'),
+          sql`DATE(${payments.paid_date}) = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::DATE`
+        )
+      )
+    ),
+    with: {
+      loan: {
+        with: {
+          client: true,
+        },
+      },
+    },
+    orderBy: [payments.status, desc(payments.due_date)],
+    limit: 8,
+  });
+
+  const todayPayments: PreviewPaymentItem[] = candidatePayments.map((p) => {
+    let itemStatus: 'paid' | 'today' | 'missed' | 'pending' = 'pending';
+    if (p.status === 'paid') {
+      itemStatus = 'paid';
+    } else if (p.status === 'missed' || p.due_date < startOfDay) {
+      itemStatus = 'missed';
+    } else {
+      itemStatus = 'today';
+    }
+
+    return {
+      id: p.id,
+      amount: p.status === 'paid' ? (p.amount_paid || p.amount_due) : p.amount_due,
+      dueDate: p.due_date.toISOString().split('T')[0],
+      clientName: p.loan?.client?.full_name || 'Cliente',
+      clientPhone: p.loan?.client?.phone || null,
+      clientToken: p.loan?.client?.access_token || null,
+      status: itemStatus,
+      installmentNumber: p.installment_number,
+    };
+  });
+
+  // 3. Estado de Membresía del Tenant
+  let membership = {
+    status: 'active' as 'active' | 'grace' | 'locked',
+    days_left: 30,
+    expires_at: null as string | null,
+    is_free_mode: true,
+  };
+
+  try {
+    const tenant = await db.query.tenants.findFirst({
+      where: eq(tenants.id, tenantId),
+    });
+    const settings = (tenant?.settings as any) || {};
+    const billing = settings.billing || {};
+
+    if (billing.expires_at) {
+      const expDate = new Date(billing.expires_at);
+      const diffMs = expDate.getTime() - Date.now();
+      membership.days_left = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      membership.expires_at = billing.expires_at;
+      membership.status = billing.status || 'active';
+    }
+  } catch (e) {
+    console.error('Error fetching tenant membership:', e);
+  }
+
+  return {
+    capital_in_street: kpis.capital_in_street,
+    interest_receivable: kpis.interest_receivable,
+    today_collected: kpis.today_collected,
+    today_expected: kpis.today_expected,
+    today_progress_pct: progressPct,
+    today_paid_count: todayPaidCount,
+    today_total_due_count: todayTotalDueCount,
+    delinquency_rate: kpis.delinquency_rate,
+    total_active_loans: kpis.total_active_loans,
+    total_clients: kpis.total_clients,
+    risk_distribution: kpis.risk_distribution,
+    today_payments: todayPayments,
+    membership,
+  };
 }
