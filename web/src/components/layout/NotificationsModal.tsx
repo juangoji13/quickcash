@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLockBodyScroll } from '@/hooks';
 import styles from './NotificationsModal.module.css';
 
 export interface NotificationItem {
@@ -46,6 +47,8 @@ interface NotificationsModalProps {
 }
 
 export default function NotificationsModal({ isOpen, onClose, onClearDot }: NotificationsModalProps) {
+  useLockBodyScroll(isOpen);
+
   const [notifications, setNotifications] = useState<NotificationItem[]>(DEFAULT_NOTIFICATIONS);
 
   if (!isOpen) return null;

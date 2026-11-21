@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLockBodyScroll } from '@/hooks';
 import { getCollectorDetail } from '@/services/collectors.service';
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils';
 import type { CollectorFullDetail, CollectorClientItem } from '@/types';
@@ -46,6 +47,8 @@ export default function CollectorDetailModal({
       setClientSearch('');
     }
   }, [isOpen, collectorId, tenantId]);
+
+  useLockBodyScroll(isOpen);
 
   if (!isOpen) return null;
 

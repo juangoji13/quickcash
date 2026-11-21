@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { useLockBodyScroll } from '@/hooks';
 import { formatCurrency } from '@/lib/utils';
 import styles from './Modal.module.css';
 
@@ -11,6 +12,8 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, width = '480px' }: ModalProps) {
+  useLockBodyScroll(isOpen);
+
   if (!isOpen) return null;
 
   return (

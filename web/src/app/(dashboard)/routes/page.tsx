@@ -343,8 +343,8 @@ export default function RoutesPage() {
           <p className={styles.subtitle}>
             {view === 'list'
               ? (mainTab === 'routes'
-                  ? `${routes.length} rutas configuradas`
-                  : `${closures.length} cierres registrados en el sistema`)
+                  ? (routes.length === 1 ? '1 ruta configurada' : `${routes.length} rutas configuradas`)
+                  : (closures.length === 1 ? '1 cierre registrado' : `${closures.length} cierres registrados`))
               : view === 'create'
               ? 'Configura los datos de la ruta'
               : `${selectedRoute?.clients?.length || 0} clientes · ${selectedRoute?.collector?.full_name || 'Sin cobrador'}`}
@@ -354,11 +354,6 @@ export default function RoutesPage() {
           {view === 'list' && mainTab === 'routes' && (
             <button className={`btn btn--primary`} onClick={() => setView('create')}>
               + Nueva Ruta
-            </button>
-          )}
-          {view === 'list' && mainTab === 'closures' && (
-            <button className="btn btn--ghost" onClick={loadClosures} disabled={loadingClosures}>
-              {loadingClosures ? 'Actualizando...' : '↻ Actualizar Arqueos'}
             </button>
           )}
           {view !== 'list' && (
@@ -460,6 +455,7 @@ export default function RoutesPage() {
           </div>
         ) : (
           <div className={styles.closuresCard}>
+            {/* Vista Tabla: Pantallas Desktop (>= 768px) */}
             <div className={styles.closuresTableWrapper}>
               <table className={styles.closuresTable}>
                 <thead>
@@ -511,12 +507,12 @@ export default function RoutesPage() {
                         <td>
                           {isVerified ? (
                             <span className={styles.statusBadgeVerified}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                              <span className={styles.statusDotVerified} />
                               Verificado
                             </span>
                           ) : (
                             <span className={styles.statusBadgeClosed}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              <span className={styles.statusDotClosed} />
                               Cerrado
                             </span>
                           )}
@@ -547,6 +543,86 @@ export default function RoutesPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Vista Tarjetas Mobile (< 768px): Cero scroll horizontal, táctil y directo */}
+            <div className={styles.closuresMobileList}>
+              {closures.map(c => {
+                const isVerified = c.status === 'verified';
+                const rateColor = c.effectiveness_rate >= 90 ? '#16A34A' : c.effectiveness_rate >= 70 ? '#D97706' : '#DC2626';
+                const timePart = c.closure_date ? new Date(c.closure_date).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '';
+
+                return (
+                  <div key={c.id} className={styles.closureMobileCard}>
+                    <div className={styles.closureCardHeader}>
+                      <div className={styles.closureCardDate}>
+                        <span className={styles.cardDateText}>{formatDate(c.closure_date)}</span>
+                        {timePart && <span className={styles.cardTimeText}>{timePart}</span>}
+                      </div>
+                      {isVerified ? (
+                        <span className={styles.statusBadgeVerified}>
+                          <span className={styles.statusDotVerified} />
+                          Verificado
+                        </span>
+                      ) : (
+                        <span className={styles.statusBadgeClosed}>
+                          <span className={styles.statusDotClosed} />
+                          Por Conciliar
+                        </span>
+                      )}
+                    </div>
+
+                    <div className={styles.closureCardCollector}>
+                      <div className={styles.collectorMiniAvatar}>{getInitials(c.collector_name)}</div>
+                      <div className={styles.collectorMeta}>
+                        <span className={styles.cardCollectorName}>{c.collector_name}</span>
+                        {c.collector_username && <span className={styles.collectorUsername}>@{c.collector_username}</span>}
+                      </div>
+                    </div>
+
+                    <div className={styles.closureCardMetrics}>
+                      <div className={styles.closureMetricCol}>
+                        <span className={styles.metricLabel}>Esperado</span>
+                        <span className={styles.metricValue}>{formatCurrency(c.total_expected)}</span>
+                      </div>
+                      <div className={styles.closureMetricCol}>
+                        <span className={styles.metricLabel}>Recaudado</span>
+                        <span className={`${styles.metricValue} ${styles.metricCollected}`}>{formatCurrency(c.total_collected)}</span>
+                      </div>
+                      <div className={styles.closureMetricCol}>
+                        <span className={styles.metricLabel}>Efectividad</span>
+                        <div className={styles.cardRateRow}>
+                          <div className={styles.rateProgress}>
+                            <div className={styles.rateProgressBar} style={{ width: `${Math.min(100, Math.max(0, c.effectiveness_rate))}%`, backgroundColor: rateColor }} />
+                          </div>
+                          <span className={styles.cardRateNumber}>{c.effectiveness_rate}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.closureCardActions}>
+                      {isVerified ? (
+                        <button
+                          type="button"
+                          className={styles.cardActionBtnVerified}
+                          onClick={() => openReconcileModal(c)}
+                        >
+                          Revisar Arqueo Verificado
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.cardActionBtnReconcile}
+                          onClick={() => openReconcileModal(c)}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                          Conciliar Caja Física
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )
