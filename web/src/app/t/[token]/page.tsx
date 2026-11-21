@@ -14,7 +14,7 @@ export default function PublicTalonarioPage() {
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [cachedTime, setCachedTime] = useState<string | null>(null);
-  const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -77,8 +77,8 @@ export default function PublicTalonarioPage() {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.spinner} />
-        <p style={{ fontWeight: 700, color: '#475569', fontSize: '0.9rem' }}>
-          Cargando tu talonario digital...
+        <p style={{ fontWeight: 700, color: '#475569', fontSize: '0.88rem' }}>
+          Abriendo tu tarjeta de cuotas...
         </p>
       </div>
     );
@@ -88,9 +88,9 @@ export default function PublicTalonarioPage() {
     return (
       <div className={styles.loadingContainer}>
         <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🔍</div>
-        <h3 style={{ margin: 0, fontWeight: 800, color: '#0F172A' }}>Talonario no encontrado</h3>
-        <p style={{ color: '#64748B', fontSize: '0.88rem', maxWidth: 300, marginTop: 6 }}>
-          Este enlace no es válido o ha expirado. Por favor pídele a tu cobrador que te comparta su código QR actualizado.
+        <h3 style={{ margin: 0, fontWeight: 800, color: '#0F172A' }}>Tarjeta no encontrada</h3>
+        <p style={{ color: '#64748B', fontSize: '0.85rem', maxWidth: 300, marginTop: 6, lineHeight: 1.4 }}>
+          Este enlace no es válido o cambió. Por favor pídele a tu cobrador que te comparta su código QR actualizado.
         </p>
       </div>
     );
@@ -99,112 +99,113 @@ export default function PublicTalonarioPage() {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.contentWrapper}>
-        {/* Banner de funcionamiento sin internet */}
+        {/* Banner discreto sin internet */}
         {isOffline && (
           <div className={styles.offlineBanner}>
             <span>📶</span>
             <span>
-              Estás en <strong>modo sin conexión</strong>. Mostrando tu última copia guardada
+              Modo sin conexión. Mostrando última copia guardada
               {cachedTime ? ` (${cachedTime})` : ''}.
             </span>
           </div>
         )}
 
-        {/* Header con marca y verificación */}
-        <header className={styles.headerCard}>
+        {/* Barra Superior Familiar */}
+        <header className={styles.topBar}>
           <div className={styles.brandGroup}>
             <div className={styles.brandLogo}>QC</div>
             <div className={styles.brandText}>
               <h1 className={styles.brandTitle}>QuickCash</h1>
-              <span className={styles.brandSubtitle}>Talonario Digital</span>
+              <span className={styles.brandTagline}>Tarjeta de Cuotas</span>
             </div>
           </div>
-          <div className={styles.verifiedBadge}>
-            <span>🛡️</span>
-            <span>Oficial</span>
+          <div className={styles.statusPill}>
+            <span>●</span>
+            <span>Al Día</span>
           </div>
         </header>
 
         {/* Saludo Cálido y Personalizado */}
-        <div className={styles.greetingRow}>
+        <div className={styles.greetingBlock}>
           <h2 className={styles.greetingTitle}>¡Hola, {data.first_name}! 👋</h2>
           <p className={styles.greetingSub}>
-            Aquí puedes ver el control de tus cuotas siempre claro y al día.
+            Aquí llevas el control de tus cuotas, claro y al día.
           </p>
         </div>
 
         {/* Caso: No tiene crédito activo o ya lo completó */}
         {!data.has_active_loan ? (
-          <div className={styles.progressCard} style={{ textAlign: 'center', padding: '30px 20px' }}>
-            <div style={{ fontSize: '3rem', marginBottom: 10 }}>
+          <div className={styles.punchcardCard} style={{ textAlign: 'center', padding: '24px 16px' }}>
+            <div style={{ fontSize: '2.8rem', marginBottom: 8 }}>
               {data.is_completed ? '🎉' : '✨'}
             </div>
-            <h3 style={{ margin: 0, fontWeight: 800, color: '#0F172A', fontSize: '1.2rem' }}>
+            <h3 style={{ margin: 0, fontWeight: 800, color: '#0F172A', fontSize: '1.15rem' }}>
               {data.is_completed ? '¡Crédito Completado!' : 'Sin Cuotas Pendientes'}
             </h3>
-            <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: 1.5, marginTop: 8 }}>
+            <p style={{ color: '#475569', fontSize: '0.88rem', lineHeight: 1.45, marginTop: 6 }}>
               {data.encouragement_message}
             </p>
           </div>
         ) : (
           <>
-            {/* HERO CARD: Únicamente el valor de la cuota a pagar */}
-            <section className={styles.cuotaCard}>
-              <span className={styles.cuotaLabel}>Tu Cuota a Pagar</span>
-              <div className={styles.cuotaAmount}>
-                {formatCurrency(data.installment_amount || 0)}
-              </div>
-              <span className={styles.cuotaFrequency}>
-                {data.frequency_label || 'Cobro diario (Lunes a Sábado)'}
-              </span>
-            </section>
+            {/* MASTER HERO CARD COMPACTA: Cuota a Pagar + Progreso Integrado */}
+            <section className={styles.masterHeroCard}>
+              <div className={styles.heroMainRow}>
+                <div className={styles.heroCuotaCol}>
+                  <span className={styles.heroCuotaLabel}>Tu Cuota a Pagar</span>
+                  <div className={styles.heroCuotaAmount}>
+                    {formatCurrency(data.installment_amount || 0)}
+                  </div>
+                  <span className={styles.heroFrequency}>
+                    {data.frequency_label || 'Cobro semanal'}
+                  </span>
+                </div>
 
-            {/* BARRA DE PROGRESO DE CUOTAS (Sin dinero) */}
-            <section className={styles.progressCard}>
-              <div className={styles.progressTopRow}>
-                <span className={styles.progressLabel}>Progreso de tu crédito</span>
-                <span className={styles.progressNumbers}>
-                  {data.paid_installments} de {data.total_installments} cuotas ({data.progress_percent}%)
-                </span>
+                <div className={styles.heroProgressCol}>
+                  <span className={styles.heroProgressLabel}>
+                    {data.paid_installments} de {data.total_installments} pagadas ({data.progress_percent}%)
+                  </span>
+                  <div className={styles.progressBarTrack}>
+                    <div
+                      className={styles.progressBarFill}
+                      style={{ width: `${Math.min(100, Math.max(8, data.progress_percent || 0))}%` }}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className={styles.progressBarBg}>
-                <div
-                  className={styles.progressBarFill}
-                  style={{ width: `${Math.min(100, Math.max(5, data.progress_percent || 0))}%` }}
-                />
-              </div>
+
               {data.encouragement_message && (
-                <div className={styles.encouragementBox}>
+                <div className={styles.heroEncouragement}>
                   {data.encouragement_message}
                 </div>
               )}
             </section>
 
-            {/* CUADRÍCULA DE CONTROL (Punchcard / Casillas selladas) */}
-            <section className={styles.punchcardSection}>
-              <div className={styles.sectionTitleRow}>
+            {/* SECCIÓN CASILLAS DE CUOTAS (Talonario / Punchcard) */}
+            <section className={styles.punchcardCard}>
+              <div className={styles.sectionHeader}>
                 <h3 className={styles.sectionTitle}>Casillas de Cuotas</h3>
-                <div className={styles.legendRow}>
+                <div className={styles.legendPills}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className={styles.legendDotPaid} />
+                    <span className={styles.dotPaid} />
                     <span>Pagada</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className={styles.legendDotToday} />
+                    <span className={styles.dotToday} />
                     <span>Hoy</span>
                   </div>
                 </div>
               </div>
 
-              <div className={styles.gridBoxes}>
+              <div className={styles.casillasGrid}>
                 {data.installments.map((inst) => {
                   if (inst.status === 'paid') {
                     return (
-                      <div key={inst.number} className={`${styles.boxItem} ${styles.boxPaid}`}>
-                        <span className={styles.boxPaidCheck}>✔</span>
-                        <span className={styles.boxPaidNumber}>#{inst.number}</span>
+                      <div key={inst.number} className={`${styles.casillaItem} ${styles.casillaPaid}`}>
+                        <span className={styles.casillaPaidCheck}>✔</span>
+                        <span className={styles.casillaPaidNumber}>#{inst.number}</span>
                         {inst.paid_date && (
-                          <span className={styles.boxPaidDate}>{inst.paid_date}</span>
+                          <span className={styles.casillaPaidDate}>{inst.paid_date}</span>
                         )}
                       </div>
                     );
@@ -212,39 +213,39 @@ export default function PublicTalonarioPage() {
 
                   if (inst.status === 'today') {
                     return (
-                      <div key={inst.number} className={`${styles.boxItem} ${styles.boxToday}`}>
-                        <span className={styles.boxTodayBadge}>HOY</span>
-                        <span className={styles.boxTodayNumber}>#{inst.number}</span>
-                        <span style={{ fontSize: '0.62rem', fontWeight: 700 }}>Pendiente</span>
+                      <div key={inst.number} className={`${styles.casillaItem} ${styles.casillaToday}`}>
+                        <span className={styles.casillaTodayBadge}>HOY</span>
+                        <span className={styles.casillaTodayNumber}>#{inst.number}</span>
+                        <span className={styles.casillaTodaySub}>Pendiente</span>
                       </div>
                     );
                   }
 
                   if (inst.status === 'missed') {
                     return (
-                      <div key={inst.number} className={`${styles.boxItem} ${styles.boxMissed}`}>
-                        <span className={styles.boxMissedNumber}>#{inst.number}</span>
-                        <span className={styles.boxMissedSub}>Atrasada</span>
+                      <div key={inst.number} className={`${styles.casillaItem} ${styles.casillaMissed}`}>
+                        <span className={styles.casillaMissedNumber}>#{inst.number}</span>
+                        <span className={styles.casillaMissedSub}>Atrasada</span>
                       </div>
                     );
                   }
 
                   return (
-                    <div key={inst.number} className={`${styles.boxItem} ${styles.boxPending}`}>
-                      <span className={styles.boxPendingNumber}>#{inst.number}</span>
-                      <span className={styles.boxPendingSub}>Pendiente</span>
+                    <div key={inst.number} className={`${styles.casillaItem} ${styles.casillaPending}`}>
+                      <span className={styles.casillaPendingNumber}>#{inst.number}</span>
+                      <span className={styles.casillaPendingSub}>Pendiente</span>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Sello de seguridad del último pago */}
+              {/* Mensaje de Pago Confirmado Humanizado */}
               {data.last_payment_note && (
-                <div className={styles.sealCard}>
-                  <span className={styles.sealIcon}>✅</span>
-                  <div className={styles.sealText}>
-                    <span style={{ fontWeight: 700 }}>Control de Pago Verificado</span>
-                    <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                <div className={styles.receiptBanner}>
+                  <span className={styles.receiptIcon}>💚</span>
+                  <div className={styles.receiptBody}>
+                    <span className={styles.receiptTitle}>¡Pago al día confirmado!</span>
+                    <span className={styles.receiptText}>
                       {data.last_payment_note}
                     </span>
                   </div>
@@ -254,51 +255,57 @@ export default function PublicTalonarioPage() {
           </>
         )}
 
-        {/* Botón para guardar en inicio / PWA */}
-        <button
-          type="button"
-          className={styles.installPromptBtn}
-          onClick={() => setShowInstallHelp(!showInstallHelp)}
-        >
-          <span>📲</span>
-          <span>
-            {showInstallHelp ? 'Ocultar guía' : '¿Cómo guardar este talonario en tu pantalla?'}
-          </span>
-        </button>
-
-        {showInstallHelp && (
+        {/* Mini Tutorial Táctil Amigable (PWA / Guardar en inicio) */}
+        <section className={styles.tutorialCard}>
           <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: 12,
-              padding: '14px 16px',
-              border: '1px solid #E2E8F0',
-              fontSize: '0.82rem',
-              color: '#334155',
-              lineHeight: 1.5,
-            }}
+            className={styles.tutorialHeader}
+            onClick={() => setTutorialOpen(!tutorialOpen)}
           >
-            <p style={{ margin: '0 0 6px 0', fontWeight: 700, color: '#0F172A' }}>
-              Para tener tu talonario siempre a la mano sin buscar el enlace:
-            </p>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              <li>
-                <strong>En Android (Chrome):</strong> Toca los tres puntos de arriba (⋮) y elige{' '}
-                <em>«Agregar a la pantalla principal»</em>.
-              </li>
-              <li style={{ marginTop: 4 }}>
-                <strong>En iPhone (Safari):</strong> Toca el botón de Compartir (el cuadrito con la
-                flecha hacia arriba) y selecciona <em>«Agregar al inicio»</em>.
-              </li>
-            </ul>
+            <div className={styles.tutorialTitleGroup}>
+              <span style={{ fontSize: '1.1rem' }}>📲</span>
+              <h4 className={styles.tutorialTitle}>
+                {tutorialOpen ? '¿Cómo guardar en tu pantalla?' : 'Ten tu tarjeta siempre a la mano'}
+              </h4>
+            </div>
+            <span className={styles.tutorialToggleIcon}>
+              {tutorialOpen ? '▲ Ocultar' : '▼ Ver cómo'}
+            </span>
           </div>
-        )}
 
-        {/* Footer amigable */}
-        <footer className={styles.footerNote}>
-          Cobrador asignado: <strong>{data.collector_name}</strong> · QuickCash
+          {tutorialOpen && (
+            <div className={styles.tutorialStepsGrid}>
+              <div className={styles.stepTile}>
+                <div className={styles.stepPlatform}>
+                  <span>🤖</span>
+                  <span>Android (Chrome)</span>
+                </div>
+                <p className={styles.stepInstruction}>
+                  1. Toca los tres puntos <strong>(⋮)</strong> arriba a la derecha.
+                  <br />
+                  2. Elige <strong>«Agregar a la pantalla principal»</strong>.
+                </p>
+              </div>
+
+              <div className={styles.stepTile}>
+                <div className={styles.stepPlatform}>
+                  <span>🍏</span>
+                  <span>iPhone (Safari)</span>
+                </div>
+                <p className={styles.stepInstruction}>
+                  1. Toca el botón Compartir <strong>(⬆)</strong> abajo.
+                  <br />
+                  2. Elige <strong>«Agregar al inicio»</strong>.
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Footer Cálido (Sin cobrador asignado) */}
+        <footer className={styles.warmFooter}>
+          QuickCash · Tu tarjeta de cuotas digital
           <br />
-          Tus pagos se actualizan de forma segura. Todo claro, sin sorpresas.
+          Cuentas claras para tu tranquilidad ✨
         </footer>
       </div>
     </div>

@@ -1,20 +1,20 @@
 .pageContainer {
   min-height: 100vh;
-  background-color: #F8FAFC;
+  background-color: #F1F5F9;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 14px 40px 14px;
+  padding: 12px 12px 32px 12px;
   font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   color: #0F172A;
 }
 
 .contentWrapper {
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 /* Offline Banner */
@@ -31,12 +31,12 @@
   font-weight: 600;
 }
 
-/* Header */
-.headerCard {
+/* Top Header Bar */
+.topBar {
   background: #FFFFFF;
-  border-radius: 16px;
-  padding: 16px 18px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   border: 1px solid #E2E8F0;
   display: flex;
   align-items: center;
@@ -46,21 +46,22 @@
 .brandGroup {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
 }
 
 .brandLogo {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: #2C3E50;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #1E293B;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #F1C40F;
   font-family: var(--font-heading, sans-serif);
   font-weight: 900;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
 .brandText {
@@ -70,173 +71,164 @@
 
 .brandTitle {
   font-family: var(--font-heading, sans-serif);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #0F172A;
   margin: 0;
   line-height: 1.1;
 }
 
-.brandSubtitle {
-  font-size: 0.72rem;
-  font-weight: 700;
+.brandTagline {
+  font-size: 0.68rem;
+  font-weight: 600;
   color: #64748B;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
-.verifiedBadge {
-  background: #DCFCE7;
-  color: #15803D;
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 4px 8px;
-  border-radius: 20px;
-  display: flex;
+.statusPill {
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #15803D;
+  background: #DCFCE7;
+  padding: 4px 8px;
+  border-radius: 20px;
 }
 
-/* Greeting */
-.greetingRow {
-  padding: 4px 6px;
+/* Greeting Block */
+.greetingBlock {
+  padding: 2px 4px;
 }
 
 .greetingTitle {
   font-family: var(--font-heading, sans-serif);
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: #0F172A;
   margin: 0 0 2px 0;
 }
 
 .greetingSub {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #64748B;
   margin: 0;
 }
 
-/* Hero: Cuota a Pagar */
-.cuotaCard {
-  background: linear-gradient(145deg, #2C3E50 0%, #1E293B 100%);
-  border-radius: 20px;
-  padding: 22px 20px;
+/* Master Hero Card: Cuota + Progreso Integrado (Compacto) */
+.masterHeroCard {
+  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+  border-radius: 16px;
+  padding: 16px 18px 14px 18px;
   color: #FFFFFF;
-  box-shadow: 0 10px 25px -5px rgba(44, 62, 80, 0.35);
+  box-shadow: 0 6px 18px -4px rgba(15, 23, 42, 0.35);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  gap: 12px;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.cuotaCard::before {
+.masterHeroCard::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
+  height: 3px;
   background: #F1C40F;
 }
 
-.cuotaLabel {
-  font-size: 0.78rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #94A3B8;
-  margin-bottom: 6px;
-}
-
-.cuotaAmount {
-  font-family: var(--font-heading, sans-serif);
-  font-size: 2.4rem;
-  font-weight: 900;
-  color: #F1C40F;
-  margin: 0 0 4px 0;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.cuotaFrequency {
-  font-size: 0.82rem;
-  color: #E2E8F0;
-  font-weight: 600;
-  opacity: 0.9;
-}
-
-/* Progress Card */
-.progressCard {
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 16px 18px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E2E8F0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.progressTopRow {
+.heroMainRow {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
+  gap: 12px;
 }
 
-.progressLabel {
-  font-size: 0.85rem;
+.heroCuotaCol {
+  display: flex;
+  flex-direction: column;
+}
+
+.heroCuotaLabel {
+  font-size: 0.7rem;
   font-weight: 800;
-  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94A3B8;
+  margin-bottom: 2px;
+}
+
+.heroCuotaAmount {
   font-family: var(--font-heading, sans-serif);
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #F1C40F;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  margin: 0 0 3px 0;
 }
 
-.progressNumbers {
-  font-size: 0.82rem;
+.heroFrequency {
+  font-size: 0.74rem;
+  color: #CBD5E1;
+  font-weight: 600;
+}
+
+.heroProgressCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.heroProgressLabel {
+  font-size: 0.78rem;
   font-weight: 800;
-  color: #2563EB;
+  color: #F8FAFC;
   font-variant-numeric: tabular-nums;
 }
 
-.progressBarBg {
-  width: 100%;
-  height: 10px;
-  background-color: #E2E8F0;
-  border-radius: 10px;
+.progressBarTrack {
+  width: 120px;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .progressBarFill {
   height: 100%;
-  background: linear-gradient(90deg, #10B981 0%, #059669 100%);
-  border-radius: 10px;
+  background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
+  border-radius: 8px;
   transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.encouragementBox {
-  font-size: 0.82rem;
-  color: #334155;
-  line-height: 1.45;
-  background: #F8FAFC;
+.heroEncouragement {
+  font-size: 0.78rem;
+  color: #E2E8F0;
+  line-height: 1.4;
+  background: rgba(255, 255, 255, 0.07);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-left: 3px solid #10B981;
 }
 
-/* Punchcard Grid */
-.punchcardSection {
+/* Punchcard Section (Casillas de Cuotas) */
+.punchcardCard {
   background: #FFFFFF;
   border-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   border: 1px solid #E2E8F0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-.sectionTitleRow {
+.sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -244,210 +236,284 @@
 
 .sectionTitle {
   font-family: var(--font-heading, sans-serif);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 800;
   color: #0F172A;
   margin: 0;
 }
 
-.legendRow {
+.legendPills {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.72rem;
+  gap: 8px;
+  font-size: 0.7rem;
   color: #64748B;
   font-weight: 700;
 }
 
-.legendDotPaid {
-  width: 8px;
-  height: 8px;
+.dotPaid {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: #10B981;
 }
 
-.legendDotToday {
-  width: 8px;
-  height: 8px;
+.dotToday {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: #F59E0B;
 }
 
-.gridBoxes {
+/* Grid de Casillas */
+.casillasGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 @media (min-width: 400px) {
-  .gridBoxes {
-    grid-template-columns: repeat(5, 1fr);
+  .casillasGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 9px;
   }
 }
 
-.boxItem {
+.casillaItem {
   border-radius: 12px;
-  padding: 10px 6px;
+  padding: 8px 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 56px;
-  border: 1px solid transparent;
+  min-height: 52px;
   transition: transform 120ms ease;
   user-select: none;
 }
 
-/* Box State: Paid */
-.boxPaid {
-  background-color: #F0FDF4;
-  border-color: #86EFAC;
+/* Casilla: Pagada */
+.casillaPaid {
+  background-color: #ECFDF5;
+  border: 1.5px solid #22C55E;
   color: #15803D;
+  box-shadow: 0 1px 2px rgba(34, 197, 94, 0.1);
 }
 
-.boxPaidCheck {
-  font-size: 0.95rem;
+.casillaPaidCheck {
+  font-size: 0.88rem;
   font-weight: 900;
+  line-height: 1;
 }
 
-.boxPaidNumber {
-  font-size: 0.72rem;
+.casillaPaidNumber {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.82rem;
   font-weight: 800;
   margin-top: 1px;
 }
 
-.boxPaidDate {
-  font-size: 0.62rem;
+.casillaPaidDate {
+  font-size: 0.6rem;
   font-weight: 700;
   color: #16A34A;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
-/* Box State: Today (Pending) */
-.boxToday {
+/* Casilla: Hoy */
+.casillaToday {
   background-color: #FFFBEB;
   border: 2px solid #F59E0B;
   color: #B45309;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
-  animation: pulseToday 2s infinite ease-in-out;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  animation: pulseToday 2.2s infinite ease-in-out;
 }
 
 @keyframes pulseToday {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  50% { transform: scale(1.03); }
 }
 
-.boxTodayBadge {
-  font-size: 0.65rem;
+.casillaTodayBadge {
+  font-size: 0.58rem;
   font-weight: 900;
-  text-transform: uppercase;
   background: #F59E0B;
   color: #FFFFFF;
-  padding: 1px 5px;
-  border-radius: 6px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
 }
 
-.boxTodayNumber {
-  font-size: 0.9rem;
+.casillaTodayNumber {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.95rem;
+  font-weight: 900;
+  margin-top: 1px;
+  color: #92400E;
+}
+
+.casillaTodaySub {
+  font-size: 0.58rem;
   font-weight: 800;
-  margin-top: 2px;
+  text-transform: uppercase;
 }
 
-/* Box State: Missed */
-.boxMissed {
+/* Casilla: Atrasada */
+.casillaMissed {
   background-color: #FEF2F2;
-  border-color: #FCA5A5;
+  border: 1.5px solid #F87171;
   color: #DC2626;
 }
 
-.boxMissedNumber {
-  font-size: 0.85rem;
+.casillaMissedNumber {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.88rem;
   font-weight: 800;
 }
 
-.boxMissedSub {
-  font-size: 0.62rem;
+.casillaMissedSub {
+  font-size: 0.58rem;
   font-weight: 700;
 }
 
-/* Box State: Pending */
-.boxPending {
+/* Casilla: Pendiente Futura */
+.casillaPending {
   background-color: #F8FAFC;
-  border-color: #E2E8F0;
+  border: 1px dashed #CBD5E1;
   color: #64748B;
 }
 
-.boxPendingNumber {
-  font-size: 0.9rem;
-  font-weight: 800;
+.casillaPendingNumber {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
-.boxPendingSub {
-  font-size: 0.62rem;
+.casillaPendingSub {
+  font-size: 0.58rem;
   font-weight: 600;
   color: #94A3B8;
 }
 
-/* Last Payment Seal */
-.sealCard {
-  background: #F8FAFC;
-  border: 1px dashed #CBD5E1;
+/* Comprobante de Pago Cálido y Confiable */
+.receiptBanner {
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.8rem;
-  color: #334155;
+  gap: 10px;
 }
 
-.sealIcon {
-  font-size: 1.4rem;
+.receiptIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
-.sealText {
+.receiptBody {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
-.sealCode {
+.receiptTitle {
+  font-size: 0.78rem;
   font-weight: 800;
-  color: #0F172A;
-  font-family: var(--font-heading, monospace);
-  font-size: 0.85rem;
+  color: #166534;
 }
 
-/* Install PWA Prompt Button */
-.installPromptBtn {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #CBD5E1;
-  background-color: #FFFFFF;
-  color: #1E293B;
-  font-family: var(--font-heading, sans-serif);
-  font-weight: 800;
-  font-size: 0.85rem;
+.receiptText {
+  font-size: 0.74rem;
+  color: #15803D;
+  line-height: 1.35;
+}
+
+/* Tutorial Card: Familiar, Limpio y Táctil */
+.tutorialCard {
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tutorialHeader {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 120ms ease;
+  user-select: none;
 }
 
-.installPromptBtn:hover {
-  background-color: #F1F5F9;
+.tutorialTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.footerNote {
-  text-align: center;
+.tutorialTitle {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #1E293B;
+  margin: 0;
+}
+
+.tutorialToggleIcon {
   font-size: 0.75rem;
+  color: #64748B;
+  font-weight: 800;
+}
+
+.tutorialStepsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.stepTile {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stepPlatform {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.stepInstruction {
+  font-size: 0.72rem;
+  color: #475569;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.stepInstruction strong {
+  color: #0F172A;
+}
+
+/* Footer Cálido */
+.warmFooter {
+  text-align: center;
+  font-size: 0.74rem;
   color: #94A3B8;
-  padding: 8px 0;
+  padding: 6px 0;
   line-height: 1.5;
 }
 
@@ -458,14 +524,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #F8FAFC;
+  background: #F1F5F9;
   padding: 20px;
   text-align: center;
 }
 
 .spinner {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border: 3px solid #E2E8F0;
   border-top-color: #F1C40F;
   border-radius: 50%;

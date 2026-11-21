@@ -50,7 +50,8 @@ export async function getTalonarioData(token: string): Promise<TalonarioData | n
       return null;
     }
 
-    const firstName = client.full_name.trim().split(' ')[0] || 'Cliente';
+    const rawFirst = client.full_name.trim().split(' ')[0] || 'Cliente';
+    const firstName = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase();
 
     // 2. Buscar préstamo activo del cliente
     const activeLoan = await db.query.loans.findFirst({
@@ -141,7 +142,7 @@ export async function getTalonarioData(token: string): Promise<TalonarioData | n
 
         lastPaidInfo = {
           number: p.installment_number,
-          dateStr: `${formattedPaidDate} · ${formattedPaidTime}`,
+          dateStr: `${formattedPaidDate} a las ${formattedPaidTime}`,
           code: shortCode,
         };
       }
@@ -197,7 +198,7 @@ export async function getTalonarioData(token: string): Promise<TalonarioData | n
       encouragement_message: encouragement,
       collector_name: collectorName,
       last_payment_note: lastPaidInfo
-        ? `Último pago registrado: Cuota #${lastPaidInfo.number} el ${lastPaidInfo.dateStr} (Sello ${lastPaidInfo.code})`
+        ? `Recibimos tu cuota #${lastPaidInfo.number} el ${lastPaidInfo.dateStr} · Comprobante ${lastPaidInfo.code}`
         : undefined,
       installments: items,
       is_completed: progressPercent >= 100,
