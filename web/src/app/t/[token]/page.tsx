@@ -78,7 +78,7 @@ export default function PublicTalonarioPage() {
       <div className={styles.loadingContainer}>
         <div className={styles.spinner} />
         <p style={{ fontWeight: 700, color: '#475569', fontSize: '0.88rem' }}>
-          Abriendo tu tarjeta de cuotas...
+          Abriendo tu talonario de cuotas...
         </p>
       </div>
     );
@@ -88,7 +88,7 @@ export default function PublicTalonarioPage() {
     return (
       <div className={styles.loadingContainer}>
         <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🔍</div>
-        <h3 style={{ margin: 0, fontWeight: 800, color: '#0F172A' }}>Tarjeta no encontrada</h3>
+        <h3 style={{ margin: 0, fontWeight: 800, color: '#0F172A' }}>Talonario no encontrado</h3>
         <p style={{ color: '#64748B', fontSize: '0.85rem', maxWidth: 300, marginTop: 6, lineHeight: 1.4 }}>
           Este enlace no es válido o cambió. Por favor pídele a tu cobrador que te comparta su código QR actualizado.
         </p>
@@ -110,188 +110,271 @@ export default function PublicTalonarioPage() {
           </div>
         )}
 
-        {/* Barra Superior Familiar */}
-        <header className={styles.topBar}>
-          <div className={styles.brandGroup}>
-            <div className={styles.brandLogo}>QC</div>
-            <div className={styles.brandText}>
-              <h1 className={styles.brandTitle}>QuickCash</h1>
-              <span className={styles.brandTagline}>Tarjeta de Cuotas</span>
-            </div>
-          </div>
-          <div className={styles.statusPill}>
-            <span>●</span>
-            <span>Al Día</span>
-          </div>
-        </header>
+        {/* TARJETA PRINCIPAL UNIFICADA (Idéntica al mockup) */}
+        <main className={styles.mainCard}>
+          {/* Swoop Amarillo Orgánico en Esquina Superior Derecha */}
+          <svg
+            className={styles.topRightSwoop}
+            viewBox="0 0 160 120"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M30 0 C 85 0, 145 25, 160 120 L 160 0 Z"
+              fill="#FEBF02"
+            />
+          </svg>
 
-        {/* Saludo Cálido y Personalizado */}
-        <div className={styles.greetingBlock}>
-          <h2 className={styles.greetingTitle}>¡Hola, {data.first_name}! 👋</h2>
-          <p className={styles.greetingSub}>
-            Aquí llevas el control de tus cuotas, claro y al día.
-          </p>
-        </div>
-
-        {/* Caso: No tiene crédito activo o ya lo completó */}
-        {!data.has_active_loan ? (
-          <div className={styles.punchcardCard} style={{ textAlign: 'center', padding: '24px 16px' }}>
-            <div style={{ fontSize: '2.8rem', marginBottom: 8 }}>
-              {data.is_completed ? '🎉' : '✨'}
+          {/* Header: QC Logo | QuickCash / Talonario de Cuotas */}
+          <header className={styles.header}>
+            <div className={styles.brandRow}>
+              <div className={styles.brandLogo}>QC</div>
+              <div className={styles.brandDivider} />
+              <div className={styles.brandText}>
+                <h1 className={styles.brandTitle}>QuickCash</h1>
+                <span className={styles.brandSubtitle}>
+                  {data.first_name ? `Talonario de ${data.first_name}` : 'Talonario de Cuotas'}
+                </span>
+              </div>
             </div>
-            <h3 style={{ margin: 0, fontWeight: 800, color: '#0F172A', fontSize: '1.15rem' }}>
-              {data.is_completed ? '¡Crédito Completado!' : 'Sin Cuotas Pendientes'}
-            </h3>
-            <p style={{ color: '#475569', fontSize: '0.88rem', lineHeight: 1.45, marginTop: 6 }}>
-              {data.encouragement_message}
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* MASTER HERO CARD COMPACTA: Cuota a Pagar + Progreso Integrado */}
-            <section className={styles.masterHeroCard}>
-              <div className={styles.heroMainRow}>
-                <div className={styles.heroCuotaCol}>
-                  <span className={styles.heroCuotaLabel}>Tu Cuota a Pagar</span>
-                  <div className={styles.heroCuotaAmount}>
+          </header>
+
+          {/* Si no tiene crédito activo o ya lo completó */}
+          {!data.has_active_loan ? (
+            <div style={{ textAlign: 'center', padding: '24px 12px', position: 'relative', zIndex: 2 }}>
+              <div style={{ fontSize: '2.8rem', marginBottom: 8 }}>
+                {data.is_completed ? '🎉' : '✨'}
+              </div>
+              <h3 style={{ margin: 0, fontWeight: 800, color: '#0C2237', fontSize: '1.2rem' }}>
+                {data.is_completed ? '¡Crédito Completado!' : 'Sin Cuotas Pendientes'}
+              </h3>
+              <p style={{ color: '#656B81', fontSize: '0.88rem', lineHeight: 1.45, marginTop: 8 }}>
+                {data.encouragement_message}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* DARK HERO CARD: Valor de la cuota | Progreso */}
+              <section className={styles.heroCard}>
+                {/* Columna Izquierda: Valor de la cuota */}
+                <div className={styles.heroColLeft}>
+                  <span className={styles.heroLabel}>Valor de la cuota</span>
+                  <div className={styles.heroAmount}>
                     {formatCurrency(data.installment_amount || 0)}
                   </div>
-                  <span className={styles.heroFrequency}>
-                    {data.frequency_label || 'Cobro semanal'}
-                  </span>
+                  <div className={styles.heroFrequencyRow}>
+                    <svg
+                      className={styles.calendarIcon}
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="3" ry="3"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                      <circle cx="8" cy="14" r="1" fill="currentColor"></circle>
+                      <circle cx="12" cy="14" r="1" fill="currentColor"></circle>
+                      <circle cx="16" cy="14" r="1" fill="currentColor"></circle>
+                      <circle cx="8" cy="18" r="1" fill="currentColor"></circle>
+                      <circle cx="12" cy="18" r="1" fill="currentColor"></circle>
+                    </svg>
+                    <span>{data.frequency_label || 'Cobro semanal'}</span>
+                  </div>
                 </div>
 
-                <div className={styles.heroProgressCol}>
-                  <span className={styles.heroProgressLabel}>
-                    {data.paid_installments} de {data.total_installments} pagadas ({data.progress_percent}%)
-                  </span>
-                  <div className={styles.progressBarTrack}>
+                {/* Divisor vertical */}
+                <div className={styles.heroDivider} />
+
+                {/* Columna Derecha: Progreso */}
+                <div className={styles.heroColRight}>
+                  <span className={styles.heroLabel}>Progreso</span>
+                  <div className={styles.heroPercent}>
+                    {data.progress_percent || 0}%
+                  </div>
+                  <div className={styles.progressTrack}>
                     <div
-                      className={styles.progressBarFill}
-                      style={{ width: `${Math.min(100, Math.max(8, data.progress_percent || 0))}%` }}
+                      className={styles.progressFill}
+                      style={{
+                        width: `${Math.min(100, Math.max(6, data.progress_percent || 0))}%`,
+                      }}
                     />
                   </div>
+                  <span className={styles.progressCounter}>
+                    {data.paid_installments} de {data.total_installments} pagadas
+                  </span>
                 </div>
-              </div>
+              </section>
 
-              {data.encouragement_message && (
-                <div className={styles.heroEncouragement}>
-                  {data.encouragement_message}
-                </div>
-              )}
-            </section>
-
-            {/* SECCIÓN CASILLAS DE CUOTAS (Talonario / Punchcard) */}
-            <section className={styles.punchcardCard}>
-              <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Casillas de Cuotas</h3>
-                <div className={styles.legendPills}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className={styles.dotPaid} />
-                    <span>Pagada</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className={styles.dotToday} />
-                    <span>Hoy</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.casillasGrid}>
+              {/* LISTA DE CUOTAS (Filas estilo mockup) */}
+              <section className={styles.cuotasList}>
                 {data.installments.map((inst) => {
-                  if (inst.status === 'paid') {
+                  const isPaid = inst.status === 'paid';
+                  const isToday = inst.status === 'today';
+                  const isMissed = inst.status === 'missed';
+
+                  // Fila: Cuota Pagada (Verde)
+                  if (isPaid) {
                     return (
-                      <div key={inst.number} className={`${styles.casillaItem} ${styles.casillaPaid}`}>
-                        <span className={styles.casillaPaidCheck}>✔</span>
-                        <span className={styles.casillaPaidNumber}>#{inst.number}</span>
-                        {inst.paid_date && (
-                          <span className={styles.casillaPaidDate}>{inst.paid_date}</span>
-                        )}
+                      <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaPaid}`}>
+                        <div className={styles.iconBoxPaid}>
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#0B6A30"
+                            strokeWidth="3.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </div>
+                        <div className={styles.cuotaInfo}>
+                          <span className={styles.cuotaTitle}>Cuota #{inst.number}</span>
+                          <span className={styles.cuotaSub}>
+                            {inst.paid_date || 'Pagada'}
+                          </span>
+                        </div>
+                        <span className={styles.badgePaid}>Pagada</span>
                       </div>
                     );
                   }
 
-                  if (inst.status === 'today') {
+                  // Fila: Cuota de Hoy / Por Pagar (Ámbar)
+                  if (isToday) {
                     return (
-                      <div key={inst.number} className={`${styles.casillaItem} ${styles.casillaToday}`}>
-                        <span className={styles.casillaTodayBadge}>HOY</span>
-                        <span className={styles.casillaTodayNumber}>#{inst.number}</span>
-                        <span className={styles.casillaTodaySub}>Pendiente</span>
+                      <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaToday}`}>
+                        <div className={styles.iconBoxToday}>
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#B47012"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <polyline points="12 7 12 12 15 15"></polyline>
+                          </svg>
+                        </div>
+                        <div className={styles.cuotaInfo}>
+                          <span className={styles.cuotaTitle}>Cuota #{inst.number}</span>
+                          <span className={styles.cuotaSubToday}>Por pagar</span>
+                        </div>
+                        <span className={styles.badgeToday}>Pendiente</span>
                       </div>
                     );
                   }
 
-                  if (inst.status === 'missed') {
+                  // Fila: Cuota Atrasada (Rojo)
+                  if (isMissed) {
                     return (
-                      <div key={inst.number} className={`${styles.casillaItem} ${styles.casillaMissed}`}>
-                        <span className={styles.casillaMissedNumber}>#{inst.number}</span>
-                        <span className={styles.casillaMissedSub}>Atrasada</span>
+                      <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaMissed}`}>
+                        <div className={styles.iconBoxMissed}>
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#DC2626"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          </svg>
+                        </div>
+                        <div className={styles.cuotaInfo}>
+                          <span className={styles.cuotaTitle}>Cuota #{inst.number}</span>
+                          <span className={styles.cuotaSubMissed}>Atrasada</span>
+                        </div>
+                        <span className={styles.badgeMissed}>Atrasada</span>
                       </div>
                     );
                   }
 
+                  // Fila: Cuota Pendiente Futura (Gris suave)
                   return (
-                    <div key={inst.number} className={`${styles.casillaItem} ${styles.casillaPending}`}>
-                      <span className={styles.casillaPendingNumber}>#{inst.number}</span>
-                      <span className={styles.casillaPendingSub}>Pendiente</span>
+                    <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaPending}`}>
+                      <div className={styles.iconBoxPending}>
+                        <svg
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#94A3B8"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <circle cx="12" cy="12" r="9"></circle>
+                          <polyline points="12 7 12 12 15 15"></polyline>
+                        </svg>
+                      </div>
+                      <div className={styles.cuotaInfo}>
+                        <span className={styles.cuotaTitlePending}>Cuota #{inst.number}</span>
+                        <span className={styles.cuotaSub}>Pendiente</span>
+                      </div>
+                      <span className={styles.badgePending}>Pendiente</span>
                     </div>
                   );
                 })}
-              </div>
+              </section>
+            </>
+          )}
 
-              {/* Mensaje de Pago Confirmado Humanizado */}
-              {data.last_payment_note && (
-                <div className={styles.receiptBanner}>
-                  <span className={styles.receiptIcon}>💚</span>
-                  <div className={styles.receiptBody}>
-                    <span className={styles.receiptTitle}>¡Pago al día confirmado!</span>
-                    <span className={styles.receiptText}>
-                      {data.last_payment_note}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </section>
-          </>
-        )}
+          {/* Footer en el pie de la tarjeta */}
+          <footer className={styles.footer}>
+            QuickCash · Tu tarjeta de cuotas digital
+          </footer>
+        </main>
 
-        {/* Mini Tutorial Táctil Amigable (PWA / Guardar en inicio) */}
-        <section className={styles.tutorialCard}>
-          <div
-            className={styles.tutorialHeader}
+        {/* Tutorial Táctil Amigable (PWA / Guardar en inicio) debajo de la tarjeta */}
+        <section className={styles.tutorialContainer}>
+          <button
+            type="button"
+            className={styles.tutorialButton}
             onClick={() => setTutorialOpen(!tutorialOpen)}
+            aria-expanded={tutorialOpen}
           >
-            <div className={styles.tutorialTitleGroup}>
-              <span style={{ fontSize: '1.1rem' }}>📲</span>
-              <h4 className={styles.tutorialTitle}>
-                {tutorialOpen ? '¿Cómo guardar en tu pantalla?' : 'Ten tu tarjeta siempre a la mano'}
-              </h4>
-            </div>
-            <span className={styles.tutorialToggleIcon}>
+            <span>📲 Ten tu tarjeta siempre a la mano</span>
+            <span className={styles.tutorialToggle}>
               {tutorialOpen ? '▲ Ocultar' : '▼ Ver cómo'}
             </span>
-          </div>
+          </button>
 
           {tutorialOpen && (
-            <div className={styles.tutorialStepsGrid}>
+            <div className={styles.tutorialSteps}>
               <div className={styles.stepTile}>
-                <div className={styles.stepPlatform}>
-                  <span>🤖</span>
-                  <span>Android (Chrome)</span>
-                </div>
-                <p className={styles.stepInstruction}>
-                  1. Toca los tres puntos <strong>(⋮)</strong> arriba a la derecha.
+                <div className={styles.stepPlatform}>🤖 Android (Chrome)</div>
+                <p className={styles.stepText}>
+                  1. Toca los tres puntos <strong>(⋮)</strong> arriba.
                   <br />
                   2. Elige <strong>«Agregar a la pantalla principal»</strong>.
                 </p>
               </div>
 
               <div className={styles.stepTile}>
-                <div className={styles.stepPlatform}>
-                  <span>🍏</span>
-                  <span>iPhone (Safari)</span>
-                </div>
-                <p className={styles.stepInstruction}>
+                <div className={styles.stepPlatform}>🍏 iPhone (Safari)</div>
+                <p className={styles.stepText}>
                   1. Toca el botón Compartir <strong>(⬆)</strong> abajo.
                   <br />
                   2. Elige <strong>«Agregar al inicio»</strong>.
@@ -300,13 +383,6 @@ export default function PublicTalonarioPage() {
             </div>
           )}
         </section>
-
-        {/* Footer Cálido (Sin cobrador asignado) */}
-        <footer className={styles.warmFooter}>
-          QuickCash · Tu tarjeta de cuotas digital
-          <br />
-          Cuentas claras para tu tranquilidad ✨
-        </footer>
       </div>
     </div>
   );

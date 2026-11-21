@@ -1,12 +1,21 @@
+/* ==============================================================================
+ * QuickCash — Talonario Virtual (Tarjeta de Cuotas Digital)
+ * Diseño de Alta Fidelidad basado en el mockup del usuario
+ * Colores: Navy #0C2237 / #172B43, Yellow #FEBF02 / #FFE600, Green #B8F6C5 / #06E267
+ * ============================================================================== */
+
+/* Page Background and Centering */
 .pageContainer {
   min-height: 100vh;
-  background-color: #F1F5F9;
+  background-color: #EDF4FC;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 12px 32px 12px;
-  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  justify-content: flex-start;
+  padding: 16px 12px 36px 12px;
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
   color: #0F172A;
+  box-sizing: border-box;
 }
 
 .contentWrapper {
@@ -14,507 +23,455 @@
   max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* Offline Banner */
 .offlineBanner {
   background-color: #FEF3C7;
   border: 1px solid #FCD34D;
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 0.78rem;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
   color: #92400E;
   display: flex;
   align-items: center;
   gap: 8px;
   font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Top Header Bar */
-.topBar {
+/* The Main White Card Container (Unificada) */
+.mainCard {
   background: #FFFFFF;
-  border-radius: 14px;
-  padding: 10px 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E2E8F0;
+  border-radius: 28px;
+  padding: 22px 18px 20px 18px;
+  box-shadow: 0 12px 36px -4px rgba(12, 34, 55, 0.08), 0 4px 12px rgba(12, 34, 55, 0.03);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  position: relative;
+  overflow: hidden;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
 }
 
-.brandGroup {
+/* Yellow Organic Corner Swoop in Top-Right */
+.topRightSwoop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 135px;
+  height: 95px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Header */
+.header {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 16px;
+}
+
+.brandRow {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 14px;
 }
 
 .brandLogo {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: #1E293B;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #0C2237;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #F1C40F;
+  color: #FFE600;
   font-family: var(--font-heading, sans-serif);
   font-weight: 900;
-  font-size: 0.95rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+  box-shadow: 0 4px 12px rgba(12, 34, 55, 0.2);
+  flex-shrink: 0;
+}
+
+.brandDivider {
+  width: 1.5px;
+  height: 38px;
+  background-color: #E2E8F0;
+  flex-shrink: 0;
 }
 
 .brandText {
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .brandTitle {
   font-family: var(--font-heading, sans-serif);
-  font-size: 0.95rem;
+  font-size: 1.45rem;
   font-weight: 800;
-  color: #0F172A;
+  color: #0C2237;
+  line-height: 1.15;
   margin: 0;
-  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
-.brandTagline {
-  font-size: 0.68rem;
+.brandSubtitle {
+  font-size: 0.92rem;
   font-weight: 600;
-  color: #64748B;
+  color: #656B81;
+  line-height: 1.2;
+  margin-top: 2px;
 }
 
-.statusPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #15803D;
-  background: #DCFCE7;
-  padding: 4px 8px;
-  border-radius: 20px;
-}
-
-/* Greeting Block */
-.greetingBlock {
-  padding: 2px 4px;
-}
-
-.greetingTitle {
-  font-family: var(--font-heading, sans-serif);
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #0F172A;
-  margin: 0 0 2px 0;
-}
-
-.greetingSub {
-  font-size: 0.82rem;
-  color: #64748B;
-  margin: 0;
-}
-
-/* Master Hero Card: Cuota + Progreso Integrado (Compacto) */
-.masterHeroCard {
-  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-  border-radius: 16px;
-  padding: 16px 18px 14px 18px;
+/* Dark Hero Card */
+.heroCard {
+  background: linear-gradient(145deg, #102136 0%, #172B43 100%);
+  border-radius: 18px;
+  padding: 18px 16px;
   color: #FFFFFF;
-  box-shadow: 0 6px 18px -4px rgba(15, 23, 42, 0.35);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 2;
+  box-shadow: 0 8px 24px -4px rgba(12, 34, 55, 0.3);
 }
 
-.masterHeroCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: #F1C40F;
-}
-
-.heroMainRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 12px;
-}
-
-.heroCuotaCol {
+.heroColLeft {
+  padding-right: 14px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
 
-.heroCuotaLabel {
-  font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.heroDivider {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  bottom: 16px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.heroColRight {
+  padding-left: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.heroLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
   color: #94A3B8;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
-.heroCuotaAmount {
+.heroAmount {
   font-family: var(--font-heading, sans-serif);
-  font-size: 1.85rem;
+  font-size: 1.7rem;
   font-weight: 900;
-  color: #F1C40F;
-  line-height: 1;
+  color: #FFE600;
+  line-height: 1.1;
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  margin: 0 0 3px 0;
 }
 
-.heroFrequency {
-  font-size: 0.74rem;
-  color: #CBD5E1;
+.heroFrequencyRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #E2E8F0;
+  font-size: 0.82rem;
   font-weight: 600;
 }
 
-.heroProgressCol {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+.calendarIcon {
+  flex-shrink: 0;
+  color: #CBD5E1;
 }
 
-.heroProgressLabel {
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: #F8FAFC;
+.heroPercent {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  line-height: 1.1;
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
-.progressBarTrack {
-  width: 120px;
-  height: 8px;
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+.progressTrack {
+  background: #334155;
+  height: 10px;
+  border-radius: 9999px;
   overflow: hidden;
+  width: 100%;
+  margin-bottom: 6px;
 }
 
-.progressBarFill {
+.progressFill {
   height: 100%;
-  background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
-  border-radius: 8px;
+  background: #06E267;
+  border-radius: 9999px;
   transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.heroEncouragement {
-  font-size: 0.78rem;
+.progressCounter {
+  font-size: 0.8rem;
+  font-weight: 600;
   color: #E2E8F0;
-  line-height: 1.4;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 8px;
-  padding: 8px 10px;
-  border-left: 3px solid #10B981;
+  white-space: nowrap;
 }
 
-/* Punchcard Section (Casillas de Cuotas) */
-.punchcardCard {
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E2E8F0;
+/* Cuotas List Stack */
+.cuotasList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 9px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
 }
 
-.sectionHeader {
+/* Row Base */
+.cuotaRow {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
+  padding: 10px 14px;
+  border-radius: 16px;
+  box-sizing: border-box;
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.sectionTitle {
-  font-family: var(--font-heading, sans-serif);
-  font-size: 0.92rem;
-  font-weight: 800;
-  color: #0F172A;
-  margin: 0;
+/* Cuota Pagada */
+.cuotaPaid {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
 }
 
-.legendPills {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.7rem;
-  color: #64748B;
-  font-weight: 700;
-}
-
-.dotPaid {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: #10B981;
-}
-
-.dotToday {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: #F59E0B;
-}
-
-/* Grid de Casillas */
-.casillasGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-@media (min-width: 400px) {
-  .casillasGrid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 9px;
-  }
-}
-
-.casillaItem {
+.iconBoxPaid {
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
-  padding: 8px 4px;
+  background-color: #B8F6C5;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  min-height: 52px;
-  transition: transform 120ms ease;
-  user-select: none;
+  flex-shrink: 0;
+  margin-right: 12px;
 }
 
-/* Casilla: Pagada */
-.casillaPaid {
-  background-color: #ECFDF5;
-  border: 1.5px solid #22C55E;
-  color: #15803D;
-  box-shadow: 0 1px 2px rgba(34, 197, 94, 0.1);
-}
-
-.casillaPaidCheck {
-  font-size: 0.88rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.casillaPaidNumber {
-  font-family: var(--font-heading, sans-serif);
+.badgePaid {
+  background-color: #DDFCEA;
+  color: #0B6A30;
   font-size: 0.82rem;
   font-weight: 800;
-  margin-top: 1px;
-}
-
-.casillaPaidDate {
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: #16A34A;
-  margin-top: 1px;
-}
-
-/* Casilla: Hoy */
-.casillaToday {
-  background-color: #FFFBEB;
-  border: 2px solid #F59E0B;
-  color: #B45309;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
-  animation: pulseToday 2.2s infinite ease-in-out;
-}
-
-@keyframes pulseToday {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-}
-
-.casillaTodayBadge {
-  font-size: 0.58rem;
-  font-weight: 900;
-  background: #F59E0B;
-  color: #FFFFFF;
-  padding: 1px 4px;
-  border-radius: 4px;
-  letter-spacing: 0.04em;
-}
-
-.casillaTodayNumber {
-  font-family: var(--font-heading, sans-serif);
-  font-size: 0.95rem;
-  font-weight: 900;
-  margin-top: 1px;
-  color: #92400E;
-}
-
-.casillaTodaySub {
-  font-size: 0.58rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-/* Casilla: Atrasada */
-.casillaMissed {
-  background-color: #FEF2F2;
-  border: 1.5px solid #F87171;
-  color: #DC2626;
-}
-
-.casillaMissedNumber {
-  font-family: var(--font-heading, sans-serif);
-  font-size: 0.88rem;
-  font-weight: 800;
-}
-
-.casillaMissedSub {
-  font-size: 0.58rem;
-  font-weight: 700;
-}
-
-/* Casilla: Pendiente Futura */
-.casillaPending {
-  background-color: #F8FAFC;
-  border: 1px dashed #CBD5E1;
-  color: #64748B;
-}
-
-.casillaPendingNumber {
-  font-family: var(--font-heading, sans-serif);
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.casillaPendingSub {
-  font-size: 0.58rem;
-  font-weight: 600;
-  color: #94A3B8;
-}
-
-/* Comprobante de Pago Cálido y Confiable */
-.receiptBanner {
-  background-color: #F0FDF4;
-  border: 1px solid #BBF7D0;
-  border-radius: 12px;
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.receiptIcon {
-  font-size: 1.25rem;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  letter-spacing: 0.01em;
   flex-shrink: 0;
 }
 
-.receiptBody {
+/* Cuota Hoy / Por Pagar */
+.cuotaToday {
+  background-color: #FFFDF5;
+  border: 1.5px solid #FEE893;
+}
+
+.iconBoxToday {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #FEE893;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.badgeToday {
+  background-color: #FEF1C4;
+  color: #A15D08;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+
+/* Cuota Futura Pendiente */
+.cuotaPending {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+}
+
+.iconBoxPending {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #F1F5F9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.badgePending {
+  background-color: #F1F5F9;
+  color: #64748B;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+
+/* Cuota Atrasada */
+.cuotaMissed {
+  background-color: #FEF2F2;
+  border: 1.5px solid #FECACA;
+}
+
+.iconBoxMissed {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #FEE2E2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.badgeMissed {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+/* Typography inside Row */
+.cuotaInfo {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
   min-width: 0;
 }
 
-.receiptTitle {
-  font-size: 0.78rem;
+.cuotaTitle {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.98rem;
   font-weight: 800;
-  color: #166534;
+  color: #0C2237;
+  line-height: 1.2;
 }
 
-.receiptText {
-  font-size: 0.74rem;
-  color: #15803D;
-  line-height: 1.35;
+.cuotaTitlePending {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #475569;
+  line-height: 1.2;
 }
 
-/* Tutorial Card: Familiar, Limpio y Táctil */
-.tutorialCard {
+.cuotaSub {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #656B81;
+}
+
+.cuotaSubToday {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #656B81;
+}
+
+.cuotaSubMissed {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #DC2626;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #656B81;
+  padding-top: 6px;
+  position: relative;
+  z-index: 2;
+}
+
+/* PWA Tutorial Drawer Below Card */
+.tutorialContainer {
+  margin-top: 2px;
+}
+
+.tutorialButton {
   background: #FFFFFF;
-  border-radius: 14px;
-  padding: 12px 14px;
   border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.tutorialHeader {
+  border-radius: 14px;
+  padding: 10px 14px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
   cursor: pointer;
-  user-select: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.tutorialTitleGroup {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tutorialTitle {
-  font-family: var(--font-heading, sans-serif);
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: #1E293B;
-  margin: 0;
-}
-
-.tutorialToggleIcon {
-  font-size: 0.75rem;
-  color: #64748B;
+.tutorialToggle {
+  font-size: 0.76rem;
+  color: #0284C7;
   font-weight: 800;
 }
 
-.tutorialStepsGrid {
+.tutorialSteps {
+  margin-top: 8px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  padding-top: 4px;
-  border-top: 1px solid #F1F5F9;
 }
 
 .stepTile {
-  background: #F8FAFC;
+  background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 10px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  border-radius: 12px;
+  padding: 10px 12px;
 }
 
 .stepPlatform {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 800;
   color: #0F172A;
+  margin-bottom: 4px;
 }
 
-.stepInstruction {
+.stepText {
   font-size: 0.72rem;
   color: #475569;
-  line-height: 1.4;
+  line-height: 1.35;
   margin: 0;
-}
-
-.stepInstruction strong {
-  color: #0F172A;
-}
-
-/* Footer Cálido */
-.warmFooter {
-  text-align: center;
-  font-size: 0.74rem;
-  color: #94A3B8;
-  padding: 6px 0;
-  line-height: 1.5;
 }
 
 /* Loading & Empty States */
@@ -524,16 +481,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #F1F5F9;
-  padding: 20px;
+  background-color: #EDF4FC;
+  padding: 24px;
   text-align: center;
 }
 
 .spinner {
-  width: 34px;
-  height: 34px;
-  border: 3px solid #E2E8F0;
-  border-top-color: #F1C40F;
+  width: 38px;
+  height: 38px;
+  border: 3.5px solid rgba(12, 34, 55, 0.12);
+  border-top-color: #0C2237;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 12px;
