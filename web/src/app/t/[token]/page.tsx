@@ -1,10 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { getTalonarioData, type TalonarioData } from '@/services/talonario.service';
+import { getTalonarioData, type TalonarioData, type TalonarioInstallmentItem } from '@/services/talonario.service';
 import { formatCurrency } from '@/lib/utils';
 import styles from './talonario.module.css';
+
+interface DisplaySlot {
+  installment: TalonarioInstallmentItem;
+  isLastGoal?: boolean;
+}
 
 export default function PublicTalonarioPage() {
   const params = useParams();
@@ -14,8 +19,8 @@ export default function PublicTalonarioPage() {
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [cachedTime, setCachedTime] = useState<string | null>(null);
-  const [tutorialOpen, setTutorialOpen] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'paid'>('all');
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [viewAll, setViewAll] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -74,6 +79,71 @@ export default function PublicTalonarioPage() {
     };
   }, [token]);
 
+  // CÁLCULO DE LA VENTANA RODANTE DE 4 CUOTAS (Rolling Window inteligente)
+  const rollingWindow = useMemo(() => {
+    const list = data?.installments || [];
+    const n = list.length;
+    if (n <= 4) {
+      return {
+        slots: list.map((inst, idx) => ({
+          installment: inst,
+          isLastGoal: idx === n - 1,
+        })),
+        hasIntermediateGap: false,
+        intermediateCount: 0,
+      };
+    }
+
+    // Localizar índice 0-based de la cuota activa (la primera pendiente / hoy / atrasada)
+    let activeIdx = list.findIndex(
+      (inst) => inst.status === 'today' || inst.status === 'pending' || inst.status === 'missed'
+    );
+    if (activeIdx === -1) {
+      activeIdx = n - 1; // Si todas están pagadas
+    }
+
+    const k = activeIdx + 1; // Cuota actual 1-based (ej: 1, 2, 3...)
+    let chosenIndices: number[] = [];
+
+    if (k === 1) {
+      // Día 1: Cuota 1 (hoy), Cuota 2 (gris), Cuota 3 (gris), Cuota N (última)
+      chosenIndices = [1, 2, 3, n];
+    } else if (k === 2) {
+      // Día 2: Cuota 1 (pagada), Cuota 2 (hoy), Cuota 3 (gris), Cuota N (última)
+      chosenIndices = [1, 2, 3, n];
+    } else if (k >= 3 && k <= n - 2) {
+      // Día 3 en adelante: Cuota k-1 (pagada anterior), Cuota k (hoy), Cuota k+1 (gris), Cuota N (última)
+      chosenIndices = [k - 1, k, k + 1, n];
+    } else if (k === n - 1) {
+      // Penúltima cuota
+      chosenIndices = [n - 3, n - 2, n - 1, n];
+    } else {
+      // Última cuota (k === n) o completado
+      chosenIndices = [n - 3, n - 2, n - 1, n];
+    }
+
+    const uniqueIndices = Array.from(new Set(chosenIndices)).filter(
+      (idx) => idx >= 1 && idx <= n
+    );
+
+    // Detección de brecha antes de la última cuota
+    const beforeLastIdx = uniqueIndices[uniqueIndices.length - 2];
+    const lastIdx = uniqueIndices[uniqueIndices.length - 1];
+    const hasIntermediateGap = lastIdx - beforeLastIdx > 1;
+    const intermediateCount = hasIntermediateGap ? lastIdx - beforeLastIdx - 1 : 0;
+
+    const slots: DisplaySlot[] = uniqueIndices.map((idx) => ({
+      installment: list[idx - 1],
+      isLastGoal: idx === n && n > 4,
+    }));
+
+    return {
+      slots,
+      hasIntermediateGap,
+      intermediateCount,
+    };
+  }, [data?.installments]);
+
   if (loading && !data) {
     return (
       <div className={styles.loadingContainer}>
@@ -97,14 +167,13 @@ export default function PublicTalonarioPage() {
     );
   }
 
-  // Filtrado de cuotas (Ideal para 4, 15, 20, 24 o 30 cuotas)
-  const filteredInstallments = (data.installments || []).filter((inst) => {
-    if (filter === 'paid') return inst.status === 'paid';
-    if (filter === 'pending') {
-      return inst.status === 'today' || inst.status === 'pending' || inst.status === 'missed';
-    }
-    return true;
-  });
+  // Lista a renderizar: o la ventana rodante de 4 o todas si el cliente pulsa "Ver todas"
+  const installmentsToRender = viewAll
+    ? (data.installments || []).map((inst, idx, arr) => ({
+        installment: inst,
+        isLastGoal: idx === arr.length - 1,
+      }))
+    : rollingWindow.slots;
 
   return (
     <div className={styles.pageContainer}>
@@ -120,7 +189,7 @@ export default function PublicTalonarioPage() {
           </div>
         )}
 
-        {/* TARJETA PRINCIPAL UNIFICADA (Idéntica al mockup) */}
+        {/* TARJETA PRINCIPAL UNIFICADA (Todo vive aquí adentro) */}
         <main className={styles.mainCard}>
           {/* Swoop Amarillo Orgánico en Esquina Superior Derecha */}
           <svg
@@ -224,55 +293,37 @@ export default function PublicTalonarioPage() {
                 </div>
               </section>
 
-              {/* Filtro por Pestañas (Segmented Control para 4, 15, 20 o 30 cuotas) */}
-              <div className={styles.filterTabs} role="tablist">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={filter === 'all'}
-                  className={`${styles.filterTab} ${filter === 'all' ? styles.filterTabActive : ''}`}
-                  onClick={() => setFilter('all')}
-                >
-                  Todas ({data.total_installments || 0})
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={filter === 'pending'}
-                  className={`${styles.filterTab} ${filter === 'pending' ? styles.filterTabActive : ''}`}
-                  onClick={() => setFilter('pending')}
-                >
-                  Por Pagar ({data.remaining_installments || 0})
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={filter === 'paid'}
-                  className={`${styles.filterTab} ${filter === 'paid' ? styles.filterTabActive : ''}`}
-                  onClick={() => setFilter('paid')}
-                >
-                  Pagadas ({data.paid_installments || 0})
-                </button>
-              </div>
-
-              {/* LISTA DE CUOTAS (Filas estilo mockup) */}
+              {/* LISTA DE CUOTAS (Ventana Rodante de 4 cuotas) */}
               <section className={styles.cuotasList}>
-                {filteredInstallments.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    {filter === 'pending'
-                      ? '🎉 ¡No tienes cuotas pendientes por pagar!'
-                      : 'Aún no registras cuotas en este estado.'}
-                  </div>
-                ) : (
-                  filteredInstallments.map((inst) => {
-                    const isPaid = inst.status === 'paid';
-                    const isToday = inst.status === 'today';
-                    const isMissed = inst.status === 'missed';
+                {installmentsToRender.map((slot, index) => {
+                  const inst = slot.installment;
+                  const isPaid = inst.status === 'paid';
+                  const isToday = inst.status === 'today';
+                  const isMissed = inst.status === 'missed';
+                  const isLastGoal = slot.isLastGoal && !viewAll;
 
-                    // Fila: Cuota Pagada (Verde)
-                    if (isPaid) {
-                      return (
-                        <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaPaid}`}>
+                  // ¿Insertar el separador de cuotas intermedias antes del último slot?
+                  const shouldShowGapBeforeThis =
+                    !viewAll &&
+                    rollingWindow.hasIntermediateGap &&
+                    index === installmentsToRender.length - 1;
+
+                  return (
+                    <div key={inst.number} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {/* Brecha elegante de cuotas intermedias */}
+                      {shouldShowGapBeforeThis && (
+                        <div className={styles.gapDivider}>
+                          <div className={styles.gapLine} />
+                          <span className={styles.gapBadge}>
+                            • • • ({rollingWindow.intermediateCount} cuotas intermedias) • • •
+                          </span>
+                          <div className={styles.gapLine} />
+                        </div>
+                      )}
+
+                      {/* FILA: Pagada (Verde) */}
+                      {isPaid && (
+                        <div className={`${styles.cuotaRow} ${styles.cuotaPaid}`}>
                           <div className={styles.iconBoxPaid}>
                             <svg
                               width="22"
@@ -296,13 +347,11 @@ export default function PublicTalonarioPage() {
                           </div>
                           <span className={styles.badgePaid}>Pagada</span>
                         </div>
-                      );
-                    }
+                      )}
 
-                    // Fila: Cuota de Hoy / Por Pagar (Ámbar)
-                    if (isToday) {
-                      return (
-                        <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaToday}`}>
+                      {/* FILA: Hoy / Pendiente activa (Amarillo) */}
+                      {isToday && (
+                        <div className={`${styles.cuotaRow} ${styles.cuotaToday}`}>
                           <div className={styles.iconBoxToday}>
                             <svg
                               width="22"
@@ -325,13 +374,11 @@ export default function PublicTalonarioPage() {
                           </div>
                           <span className={styles.badgeToday}>Pendiente</span>
                         </div>
-                      );
-                    }
+                      )}
 
-                    // Fila: Cuota Atrasada (Rojo)
-                    if (isMissed) {
-                      return (
-                        <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaMissed}`}>
+                      {/* FILA: Atrasada (Rojo) */}
+                      {isMissed && (
+                        <div className={`${styles.cuotaRow} ${styles.cuotaMissed}`}>
                           <div className={styles.iconBoxMissed}>
                             <svg
                               width="22"
@@ -355,111 +402,97 @@ export default function PublicTalonarioPage() {
                           </div>
                           <span className={styles.badgeMissed}>Atrasada</span>
                         </div>
-                      );
-                    }
+                      )}
 
-                    // Fila: Cuota Pendiente Futura (Gris suave)
-                    return (
-                      <div key={inst.number} className={`${styles.cuotaRow} ${styles.cuotaPending}`}>
-                        <div className={styles.iconBoxPending}>
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#94A3B8"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <circle cx="12" cy="12" r="9"></circle>
-                            <polyline points="12 7 12 12 15 15"></polyline>
-                          </svg>
+                      {/* FILA: Futura Pendiente (Gris) */}
+                      {!isPaid && !isToday && !isMissed && (
+                        <div className={`${styles.cuotaRow} ${styles.cuotaPending}`}>
+                          <div className={styles.iconBoxPending}>
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#94A3B8"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <circle cx="12" cy="12" r="9"></circle>
+                              <polyline points="12 7 12 12 15 15"></polyline>
+                            </svg>
+                          </div>
+                          <div className={styles.cuotaInfo}>
+                            <span className={styles.cuotaTitlePending}>Cuota #{inst.number}</span>
+                            <span className={styles.cuotaSub}>
+                              {isLastGoal ? 'Última cuota · Meta' : 'Pendiente'}
+                            </span>
+                          </div>
+                          <span className={styles.badgePending}>
+                            {isLastGoal ? 'Meta' : 'Pendiente'}
+                          </span>
                         </div>
-                        <div className={styles.cuotaInfo}>
-                          <span className={styles.cuotaTitlePending}>Cuota #{inst.number}</span>
-                          <span className={styles.cuotaSub}>Pendiente</span>
-                        </div>
-                        <span className={styles.badgePending}>Pendiente</span>
-                      </div>
-                    );
-                  })
-                )}
+                      )}
+                    </div>
+                  );
+                })}
               </section>
+
+              {/* Botón discreto si hay más de 4 cuotas para ver todas o resumen */}
+              {(data.installments?.length || 0) > 4 && (
+                <button
+                  type="button"
+                  className={styles.viewAllToggleBtn}
+                  onClick={() => setViewAll(!viewAll)}
+                >
+                  {viewAll
+                    ? '▲ Ver resumen de 4 cuotas'
+                    : `Ver las ${data.total_installments} cuotas completas ▼`}
+                </button>
+              )}
             </>
           )}
 
-          {/* Footer en el pie de la tarjeta */}
+          {/* Footer integrado en la misma tarjeta */}
           <footer className={styles.footer}>
-            QuickCash · Tu tarjeta de cuotas digital
+            <span className={styles.footerBrand}>
+              QuickCash · Tu tarjeta de cuotas digital
+            </span>
+
+            {/* Enlace discreto a pantalla de inicio (sin tarjeta externa ni tecnicismos) */}
+            <button
+              type="button"
+              className={styles.saveShortcutBtn}
+              onClick={() => setShowInstallHelp(!showInstallHelp)}
+            >
+              <span>📲</span>
+              <span>
+                {showInstallHelp ? 'Ocultar guía de pantalla' : 'Guardar en pantalla de inicio'}
+              </span>
+            </button>
+
+            {/* Mini guía rápida que se despliega DENTRO de la misma tarjeta */}
+            {showInstallHelp && (
+              <div className={styles.installHelpBox}>
+                <div className={styles.installHelpGrid}>
+                  <div className={styles.installHelpItem}>
+                    <span className={styles.installHelpPlatform}>🤖 Android (Chrome)</span>
+                    <p className={styles.installHelpText}>
+                      Toca <strong>(⋮)</strong> arriba a la derecha y elige <strong>«Agregar a la pantalla principal»</strong>.
+                    </p>
+                  </div>
+                  <div className={styles.installHelpItem}>
+                    <span className={styles.installHelpPlatform}>🍏 iPhone (Safari)</span>
+                    <p className={styles.installHelpText}>
+                      Toca Compartir <strong>(⬆)</strong> abajo y elige <strong>«Agregar al inicio»</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </footer>
         </main>
-
-        {/* TARJETA DE ACCESO RÁPIDO / INSTALACIÓN PWA (Diseño Premium & Textos Claros) */}
-        <section className={styles.installCard}>
-          <div
-            className={styles.installHeader}
-            onClick={() => setTutorialOpen(!tutorialOpen)}
-            role="button"
-            tabIndex={0}
-            aria-expanded={tutorialOpen}
-          >
-            <div className={styles.installLeft}>
-              <div className={styles.installIconBox}>
-                <span>📲</span>
-              </div>
-              <div className={styles.installTextGroup}>
-                <span className={styles.installTitle}>Guarda tu Talonario en el Celular</span>
-                <span className={styles.installSubtitle}>
-                  Ábrelo en 1 toque directo sin buscar enlaces y sin gastar datos
-                </span>
-              </div>
-            </div>
-            <span className={styles.installToggleBadge}>
-              {tutorialOpen ? '▲ Ocultar' : '⚡ Ver cómo'}
-            </span>
-          </div>
-
-          {tutorialOpen && (
-            <div className={styles.installBody}>
-              <p className={styles.installIntro}>
-                No necesitas descargar nada pesado de la tienda. Puedes anclar esta tarjeta a tu pantalla de inicio como si fuera una aplicación (Nequi, WhatsApp, etc.):
-              </p>
-
-              <div className={styles.installPlatformsGrid}>
-                <div className={styles.platformTile}>
-                  <div className={styles.platformHeader}>
-                    <span>🤖</span>
-                    <span>Android (Chrome)</span>
-                  </div>
-                  <p className={styles.platformStep}>
-                    1. Toca los tres puntos <strong>(⋮)</strong> arriba a la derecha.
-                    <br />
-                    2. Selecciona <strong>«Agregar a la pantalla principal»</strong>.
-                  </p>
-                </div>
-
-                <div className={styles.platformTile}>
-                  <div className={styles.platformHeader}>
-                    <span>🍏</span>
-                    <span>iPhone (Safari)</span>
-                  </div>
-                  <p className={styles.platformStep}>
-                    1. Toca el botón Compartir <strong>(⬆)</strong> en la barra inferior.
-                    <br />
-                    2. Desliza hacia abajo y toca <strong>«Agregar al inicio»</strong>.
-                  </p>
-                </div>
-              </div>
-
-              <div className={styles.installFeaturePill}>
-                <span>🔒</span>
-                <span>100% privado · Guarda una copia local que abre incluso sin internet</span>
-              </div>
-            </div>
-          )}
-        </section>
       </div>
     </div>
   );
