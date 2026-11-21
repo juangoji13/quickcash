@@ -196,39 +196,51 @@
   margin-top: 2px;
 }
 
-.roleBadge {
+.roleText {
   font-family: var(--font-heading);
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.role_admin { background: var(--gradient-yellow); color: var(--color-asphalt-dark); }
-.role_collector { background: #E2E8F0; color: #334155; }
-
-/* Route Chip */
-.routeChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: #1E293B;
-  background: #F8FAFC;
-  padding: 4px 10px;
-  border-radius: 8px;
-  border: 1px solid #E2E8F0;
-  width: fit-content;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.routeDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: #3B82F6;
+/* Route Info - Clean Typography Without Pill Outline */
+.routeText {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #1E293B;
+  padding: 2px 0;
+}
+
+.routeLabel {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #94A3B8;
+  letter-spacing: 0.05em;
+}
+
+.routeName {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+/* Admin Card Body */
+.adminCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0 4px 0;
+}
+
+.adminDescText {
+  font-size: 0.84rem;
+  color: #64748B;
+  line-height: 1.45;
+  margin: 0;
 }
 
 /* 2x2 Financial Preview Grid */
@@ -308,33 +320,24 @@
   gap: 8px;
 }
 
-.btnContactMini {
+.btnCall {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
+  gap: 6px;
+  font-size: 0.78rem;
   font-weight: 700;
-  padding: 5px 10px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid rgba(37, 99, 235, 0.2);
   text-decoration: none;
   cursor: pointer;
   transition: all 120ms ease;
 }
 
-.btnWhatsapp {
-  background: #DCFCE7;
-  color: #15803D;
-  border: 1px solid rgba(22, 163, 74, 0.2);
-}
-
-.btnWhatsapp:hover {
-  background: #BBF7D0;
-}
-
-.btnCall {
-  background: #EFF6FF;
-  color: #1D4ED8;
-  border: 1px solid rgba(37, 99, 235, 0.2);
+.btnCall:hover {
+  background: #DBEAFE;
 }
 
 .statusActive { font-size: 11px; font-weight: 800; color: #16A34A; }
@@ -363,6 +366,6 @@
 
 /* Empty */
 .empty { text-align: center; padding: var(--space-12) var(--space-6); color: var(--color-gray-400); }
-.empty span { font-size: 3rem; display: block; margin-bottom: var(--space-3); }
+.emptyIcon { display: inline-flex; justify-content: center; align-items: center; margin-bottom: var(--space-3); color: #94A3B8; }
 .empty h3 { font-family: var(--font-heading); font-size: var(--text-xl); color: var(--color-asphalt); margin-bottom: var(--space-2); }
 .empty p { font-size: var(--text-sm); }

@@ -76,9 +76,11 @@ export default function CollectorDetailModal({
                 {data?.user.username && (
                   <span className={styles.handleBadge}>{data.user.username}</span>
                 )}
-                <span className={`${styles.roleBadge} ${data?.user.role === 'admin' ? styles.role_admin : styles.role_collector}`}>
+                <span>·</span>
+                <span className={styles.roleText}>
                   {data?.user.role === 'admin' ? 'Administrador' : 'Cobrador'}
                 </span>
+                <span>·</span>
                 {data?.user.is_active ? (
                   <span style={{ color: '#16A34A', fontWeight: 700 }}>● Activo</span>
                 ) : (
@@ -98,33 +100,24 @@ export default function CollectorDetailModal({
         {/* Route & Quick Contact Banner */}
         {data && (
           <div className={styles.routeBanner}>
-            <div className={styles.routeBadge}>
-              <span 
-                className={styles.routeDot} 
-                style={{ backgroundColor: data.assignedRoute?.color || '#3B82F6' }} 
-              />
-              <span>{data.assignedRoute ? `${data.assignedRoute.name} (${data.assignedRoute.zone || 'Ruta General'})` : 'Sin ruta fija asignada'}</span>
+            <div className={styles.routeText}>
+              <span className={styles.routeLabel}>Ruta:</span>
+              <span className={styles.routeName}>
+                {data.assignedRoute ? `${data.assignedRoute.name} (${data.assignedRoute.zone || 'Ruta General'})` : 'Sin ruta fija asignada'}
+              </span>
             </div>
             <div className={styles.directActions}>
               {data.user.phone && (
-                <>
-                  <a
-                    href={`https://wa.me/${data.user.phone.replace(/[^0-9]/g, '')}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`${styles.actionBtnMini} ${styles.btnWhatsapp}`}
-                    title="WhatsApp Cobrador"
-                  >
-                    💬 WhatsApp
-                  </a>
-                  <a
-                    href={`tel:${data.user.phone}`}
-                    className={`${styles.actionBtnMini} ${styles.btnCall}`}
-                    title="Llamar Cobrador"
-                  >
-                    📞 Llamar
-                  </a>
-                </>
+                <a
+                  href={`tel:${data.user.phone}`}
+                  className={`${styles.actionBtnMini} ${styles.btnCall}`}
+                  title="Llamar Cobrador"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  <span>Llamar</span>
+                </a>
               )}
             </div>
           </div>
@@ -136,20 +129,20 @@ export default function CollectorDetailModal({
             className={`${styles.tabBtn} ${activeTab === 'clients' ? styles.tabBtnActive : ''}`}
             onClick={() => handleTabChange('clients')}
           >
-            👥 Clientes Asignados
+            Clientes Asignados
             <span className={styles.tabCountBadge}>{data?.clients.length || 0}</span>
           </button>
           <button 
             className={`${styles.tabBtn} ${activeTab === 'performance' ? styles.tabBtnActive : ''}`}
             onClick={() => handleTabChange('performance')}
           >
-            💰 Rendimiento & Caja
+            Rendimiento & Caja
           </button>
           <button 
             className={`${styles.tabBtn} ${activeTab === 'history' ? styles.tabBtnActive : ''}`}
             onClick={() => handleTabChange('history')}
           >
-            🧾 Cobros Recientes
+            Cobros Recientes
             <span className={styles.tabCountBadge}>{data?.recentPayments.length || 0}</span>
           </button>
         </div>
@@ -197,8 +190,8 @@ export default function CollectorDetailModal({
                         <div className={styles.clientIdentity}>
                           <h4 className={styles.clientName}>{c.full_name}</h4>
                           <div className={styles.clientAddress}>
-                            <span>📍 {c.address || 'Sin dirección registrada'}</span>
-                            {c.phone && <span>· 📞 {c.phone}</span>}
+                            <span>{c.address || 'Sin dirección registrada'}</span>
+                            {c.phone && <span>· Tel: {c.phone}</span>}
                           </div>
                         </div>
                         <span className={`${styles.clientStatusPill} ${
@@ -222,7 +215,7 @@ export default function CollectorDetailModal({
                           <div className={styles.loanMetric}>
                             <span className={styles.loanMetricLabel}>Estado Cuota Hoy</span>
                             <span className={`${styles.todayIndicator} ${c.today_payment_status === 'paid' ? styles.todayPaid : styles.todayPending}`}>
-                              {c.today_payment_status === 'paid' ? 'Cobrada ✅' : c.today_payment_status === 'missed' ? 'Atrasada ⚠️' : 'Pendiente ⏳'}
+                              {c.today_payment_status === 'paid' ? 'Cobrada' : c.today_payment_status === 'missed' ? 'Atrasada' : 'Pendiente'}
                             </span>
                           </div>
                         </div>
@@ -232,7 +225,7 @@ export default function CollectorDetailModal({
                         </div>
                       )}
 
-                      {/* Acciones directas del cliente: Reasignar + Contacto */}
+                      {/* Acciones directas del cliente: Reasignar + Llamar */}
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 6, flexWrap: 'wrap' }}>
                         <button
                           type="button"
@@ -240,25 +233,24 @@ export default function CollectorDetailModal({
                           onClick={() => setReassignTarget(c)}
                           title="Reasignar a otro cobrador"
                         >
-                          🔄 Reasignar Cobrador
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <polyline points="1 20 1 14 7 14"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                          </svg>
+                          <span>Reasignar</span>
                         </button>
                         {c.phone && (
-                          <>
-                            <a
-                              href={`https://wa.me/${c.phone.replace(/[^0-9]/g, '')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={`${styles.actionBtnMini} ${styles.btnWhatsapp}`}
-                            >
-                              💬 WhatsApp
-                            </a>
-                            <a
-                              href={`tel:${c.phone}`}
-                              className={`${styles.actionBtnMini} ${styles.btnCall}`}
-                            >
-                              📞 Llamar
-                            </a>
-                          </>
+                          <a
+                            href={`tel:${c.phone}`}
+                            className={`${styles.actionBtnMini} ${styles.btnCall}`}
+                            title="Llamar"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                            </svg>
+                            <span>Llamar</span>
+                          </a>
                         )}
                       </div>
                     </div>
@@ -330,7 +322,7 @@ export default function CollectorDetailModal({
                 <div className={styles.breakdownRow}>
                   <span className={styles.breakdownRowLabel}>Distribución Semáforo de Riesgo</span>
                   <span className={styles.breakdownRowValue}>
-                    🟢 {data.stats.greenClients} Al Día · 🟡 {data.stats.yellowClients} Alerta · 🔴 {data.stats.redClients} Mora
+                    <span style={{ color: '#16A34A', fontWeight: 700 }}>● {data.stats.greenClients} Al Día</span> · <span style={{ color: '#D97706', fontWeight: 700 }}>● {data.stats.yellowClients} Alerta</span> · <span style={{ color: '#DC2626', fontWeight: 700 }}>● {data.stats.redClients} Mora</span>
                   </span>
                 </div>
                 <div className={styles.breakdownRow}>

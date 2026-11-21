@@ -322,10 +322,10 @@ export default function SettingsPage() {
               <span>{email}</span>
               {username && <span>• @{username.replace('@', '')}</span>}
               <span>• Negocio: <strong>{tenant?.name || 'Mi Ruta'}</strong></span>
+              <span>• {roleLabel}</span>
             </div>
           </div>
         </div>
-        <span className={styles.roleBadge}>{roleLabel}</span>
       </div>
 
       {/* Settings Grid */}
@@ -355,7 +355,7 @@ export default function SettingsPage() {
           </div>
 
           <div className={styles.field}>
-            <label className="input-label" htmlFor="userPhone">Teléfono / WhatsApp de Contacto</label>
+            <label className="input-label" htmlFor="userPhone">Teléfono de Contacto</label>
             <input
               id="userPhone"
               className="input"
@@ -363,7 +363,7 @@ export default function SettingsPage() {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Ej. 310 123 4567"
             />
-            <p className={styles.fieldHint}>Número de contacto para notificaciones y soporte con cobradores.</p>
+            <p className={styles.fieldHint}>Número de contacto para notificaciones y soporte.</p>
           </div>
 
           <div className={styles.fieldRow}>
@@ -396,11 +396,10 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* 2. Datos de la Empresa y Moneda */}
+        {/* 2. Datos de la Empresa */}
         <div className="card">
           <h2 className={styles.sectionTitle}>
-            <span>Datos del Negocio y Moneda</span>
-            <span style={{ fontSize: '11px', color: 'var(--color-gray-400)' }}>100% Colombia</span>
+            <span>Datos del Negocio</span>
           </h2>
 
           <div className={styles.field}>
@@ -446,18 +445,6 @@ export default function SettingsPage() {
               onChange={(e) => setBusinessAddress(e.target.value)}
               placeholder="Ej. Cra 45 # 50-20, Centro"
             />
-          </div>
-
-          {/* Moneda Fija COP - Rediseñada sin selectores ajenos */}
-          <div className={styles.field}>
-            <label className="input-label">Moneda de Operación</label>
-            <div className={styles.currencyBox}>
-              <div className={styles.currencyText}>
-                <span className={styles.currencyTitle}>Pesos Colombianos ($ COP)</span>
-                <span className={styles.currencySub}>Moneda fija de la plataforma. Valores enteros sin decimales.</span>
-              </div>
-              <span className={styles.currencyPill}>100% COP</span>
-            </div>
           </div>
         </div>
 
@@ -585,23 +572,6 @@ export default function SettingsPage() {
                   type="checkbox"
                   checked={requireDailyClosure}
                   onChange={(e) => setRequireDailyClosure(e.target.checked)}
-                />
-                <span className={styles.slider} />
-              </label>
-            </div>
-
-            <div className={styles.toggleItem}>
-              <div className={styles.toggleLabel}>
-                <span className={styles.toggleTitle}>Recibo Digital por WhatsApp</span>
-                <span className={styles.toggleDesc}>
-                  Habilita el botón directo para compartir el comprobante de pago por WhatsApp al cobrar.
-                </span>
-              </div>
-              <label className={styles.switch}>
-                <input
-                  type="checkbox"
-                  checked={autoReceiptsWhatsapp}
-                  onChange={(e) => setAutoReceiptsWhatsapp(e.target.checked)}
                 />
                 <span className={styles.slider} />
               </label>

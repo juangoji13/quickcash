@@ -486,15 +486,11 @@ export default function SuperAdminPage() {
                           <>
                             <span>·</span>
                             <a
-                              href={`https://wa.me/${t.admin.phone.replace(
-                                /\D/g,
-                                ''
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.whatsappLink}
+                              href={`tel:${t.admin.phone}`}
+                              className={styles.phoneLink}
+                              title="Llamar"
                             >
-                              WhatsApp
+                              {t.admin.phone}
                             </a>
                           </>
                         )}
@@ -528,15 +524,15 @@ export default function SuperAdminPage() {
                         <span className={styles.badgeFree}>Modo Gratis</span>
                       ) : isLocked ? (
                         <span className={styles.badgeLocked}>
-                          🔴 Bloqueado (No pagó)
+                          ● Bloqueado (No pagó)
                         </span>
                       ) : isDueSoon ? (
                         <span className={styles.badgeGrace}>
-                          🟡 Vence en {daysLeft} días
+                          ● Vence en {daysLeft} días
                         </span>
                       ) : (
                         <span className={styles.badgeActive}>
-                          🟢 Al Día ({daysLeft} días)
+                          ● Al Día ({daysLeft} días)
                         </span>
                       )}
                     </div>
@@ -551,7 +547,7 @@ export default function SuperAdminPage() {
                       disabled={actionLoading}
                       title="Registrar pago de mensualidad (+30 días)"
                     >
-                      <span>➕ Pago $25.000</span>
+                      <span>+ Pago $25.000</span>
                     </button>
 
                     {/* Botón para Simular Bloqueo / Desbloqueo en Pruebas */}
@@ -563,7 +559,11 @@ export default function SuperAdminPage() {
                         disabled={actionLoading}
                         title="Desbloquear acceso"
                       >
-                        🔓 Desbloquear
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                          <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                        </svg>
+                        <span>Desbloquear</span>
                       </button>
                     ) : (
                       <button
@@ -573,7 +573,11 @@ export default function SuperAdminPage() {
                         disabled={actionLoading}
                         title="Simular bloqueo por no pago para pruebas"
                       >
-                        🔒 Simular Bloqueo
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <span>Simular Bloqueo</span>
                       </button>
                     )}
                   </div>

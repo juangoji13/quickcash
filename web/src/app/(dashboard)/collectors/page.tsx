@@ -241,131 +241,167 @@ export default function CollectorsPage() {
       ) : tab === 'team' ? (
         filteredCollectors.length === 0 ? (
           <div className={styles.empty}>
-            <span>👥</span>
+            <div className={styles.emptyIcon}>
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
             <h3>No se encontraron miembros</h3>
             <p>No hay cobradores que coincidan con la búsqueda.</p>
           </div>
         ) : (
           <div className={styles.grid}>
-            {filteredCollectors.map((c) => (
-              <div key={c.user.id} className={styles.memberCard}>
-                {/* Header del Cobrador */}
-                <div className={styles.memberHeader}>
-                  <div className={styles.avatar}>{getInitials(c.user.full_name)}</div>
-                  <div className={styles.memberInfo}>
-                    <h4 className={styles.memberName}>{c.user.full_name}</h4>
-                    <div className={styles.memberMeta}>
-                      {c.user.username && (
-                        <span style={{ color: '#2563EB', fontWeight: 700 }}>{c.user.username}</span>
-                      )}
-                      <span>·</span>
-                      <span className={`${styles.roleBadge} ${c.user.role === 'admin' ? styles.role_admin : styles.role_collector}`}>
-                        {c.user.role === 'admin' ? 'Admin' : 'Cobrador'}
-                      </span>
+            {filteredCollectors.map((c) => {
+              const isAdminOnly = c.user.role === 'admin' && c.stats.clientsCount === 0 && c.stats.capitalInStreet === 0;
+
+              return (
+                <div key={c.user.id} className={styles.memberCard}>
+                  {/* Header del Miembro */}
+                  <div className={styles.memberHeader}>
+                    <div className={styles.avatar}>{getInitials(c.user.full_name)}</div>
+                    <div className={styles.memberInfo}>
+                      <h4 className={styles.memberName}>{c.user.full_name}</h4>
+                      <div className={styles.memberMeta}>
+                        {c.user.username && (
+                          <span style={{ color: '#2563EB', fontWeight: 700 }}>{c.user.username}</span>
+                        )}
+                        <span>·</span>
+                        <span className={styles.roleText}>
+                          {c.user.role === 'admin' ? 'Administrador' : 'Cobrador'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <span className={c.user.is_active ? styles.statusActive : styles.statusInactive}>
-                    {c.user.is_active ? '● Activo' : '● Inactivo'}
-                  </span>
-                </div>
-
-                {/* Ruta Asignada */}
-                <div className={styles.routeChip}>
-                  <span
-                    className={styles.routeDot}
-                    style={{ backgroundColor: c.assignedRoute?.color || '#3B82F6' }}
-                  />
-                  <span>
-                    {c.assignedRoute
-                      ? `${c.assignedRoute.name} (${c.assignedRoute.zone || 'Ruta General'})`
-                      : 'Sin ruta fija asignada'}
-                  </span>
-                </div>
-
-                {/* Grid 2x2 de Rendimiento Financiero ("Lo que me genera") */}
-                <div className={styles.kpiPreviewGrid}>
-                  <div className={styles.kpiPreviewItem}>
-                    <span className={styles.kpiPreviewLabel}>Cobrado Hoy</span>
-                    <span className={`${styles.kpiPreviewVal} ${c.stats.totalCollectedToday > 0 ? styles.kpiPreviewValHighlight : ''}`}>
-                      {formatCurrency(c.stats.totalCollectedToday)}
+                    <span className={c.user.is_active ? styles.statusActive : styles.statusInactive}>
+                      {c.user.is_active ? '● Activo' : '● Inactivo'}
                     </span>
                   </div>
-                  <div className={styles.kpiPreviewItem}>
-                    <span className={styles.kpiPreviewLabel}>Cobrado Mes</span>
-                    <span className={styles.kpiPreviewVal}>
-                      {formatCurrency(c.stats.totalCollectedMonth)}
-                    </span>
-                  </div>
-                  <div className={styles.kpiPreviewItem}>
-                    <span className={styles.kpiPreviewLabel}>Capital en Calle</span>
-                    <span className={styles.kpiPreviewVal}>
-                      {formatCurrency(c.stats.capitalInStreet)}
-                    </span>
-                  </div>
-                  <div className={styles.kpiPreviewItem}>
-                    <span className={styles.kpiPreviewLabel}>Clientes / Cartera</span>
-                    <span className={styles.kpiPreviewVal}>
-                      {c.stats.clientsCount} Clientes
-                    </span>
-                  </div>
-                </div>
 
-                {/* Botones de Acción */}
-                <div className={styles.cardActions}>
-                  <button
-                    className={styles.btnViewDetail}
-                    onClick={() => setDetailCollectorId(c.user.id)}
-                  >
-                    <span>📊 Ver Cartera y Rendimiento</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6"/>
-                    </svg>
-                  </button>
-
-                  <div className={styles.secondaryActions}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {c.user.phone && (
-                        <>
-                          <a
-                            href={`https://wa.me/${c.user.phone.replace(/[^0-9]/g, '')}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={`${styles.btnContactMini} ${styles.btnWhatsapp}`}
-                            title="WhatsApp al Cobrador"
-                          >
-                            💬 WhatsApp
-                          </a>
+                  {isAdminOnly ? (
+                    <div className={styles.adminCardBody}>
+                      <p className={styles.adminDescText}>
+                        Titular de la cuenta y administración general del negocio.
+                      </p>
+                      <div className={styles.secondaryActions}>
+                        {c.user.phone && (
                           <a
                             href={`tel:${c.user.phone}`}
-                            className={`${styles.btnContactMini} ${styles.btnCall}`}
-                            title="Llamar al Cobrador"
+                            className={styles.btnCall}
+                            title="Llamar"
                           >
-                            📞 Llamar
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                            </svg>
+                            <span>Llamar</span>
                           </a>
-                        </>
-                      )}
+                        )}
+                        {c.user.id !== appUser?.id && (
+                          <button
+                            className="btn btn--ghost btn--sm"
+                            onClick={() => handleToggleActive(c.user)}
+                            style={{ fontSize: '0.72rem' }}
+                          >
+                            {c.user.is_active ? 'Pausar' : 'Activar'}
+                          </button>
+                        )}
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      {/* Ruta Asignada */}
+                      <div className={styles.routeText}>
+                        <span className={styles.routeLabel}>Ruta:</span>
+                        <span className={styles.routeName}>
+                          {c.assignedRoute
+                            ? `${c.assignedRoute.name} (${c.assignedRoute.zone || 'Ruta General'})`
+                            : 'Sin ruta fija asignada'}
+                        </span>
+                      </div>
 
-                    {c.user.id !== appUser?.id && (
-                      <button
-                        className="btn btn--ghost btn--sm"
-                        onClick={() => handleToggleActive(c.user)}
-                        style={{ fontSize: '0.72rem' }}
-                      >
-                        {c.user.is_active ? 'Pausar' : 'Activar'}
-                      </button>
-                    )}
-                  </div>
+                      {/* Grid 2x2 de Rendimiento Financiero */}
+                      <div className={styles.kpiPreviewGrid}>
+                        <div className={styles.kpiPreviewItem}>
+                          <span className={styles.kpiPreviewLabel}>Cobrado Hoy</span>
+                          <span className={`${styles.kpiPreviewVal} ${c.stats.totalCollectedToday > 0 ? styles.kpiPreviewValHighlight : ''}`}>
+                            {formatCurrency(c.stats.totalCollectedToday)}
+                          </span>
+                        </div>
+                        <div className={styles.kpiPreviewItem}>
+                          <span className={styles.kpiPreviewLabel}>Cobrado Mes</span>
+                          <span className={styles.kpiPreviewVal}>
+                            {formatCurrency(c.stats.totalCollectedMonth)}
+                          </span>
+                        </div>
+                        <div className={styles.kpiPreviewItem}>
+                          <span className={styles.kpiPreviewLabel}>Capital en Calle</span>
+                          <span className={styles.kpiPreviewVal}>
+                            {formatCurrency(c.stats.capitalInStreet)}
+                          </span>
+                        </div>
+                        <div className={styles.kpiPreviewItem}>
+                          <span className={styles.kpiPreviewLabel}>Clientes / Cartera</span>
+                          <span className={styles.kpiPreviewVal}>
+                            {c.stats.clientsCount} Clientes
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Botones de Acción */}
+                      <div className={styles.cardActions}>
+                        <button
+                          className={styles.btnViewDetail}
+                          onClick={() => setDetailCollectorId(c.user.id)}
+                        >
+                          <span>Ver Cartera y Rendimiento</span>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6"/>
+                          </svg>
+                        </button>
+
+                        <div className={styles.secondaryActions}>
+                          {c.user.phone && (
+                            <a
+                              href={`tel:${c.user.phone}`}
+                              className={styles.btnCall}
+                              title="Llamar al Cobrador"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                              </svg>
+                              <span>Llamar</span>
+                            </a>
+                          )}
+
+                          {c.user.id !== appUser?.id && (
+                            <button
+                              className="btn btn--ghost btn--sm"
+                              onClick={() => handleToggleActive(c.user)}
+                              style={{ fontSize: '0.72rem' }}
+                            >
+                              {c.user.is_active ? 'Pausar' : 'Activar'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )
       ) : (
         /* Pestaña Invitaciones */
         invitations.length === 0 ? (
           <div className={styles.empty}>
-            <span>✉️</span>
+            <div className={styles.emptyIcon}>
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            </div>
             <h3>Sin invitaciones pendientes</h3>
             <p>Invita a un cobrador con su correo electrónico para darle acceso al equipo.</p>
           </div>

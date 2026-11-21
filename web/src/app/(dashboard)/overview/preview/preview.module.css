@@ -439,9 +439,10 @@
   border-radius: 9999px;
 }
 
-.whatsappRemindBtn {
-  background-color: #25D366;
-  color: #FFFFFF;
+.remindBtn {
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid rgba(37, 99, 235, 0.2);
   text-decoration: none;
   font-size: 0.76rem;
   font-weight: 800;
@@ -454,8 +455,8 @@
   white-space: nowrap;
 }
 
-.whatsappRemindBtn:hover {
-  background-color: #20BA5A;
+.remindBtn:hover {
+  background-color: #DBEAFE;
   transform: translateY(-1px);
 }
 

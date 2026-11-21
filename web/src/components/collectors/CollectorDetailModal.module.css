@@ -100,23 +100,13 @@
   color: #2563EB;
 }
 
-.roleBadge {
+.roleText {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 6px;
-  letter-spacing: 0.03em;
-}
-
-.role_admin {
-  background: #FEF3C7;
-  color: #92400E;
-}
-
-.role_collector {
-  background: #E2E8F0;
-  color: #334155;
+  color: #475569;
+  letter-spacing: 0.04em;
 }
 
 .closeBtn {
@@ -142,7 +132,7 @@
 /* Route Banner */
 .routeBanner {
   background: #FFFFFF;
-  padding: 8px 20px;
+  padding: 10px 20px;
   border-bottom: 1px solid #E2E8F0;
   display: flex;
   align-items: center;
@@ -151,19 +141,24 @@
   font-size: 0.82rem;
 }
 
-.routeBadge {
-  display: inline-flex;
-  align-items: center;
+.routeText {
+  display: flex;
+  align-items: baseline;
   gap: 6px;
-  font-weight: 700;
   color: #0F172A;
 }
 
-.routeDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #3B82F6;
+.routeLabel {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #94A3B8;
+  letter-spacing: 0.05em;
+}
+
+.routeName {
+  font-weight: 700;
+  color: #0F172A;
 }
 
 .directActions {
@@ -185,20 +180,14 @@
   transition: all 120ms ease;
 }
 
-.btnWhatsapp {
-  background: #DCFCE7;
-  color: #15803D;
-  border: 1px solid rgba(22, 163, 74, 0.2);
-}
-
-.btnWhatsapp:hover {
-  background: #BBF7D0;
-}
-
 .btnCall {
   background: #EFF6FF;
   color: #1D4ED8;
   border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.btnCall:hover {
+  background: #DBEAFE;
 }
 
 .btnReassign {

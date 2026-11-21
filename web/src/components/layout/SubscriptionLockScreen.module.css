@@ -163,10 +163,10 @@
   gap: 10px;
 }
 
-.whatsappBtn {
+.contactSupportBtn {
   width: 100%;
-  background-color: #25D366;
-  color: #FFFFFF;
+  background-color: #0C2237;
+  color: #FFE600;
   text-decoration: none;
   font-family: var(--font-heading, sans-serif);
   font-weight: 800;
@@ -177,13 +177,13 @@
   align-items: center;
   justify-content: center;
   gap: 9px;
-  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
+  box-shadow: 0 4px 14px rgba(12, 34, 55, 0.25);
   transition: all 180ms ease;
   box-sizing: border-box;
 }
 
-.whatsappBtn:hover {
-  background-color: #20BA5A;
+.contactSupportBtn:hover {
+  background-color: #163654;
   transform: translateY(-1px);
 }
 

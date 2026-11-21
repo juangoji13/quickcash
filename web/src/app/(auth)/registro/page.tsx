@@ -245,7 +245,7 @@ export default function RegistroPage() {
 
               <div className={styles.fieldGroup}>
                 <label htmlFor="phone" className="input-label">
-                  Teléfono / WhatsApp
+                  Teléfono de Contacto
                 </label>
                 <input
                   id="phone"
