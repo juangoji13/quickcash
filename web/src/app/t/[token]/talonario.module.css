@@ -1,6 +1,6 @@
 /* ==============================================================================
  * QuickCash — Talonario Virtual (Tarjeta de Cuotas Digital)
- * Diseño Minimalista Puro — Exacto al Mockup del Usuario
+ * Diseño de Alta Fidelidad — Fiel al Mockup del Usuario
  * Colores: Navy #0C2237 / #172B43, Yellow #FEBF02 / #FFE600, Green #B8F6C5 / #06E267
  * ============================================================================== */
 
@@ -234,7 +234,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   position: relative;
   z-index: 2;
 }
@@ -405,6 +405,206 @@
   font-size: 0.82rem;
   font-weight: 600;
   color: #DC2626;
+}
+
+/* ==============================================================================
+ * Guía de Instalación en Pantalla (Diseño Acorde, Visual, Cero Emojis Feos)
+ * ============================================================================== */
+.guideContainer {
+  margin-top: 4px;
+  margin-bottom: 14px;
+  border-radius: 18px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+  transition: all 200ms ease;
+  position: relative;
+  z-index: 2;
+}
+
+.guideHeaderBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 10px;
+}
+
+.guideHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.guideAppIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #0C2237;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFE600;
+  font-family: var(--font-heading, sans-serif);
+  font-weight: 900;
+  font-size: 0.95rem;
+  letter-spacing: -0.03em;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(12, 34, 55, 0.15);
+}
+
+.guideHeaderText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.guideTitle {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #0C2237;
+  line-height: 1.2;
+}
+
+.guideSubtitle {
+  font-size: 0.73rem;
+  color: #656B81;
+  font-weight: 500;
+  margin-top: 2px;
+  line-height: 1.25;
+}
+
+.guideChevron {
+  font-size: 0.72rem;
+  color: #94A3B8;
+  flex-shrink: 0;
+}
+
+.guideBody {
+  padding: 0 14px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px dashed #E2E8F0;
+  padding-top: 12px;
+  animation: fadeIn 180ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Selector de Plataforma (Segmented Control sobrio) */
+.platformSelector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #EEF2F6;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.platformTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.platformTabActive {
+  background: #FFFFFF;
+  color: #0C2237;
+  box-shadow: 0 1px 3px rgba(12, 34, 55, 0.08);
+}
+
+.platformSvg {
+  flex-shrink: 0;
+}
+
+/* Pasos Visuales */
+.stepsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stepCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.stepBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #0C2237;
+  color: #FFE600;
+  font-family: var(--font-heading, sans-serif);
+  font-weight: 900;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0C2237;
+  line-height: 1.35;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.inlineActionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: #F1F5F9;
+  color: #0C2237;
+  vertical-align: middle;
+}
+
+.stepDesc {
+  font-size: 0.73rem;
+  color: #656B81;
+  line-height: 1.35;
 }
 
 /* Footer limpio */
