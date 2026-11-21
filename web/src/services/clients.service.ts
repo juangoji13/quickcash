@@ -6,7 +6,7 @@
  * ============================================ */
 
 import { db } from '@/lib/db';
-import { clients, loans, users, payments } from '@/lib/db/schema';
+import { clients, loans, users, payments, collection_routes } from '@/lib/db/schema';
 import { eq, or, ilike, desc, and, sql, inArray } from 'drizzle-orm';
 import type { Client, ClientWithLoans, RiskStatus } from '@/types';
 import { calculateRiskStatus as computeRiskStatus } from '@/lib/utils';
@@ -281,3 +281,102 @@ export async function searchClients(query: string, tenantId: string): Promise<Cl
     return [];
   }
 }
+
+/**
+ * Reasigna un cliente a otro cobrador de forma atómica.
+ * Actualiza:
+ * 1. clients.collector_id y clients.route_id
+ * 2. loans.collector_id para todos los préstamos activos del cliente
+ * 3. payments.collector_id para todas las cuotas pendientes no bloqueadas
+ */
+export async function reassignClientCollector(
+  clientId: string,
+  newCollectorId: string,
+  tenantId: string,
+  newRouteId?: string | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return await db.transaction(async (tx) => {
+      // 1. Validar cliente en tenant
+      const client = await tx.query.clients.findFirst({
+        where: and(eq(clients.id, clientId), eq(clients.tenant_id, tenantId)),
+      });
+      if (!client) {
+        return { success: false, error: 'Cliente no encontrado o no pertenece a tu cuenta.' };
+      }
+
+      // 2. Validar cobrador destino
+      const targetCollector = await tx.query.users.findFirst({
+        where: and(eq(users.id, newCollectorId), eq(users.tenant_id, tenantId)),
+      });
+      if (!targetCollector) {
+        return { success: false, error: 'El cobrador seleccionado no existe o no pertenece a tu equipo.' };
+      }
+
+      // 3. Determinar ruta destino
+      let targetRouteId = newRouteId;
+      if (targetRouteId === undefined) {
+        const collectorRoute = await tx.query.collection_routes.findFirst({
+          where: and(
+            eq(collection_routes.tenant_id, tenantId),
+            eq(collection_routes.collector_id, newCollectorId)
+          ),
+        });
+        targetRouteId = collectorRoute ? collectorRoute.id : (client.route_id || null);
+      }
+
+      // 4. Actualizar cliente
+      await tx.update(clients)
+        .set({
+          collector_id: newCollectorId,
+          route_id: targetRouteId || null,
+          updated_at: new Date(),
+        })
+        .where(and(eq(clients.id, clientId), eq(clients.tenant_id, tenantId)));
+
+      // 5. Localizar préstamos activos del cliente
+      const activeLoans = await tx
+        .select({ id: loans.id })
+        .from(loans)
+        .where(
+          and(
+            eq(loans.client_id, clientId),
+            eq(loans.tenant_id, tenantId),
+            eq(loans.status, 'active')
+          )
+        );
+
+      if (activeLoans.length > 0) {
+        const loanIds = activeLoans.map((l) => l.id);
+
+        // Actualizar cobrador en préstamos activos
+        await tx.update(loans)
+          .set({
+            collector_id: newCollectorId,
+            updated_at: new Date(),
+          })
+          .where(inArray(loans.id, loanIds));
+
+        // Actualizar cobrador en cuotas pendientes y desbloqueadas
+        await tx.update(payments)
+          .set({
+            collector_id: newCollectorId,
+          })
+          .where(
+            and(
+              inArray(payments.loan_id, loanIds),
+              eq(payments.tenant_id, tenantId),
+              eq(payments.is_locked, false),
+              sql`${payments.status} != 'paid'`
+            )
+          );
+      }
+
+      return { success: true };
+    });
+  } catch (err: any) {
+    console.error('Error al reasignar cobrador del cliente:', err);
+    return { success: false, error: err.message || 'Error inesperado al reasignar cobrador' };
+  }
+}
+

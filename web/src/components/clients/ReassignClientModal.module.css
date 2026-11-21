@@ -1,0 +1,148 @@
+.reassignForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.clientSummary {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.clientName {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+.clientDoc {
+  font-size: 0.8rem;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.currentCollectorBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #334155;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.currentCollectorHighlight {
+  font-weight: 700;
+  color: #2563EB;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1E293B;
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+}
+
+.collectorSelect {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #CBD5E1;
+  background-color: #FFFFFF;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0F172A;
+  outline: none;
+  transition: all 120ms ease;
+  font-family: inherit;
+}
+
+.collectorSelect:focus {
+  border-color: var(--color-safety-yellow, #F1C40F);
+  box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.25);
+}
+
+.transferNote {
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #1E40AF;
+  line-height: 1.4;
+}
+
+.errorBanner {
+  background-color: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  color: #B91C1C;
+  font-weight: 600;
+}
+
+.actionsRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.cancelBtn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: transparent;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.cancelBtn:hover {
+  background: #F1F5F9;
+}
+
+.submitBtn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-asphalt, #2C3E50);
+  color: var(--color-safety-yellow, #F1C40F);
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 120ms ease;
+}
+
+.submitBtn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

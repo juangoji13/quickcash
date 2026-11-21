@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { getCollectorDetail } from '@/services/collectors.service';
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils';
-import type { CollectorFullDetail } from '@/types';
+import type { CollectorFullDetail, CollectorClientItem } from '@/types';
+import ReassignClientModal from '@/components/clients/ReassignClientModal';
 import styles from './CollectorDetailModal.module.css';
 
 interface CollectorDetailModalProps {
@@ -25,6 +26,7 @@ export default function CollectorDetailModal({
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('clients');
   const [clientSearch, setClientSearch] = useState('');
+  const [reassignTarget, setReassignTarget] = useState<CollectorClientItem | null>(null);
 
   useEffect(() => {
     if (isOpen && collectorId && tenantId) {
@@ -230,24 +232,35 @@ export default function CollectorDetailModal({
                         </div>
                       )}
 
-                      {c.phone && (
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
-                          <a
-                            href={`https://wa.me/${c.phone.replace(/[^0-9]/g, '')}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={`${styles.actionBtnMini} ${styles.btnWhatsapp}`}
-                          >
-                            💬 WhatsApp Cliente
-                          </a>
-                          <a
-                            href={`tel:${c.phone}`}
-                            className={`${styles.actionBtnMini} ${styles.btnCall}`}
-                          >
-                            📞 Llamar
-                          </a>
-                        </div>
-                      )}
+                      {/* Acciones directas del cliente: Reasignar + Contacto */}
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 6, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className={`${styles.actionBtnMini} ${styles.btnReassign}`}
+                          onClick={() => setReassignTarget(c)}
+                          title="Reasignar a otro cobrador"
+                        >
+                          🔄 Reasignar Cobrador
+                        </button>
+                        {c.phone && (
+                          <>
+                            <a
+                              href={`https://wa.me/${c.phone.replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`${styles.actionBtnMini} ${styles.btnWhatsapp}`}
+                            >
+                              💬 WhatsApp
+                            </a>
+                            <a
+                              href={`tel:${c.phone}`}
+                              className={`${styles.actionBtnMini} ${styles.btnCall}`}
+                            >
+                              📞 Llamar
+                            </a>
+                          </>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -354,6 +367,25 @@ export default function CollectorDetailModal({
           )}
         </div>
       </div>
+
+      {/* Modal de Reasignación Rápida */}
+      <ReassignClientModal
+        isOpen={!!reassignTarget}
+        onClose={() => setReassignTarget(null)}
+        client={reassignTarget ? {
+          id: reassignTarget.id,
+          full_name: reassignTarget.full_name,
+          document_id: reassignTarget.document_id,
+          collector_id: collectorId,
+        } : null}
+        currentCollectorName={data?.user.full_name}
+        tenantId={tenantId || ''}
+        onSuccess={() => {
+          if (collectorId && tenantId) {
+            getCollectorDetail(collectorId, tenantId).then(setData);
+          }
+        }}
+      />
     </div>
   );
 }

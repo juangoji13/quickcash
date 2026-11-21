@@ -3,10 +3,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks';
 import { getClients, createClient, deleteClient, searchClients } from '@/services/clients.service';
+import { getCollectors } from '@/services/collectors.service';
 import { getLoansByClientId } from '@/services/loans.service';
 import { formatDate, getRiskBadgeClass, getRiskLabel, getInitials, formatCurrency } from '@/lib/utils';
 import type { Client } from '@/types';
 import { ConfirmModal, AlertModal } from '@/components/ui/Modal';
+import ReassignClientModal from '@/components/clients/ReassignClientModal';
 import styles from './clients.module.css';
 
 export default function ClientsPage() {
@@ -23,6 +25,8 @@ export default function ClientsPage() {
   // Modals state
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
+  const [reassignClientTarget, setReassignClientTarget] = useState<Client | null>(null);
+  const [collectorsMap, setCollectorsMap] = useState<Record<string, string>>({});
 
   // Form state
   const [formData, setFormData] = useState({
@@ -38,9 +42,22 @@ export default function ClientsPage() {
   const loadClients = useCallback(async () => {
     if (!appUser?.tenant_id) return;
     setLoading(true);
-    const data = await getClients(appUser.tenant_id);
-    setClients(data);
-    setLoading(false);
+    try {
+      const [data, collectorsList] = await Promise.all([
+        getClients(appUser.tenant_id),
+        getCollectors(appUser.tenant_id),
+      ]);
+      setClients(data);
+      const map: Record<string, string> = {};
+      for (const col of collectorsList) {
+        map[col.id] = col.full_name;
+      }
+      setCollectorsMap(map);
+    } catch (err) {
+      console.error('Error loading clients or collectors:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [appUser?.tenant_id]);
 
   useEffect(() => {
@@ -318,6 +335,9 @@ export default function ClientsPage() {
                         <span>{client.address}</span>
                       </div>
                     )}
+                    <div className={styles.collectorTag}>
+                      <span>👤 {client.collector_id ? (collectorsMap[client.collector_id] || 'Cobrador asignado') : 'Sin cobrador asignado'}</span>
+                    </div>
 
                     {/* Fila 3: Teléfono y Acciones Táctiles Directas */}
                     <div className={styles.clientCardFooter} onClick={(e) => e.stopPropagation()}>
@@ -330,6 +350,23 @@ export default function ClientsPage() {
                       </div>
 
                       <div className={styles.clientQuickActions}>
+                        <button
+                          type="button"
+                          className={styles.quickActionBtnReassign}
+                          title="Reasignar Cobrador"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReassignClientTarget(client);
+                          }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                          </svg>
+                          <span>Reasignar</span>
+                        </button>
+
                         {cleanPhone && (
                           <>
                             <a
@@ -382,6 +419,12 @@ export default function ClientsPage() {
                 <p className={styles.pageSubtitle}>{selectedClient.full_name} · CC {selectedClient.document_id}</p>
               </div>
               <div className={styles.headerBtns} style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  className="btn btn--secondary" 
+                  onClick={() => setReassignClientTarget(selectedClient)}
+                >
+                  🔄 Reasignar Cobrador
+                </button>
                 <button className="btn btn--danger" onClick={() => handleDelete(selectedClient.id, selectedClient.full_name)}>
                   Eliminar Cliente
                 </button>
@@ -457,6 +500,19 @@ export default function ClientsPage() {
         title="Error"
         message={errorAlert}
         isError={true}
+      />
+      <ReassignClientModal
+        isOpen={!!reassignClientTarget}
+        onClose={() => setReassignClientTarget(null)}
+        client={reassignClientTarget}
+        currentCollectorName={reassignClientTarget?.collector_id ? collectorsMap[reassignClientTarget.collector_id] : undefined}
+        tenantId={appUser?.tenant_id || ''}
+        onSuccess={() => {
+          loadClients();
+          if (selectedClient && reassignClientTarget && selectedClient.id === reassignClientTarget.id) {
+            setSelectedClient(prev => prev ? { ...prev, collector_id: reassignClientTarget.collector_id } : null);
+          }
+        }}
       />
     </>
   );

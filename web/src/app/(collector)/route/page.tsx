@@ -65,6 +65,10 @@ export default function CollectorRoutePage() {
   // Navegación de pestañas: Pendientes, Cobrados, Novedades
   const [activeTab, setActiveTab] = useState<'pending' | 'collected' | 'incidents'>('pending');
 
+  // Filtros Rápidos y Búsqueda en Ruta Móvil (Sprint Prioridad 1)
+  const [routeSearch, setRouteSearch] = useState('');
+  const [routeRiskFilter, setRouteRiskFilter] = useState<'all' | 'red' | 'yellow' | 'green'>('all');
+
   // Cliente actualmente enfocado para la Thumb-Zone
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
@@ -244,6 +248,38 @@ export default function CollectorRoutePage() {
       (c) => processedMap[c.payment_id]?.status === 'missed'
     );
   }, [checklist, processedMap]);
+
+  // Filtro compuesto por búsqueda y semáforo de riesgo
+  const filterList = useCallback((list: ChecklistItem[]) => {
+    let result = list;
+
+    if (routeRiskFilter !== 'all') {
+      result = result.filter((item) => item.risk_status === routeRiskFilter);
+    }
+
+    if (routeSearch.trim()) {
+      const q = routeSearch.toLowerCase().trim();
+      result = result.filter((item) =>
+        item.client_name.toLowerCase().includes(q) ||
+        item.document_id.includes(q) ||
+        (item.address && item.address.toLowerCase().includes(q)) ||
+        (item.phone && item.phone.includes(q))
+      );
+    }
+
+    return result;
+  }, [routeRiskFilter, routeSearch]);
+
+  const displayedPendingClients = useMemo(() => filterList(pendingClients), [filterList, pendingClients]);
+  const displayedCollectedClients = useMemo(() => filterList(collectedClients), [filterList, collectedClients]);
+  const displayedIncidentClients = useMemo(() => filterList(incidentClients), [filterList, incidentClients]);
+
+  const pendingRiskCounts = useMemo(() => ({
+    all: pendingClients.length,
+    red: pendingClients.filter((c) => c.risk_status === 'red').length,
+    yellow: pendingClients.filter((c) => c.risk_status === 'yellow').length,
+    green: pendingClients.filter((c) => c.risk_status === 'green').length,
+  }), [pendingClients]);
 
   // Selección automática del siguiente cliente pendiente
   const advanceToNextPending = useCallback(
@@ -873,6 +909,92 @@ export default function CollectorRoutePage() {
         </button>
       </nav>
 
+      {/* Barra de Búsqueda y Filtros Rápidos (Sprint Prioridad 1) */}
+      <div className={styles.quickFilterBar}>
+        <div className={styles.searchBox}>
+          <span className={styles.searchIcon}>🔍</span>
+          <input
+            type="text"
+            className={styles.routeSearchInput}
+            placeholder="Buscar por nombre, cédula o dirección..."
+            value={routeSearch}
+            onChange={(e) => setRouteSearch(e.target.value)}
+          />
+          {routeSearch && (
+            <button
+              type="button"
+              className={styles.clearSearchBtn}
+              onClick={() => {
+                setRouteSearch('');
+                triggerHaptic(10);
+              }}
+              aria-label="Limpiar búsqueda"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className={styles.filterPillsRow}>
+          <button
+            type="button"
+            className={`${styles.filterPill} ${routeRiskFilter === 'all' ? styles.filterPillActive : ''}`}
+            onClick={() => {
+              setRouteRiskFilter('all');
+              triggerHaptic(15);
+            }}
+          >
+            <span>Todos</span>
+            <span className={styles.pillCount}>
+              {activeTab === 'pending'
+                ? pendingRiskCounts.all
+                : activeTab === 'collected'
+                ? collectedClients.length
+                : incidentClients.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.filterPill} ${routeRiskFilter === 'red' ? styles.filterPillActiveRed : ''}`}
+            onClick={() => {
+              setRouteRiskFilter(routeRiskFilter === 'red' ? 'all' : 'red');
+              triggerHaptic(15);
+            }}
+          >
+            <span className={styles.riskDotMiniRed} />
+            <span>En Mora</span>
+            {activeTab === 'pending' && <span className={styles.pillCountRed}>{pendingRiskCounts.red}</span>}
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.filterPill} ${routeRiskFilter === 'yellow' ? styles.filterPillActiveYellow : ''}`}
+            onClick={() => {
+              setRouteRiskFilter(routeRiskFilter === 'yellow' ? 'all' : 'yellow');
+              triggerHaptic(15);
+            }}
+          >
+            <span className={styles.riskDotMiniYellow} />
+            <span>Alerta</span>
+            {activeTab === 'pending' && <span className={styles.pillCountYellow}>{pendingRiskCounts.yellow}</span>}
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.filterPill} ${routeRiskFilter === 'green' ? styles.filterPillActiveGreen : ''}`}
+            onClick={() => {
+              setRouteRiskFilter(routeRiskFilter === 'green' ? 'all' : 'green');
+              triggerHaptic(15);
+            }}
+          >
+            <span className={styles.riskDotMiniGreen} />
+            <span>Al Día</span>
+            {activeTab === 'pending' && <span className={styles.pillCountGreen}>{pendingRiskCounts.green}</span>}
+          </button>
+        </div>
+      </div>
+
       {/* Contenido según pestaña activa */}
       <main className={styles.clientList}>
         {activeTab === 'pending' && (
@@ -885,8 +1007,26 @@ export default function CollectorRoutePage() {
                   No hay cobros pendientes por realizar en esta jornada.
                 </div>
               </div>
+            ) : displayedPendingClients.length === 0 ? (
+              <div className={styles.emptyState}>
+                <div style={{ fontSize: '1.8rem' }}>🔍</div>
+                <div className={styles.emptyTitle}>Sin coincidencias</div>
+                <div className={styles.emptyText}>No hay clientes pendientes que coincidan con el filtro actual.</div>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  style={{ marginTop: 8 }}
+                  onClick={() => {
+                    setRouteSearch('');
+                    setRouteRiskFilter('all');
+                    triggerHaptic(15);
+                  }}
+                >
+                  Ver todos los pendientes
+                </button>
+              </div>
             ) : (
-              pendingClients.map((client) => {
+              displayedPendingClients.map((client) => {
                 const isSelected = client.client_id === selectedClientId;
                 return (
                   <article
@@ -968,8 +1108,14 @@ export default function CollectorRoutePage() {
                 <div className={styles.emptyTitle}>Sin Cobros Registrados</div>
                 <div className={styles.emptyText}>Los pagos cobrados hoy aparecerán listados aquí.</div>
               </div>
+            ) : displayedCollectedClients.length === 0 ? (
+              <div className={styles.emptyState}>
+                <div style={{ fontSize: '1.8rem' }}>🔍</div>
+                <div className={styles.emptyTitle}>Sin coincidencias</div>
+                <div className={styles.emptyText}>No hay cobros que coincidan con el filtro actual.</div>
+              </div>
             ) : (
-              collectedClients.map((client) => {
+              displayedCollectedClients.map((client) => {
                 const rec = processedMap[client.payment_id];
                 return (
                   <article key={client.client_id} className={`${styles.clientCard} ${styles.clientCardPaid}`}>
@@ -1017,8 +1163,14 @@ export default function CollectorRoutePage() {
                 <div className={styles.emptyTitle}>Sin Novedades</div>
                 <div className={styles.emptyText}>Los clientes que no pagaron hoy se registrarán aquí.</div>
               </div>
+            ) : displayedIncidentClients.length === 0 ? (
+              <div className={styles.emptyState}>
+                <div style={{ fontSize: '1.8rem' }}>🔍</div>
+                <div className={styles.emptyTitle}>Sin coincidencias</div>
+                <div className={styles.emptyText}>No hay novedades que coincidan con el filtro actual.</div>
+              </div>
             ) : (
-              incidentClients.map((client) => {
+              displayedIncidentClients.map((client) => {
                 const rec = processedMap[client.payment_id];
                 return (
                   <article key={client.client_id} className={`${styles.clientCard} ${styles.clientCardMissed}`}>
