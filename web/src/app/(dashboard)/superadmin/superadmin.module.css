@@ -1,33 +1,40 @@
-/* ============================================
- * QuickCash — SuperAdmin Portal Styles
- * Identidad 'Metal y Asfalto' (#2C3E50 / #F1C40F)
- * ============================================ */
+/* ==============================================================================
+ * QuickCash — Panel de Dirección del Negocio & Plataforma (Estilo Talonario Digital)
+ * Tokens: Deep Navy (#0C2237), QuickCash Gold (#FFE600), Mint Green (#06E267)
+ * ============================================================================== */
 
 .page {
-  animation: fadeIn var(--transition-base, 0.2s) ease-out;
+  animation: fadeIn 0.25s ease-out;
+  padding-bottom: 40px;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header & Master Billing Switch */
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--space-6, 24px);
-  gap: var(--space-4, 16px);
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 .headerTitleWrapper {
   display: flex;
   align-items: center;
-  gap: var(--space-3, 12px);
+  gap: 10px;
   margin-bottom: 4px;
 }
 
 .title {
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-  font-size: var(--text-2xl, 24px);
-  font-weight: 800;
-  color: var(--color-asphalt, #2C3E50);
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: #0C2237;
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -36,106 +43,262 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background-color: var(--color-asphalt, #2C3E50);
-  color: var(--color-safety-yellow, #F1C40F);
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-  font-size: 11px;
-  font-weight: 800;
+  background-color: #0C2237;
+  color: #FFE600;
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm, 4px);
-  border: 1px solid rgba(241, 196, 15, 0.3);
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(12, 34, 55, 0.12);
 }
 
 .subtitle {
-  font-size: var(--text-sm, 14px);
-  color: var(--color-gray-400, #7F8C8D);
+  font-size: 0.88rem;
+  color: #656B81;
   margin: 0;
+  font-weight: 500;
 }
 
-.headerActions {
+/* Master Billing Switch Card */
+.masterBillingCard {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
-  gap: var(--space-3, 12px);
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(12, 34, 55, 0.04);
 }
 
-/* ============================================
- * KPI Grid — Global Cross-Tenant Metrics
- * ============================================ */
-.kpiGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-4, 16px);
-  margin-bottom: var(--space-6, 24px);
-}
-
-@media (max-width: 1024px) {
-  .kpiGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .kpiGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.kpiCard {
-  background-color: var(--color-card-white, #FFFFFF);
-  border-radius: var(--radius-md, 8px);
-  padding: var(--space-5, 20px);
-  box-shadow: var(--shadow-card, 0 2px 8px rgba(44, 62, 80, 0.08));
-  border: 1px solid rgba(44, 62, 80, 0.06);
-  border-bottom: 4px solid var(--kpi-accent, var(--color-gray-200));
+.masterBillingInfo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  text-align: right;
+}
+
+.masterBillingLabel {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0C2237;
+}
+
+.masterBillingStatus {
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.masterBillingStatusActive {
+  color: #0B6A30;
+}
+
+.masterBillingStatusFree {
+  color: #64748B;
+}
+
+/* Toggle Switch Component */
+.switchBtn {
+  width: 48px;
+  height: 26px;
+  border-radius: 9999px;
+  background-color: #CBD5E1;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 200ms ease;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.switchBtnActive {
+  background-color: #0C2237;
+}
+
+.switchKnob {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(0);
+}
+
+.switchBtnActive .switchKnob {
+  transform: translateX(22px);
+  background-color: #FFE600;
+}
+
+/* ==============================================================================
+ * Hero Cockpit (Dark Navy #0C2237 + QuickCash Yellow #FFE600)
+ * ============================================================================== */
+.heroCockpit {
+  background-color: #0C2237;
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin-bottom: 22px;
+  display: grid;
+  grid-template-columns: 1.1fr 1px 1.2fr 1px 0.9fr 1px 1.3fr;
+  align-items: center;
+  box-shadow: 0 8px 30px rgba(12, 34, 55, 0.15);
   position: relative;
   overflow: hidden;
-  transition: transform var(--transition-base, 0.2s), box-shadow var(--transition-base, 0.2s);
 }
 
-.kpiCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md, 0 4px 12px rgba(44, 62, 80, 0.12));
+.heroDivider {
+  width: 1px;
+  height: 48px;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.kpiLabel {
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-  font-size: 11px;
+.heroCol {
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+}
+
+.heroCol:first-child {
+  padding-left: 0;
+}
+
+.heroCol:last-child {
+  padding-right: 0;
+}
+
+.heroLabel {
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--color-gray-400, #7F8C8D);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: #94A3B8;
+  margin-bottom: 4px;
 }
 
-.kpiValue {
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-  font-size: var(--text-2xl, 24px);
-  font-weight: 800;
-  color: var(--color-asphalt, #2C3E50);
+.heroValGold {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.65rem;
+  font-weight: 900;
+  color: #FFE600;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
-  margin-top: 2px;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
 }
 
-.kpiSub {
-  font-size: var(--text-xs, 12px);
-  color: var(--color-gray-300, #95A5A6);
+.heroValWhite {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.65rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.heroValGreen {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.65rem;
+  font-weight: 900;
+  color: #06E267;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.heroSub {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #CBD5E1;
+}
+
+.censusRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin-top: 4px;
 }
 
-/* ============================================
- * Toolbar — Search & Filters
- * ============================================ */
+.censusItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.censusVal {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.censusTag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+@media (max-width: 1024px) {
+  .heroCockpit {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+  }
+  .heroDivider {
+    display: none;
+  }
+  .heroCol {
+    padding: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .heroCockpit {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+/* ==============================================================================
+ * Navigation Tabs & Search Toolbar
+ * ============================================================================== */
+.tabsRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.tabBtn {
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid #E2E8F0;
+  background-color: #FFFFFF;
+  color: #64748B;
+  transition: all 160ms ease;
+}
+
+.tabBtnActive {
+  background-color: #0C2237;
+  color: #FFE600;
+  border-color: #0C2237;
+  box-shadow: 0 4px 12px rgba(12, 34, 55, 0.12);
+}
+
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-4, 16px);
-  margin-bottom: var(--space-4, 16px);
+  gap: 14px;
+  margin-bottom: 18px;
   flex-wrap: wrap;
 }
 
@@ -143,68 +306,323 @@
   position: relative;
   flex: 1;
   min-width: 240px;
-  max-width: 420px;
+  max-width: 440px;
 }
 
 .searchIcon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--color-gray-300, #95A5A6);
-  pointer-events: none;
+  color: #94A3B8;
 }
 
 .searchInput {
   width: 100%;
-  padding-left: 36px;
-  padding-right: 12px;
-  height: 40px;
-  font-size: var(--text-sm, 14px);
+  padding: 10px 14px 10px 40px;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  background-color: #FFFFFF;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #0C2237;
+  outline: none;
+  transition: border-color 150ms ease;
+  box-sizing: border-box;
 }
 
-.filterTabs {
+.searchInput:focus {
+  border-color: #0C2237;
+}
+
+.filterGroup {
   display: flex;
-  background-color: var(--color-gray-100, #F4F6F7);
+  background-color: #EEF2F6;
   padding: 3px;
-  border-radius: var(--radius-sm, 4px);
-  border: 1px solid rgba(44, 62, 80, 0.08);
+  border-radius: 10px;
+  gap: 2px;
 }
 
-.filterTab {
-  background: none;
-  border: none;
+.filterBtn {
   padding: 6px 14px;
-  font-size: var(--text-xs, 12px);
-  font-weight: 600;
-  color: var(--color-gray-400, #7F8C8D);
-  border-radius: var(--radius-sm, 4px);
-  cursor: pointer;
-  transition: all var(--transition-fast, 0.15s);
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-}
-
-.filterTabActive {
-  background-color: var(--color-card-white, #FFFFFF);
-  color: var(--color-asphalt, #2C3E50);
-  box-shadow: 0 1px 3px rgba(44, 62, 80, 0.1);
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
   font-weight: 700;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 150ms ease;
 }
 
-/* ============================================
- * Tenants Table Card
- * ============================================ */
+.filterBtnActive {
+  background-color: #FFFFFF;
+  color: #0C2237;
+  box-shadow: 0 1px 3px rgba(12, 34, 55, 0.08);
+}
+
+/* ==============================================================================
+ * Prestamistas Cards Stack (SaaS Executive View)
+ * ============================================================================== */
+.tenantsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tenantCard {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(12, 34, 55, 0.03);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  flex-wrap: wrap;
+}
+
+.tenantCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(12, 34, 55, 0.06);
+}
+
+.tenantMain {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 240px;
+  flex: 1;
+}
+
+.tenantLogo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #0C2237;
+  color: #FFE600;
+  font-family: var(--font-heading, sans-serif);
+  font-weight: 900;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(12, 34, 55, 0.1);
+}
+
+.tenantInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tenantNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tenantName {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #0C2237;
+  line-height: 1.2;
+}
+
+.tenantAdmin {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #656B81;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.whatsappLink {
+  color: #25D366;
+  text-decoration: none;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.whatsappLink:hover {
+  text-decoration: underline;
+}
+
+.tenantStats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 10px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.statVal {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #0C2237;
+  font-variant-numeric: tabular-nums;
+}
+
+.statTag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+/* Subscription Box inside Tenant Card */
+.billingBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 8px 14px;
+}
+
+.billingText {
+  display: flex;
+  flex-direction: column;
+}
+
+.billingTitle {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.badgeActive {
+  background-color: #DDFCEA;
+  color: #0B6A30;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badgeGrace {
+  background-color: #FEF3C7;
+  color: #B45309;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badgeLocked {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badgeFree {
+  background-color: #F1F5F9;
+  color: #64748B;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+/* Actions inside Tenant Card */
+.tenantActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payBtn {
+  background-color: #0C2237;
+  color: #FFE600;
+  border: none;
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.payBtn:hover {
+  background-color: #163654;
+  transform: translateY(-1px);
+}
+
+.testLockBtn {
+  background-color: transparent;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+.testLockBtn:hover {
+  background-color: #FEF2F2;
+}
+
+.unlockBtn {
+  background-color: #DDFCEA;
+  color: #0B6A30;
+  border: 1px solid #86EFAC;
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 7px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+.unlockBtn:hover {
+  background-color: #BBF7D0;
+}
+
+/* ==============================================================================
+ * Users Directory Table
+ * ============================================================================== */
 .tableCard {
-  background-color: var(--color-card-white, #FFFFFF);
-  border-radius: var(--radius-md, 8px);
-  border: 1px solid rgba(44, 62, 80, 0.08);
-  box-shadow: var(--shadow-card, 0 2px 8px rgba(44, 62, 80, 0.08));
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
   overflow: hidden;
-}
-
-.tableResponsive {
-  width: 100%;
-  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(12, 34, 55, 0.03);
 }
 
 .table {
@@ -215,23 +633,21 @@
 
 .table th {
   background-color: #F8FAFC;
-  padding: 14px 16px;
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-gray-400, #7F8C8D);
+  padding: 12px 18px;
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #64748B;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid rgba(44, 62, 80, 0.08);
-  white-space: nowrap;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #E2E8F0;
 }
 
 .table td {
-  padding: 16px;
-  border-bottom: 1px solid rgba(44, 62, 80, 0.05);
-  font-size: var(--text-sm, 14px);
-  vertical-align: middle;
-  font-variant-numeric: tabular-nums;
+  padding: 14px 18px;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 0.85rem;
+  color: #0C2237;
 }
 
 .table tr:last-child td {
@@ -239,200 +655,52 @@
 }
 
 .table tr:hover td {
-  background-color: #FAFCFD;
+  background-color: #F8FAFC;
 }
 
-/* Cell content */
-.tenantInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.tenantName {
-  font-weight: 700;
-  color: var(--color-asphalt, #2C3E50);
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-}
-
-.tenantMeta {
-  font-size: var(--text-xs, 12px);
-  color: var(--color-gray-400, #7F8C8D);
+.userCell {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
 }
 
-.currencyTag {
-  background: var(--color-gray-100, #F4F6F7);
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-weight: 600;
-  font-size: 10px;
-}
-
-.adminInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.adminName {
-  font-weight: 600;
-  color: var(--color-gray-500, #34495E);
-}
-
-.adminHandle {
-  font-size: var(--text-xs, 12px);
-  color: #D68910;
-  font-weight: 600;
-}
-
-.adminEmail {
-  font-size: var(--text-xs, 12px);
-  color: var(--color-gray-300, #95A5A6);
-}
-
-.statusBadgeActive {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: var(--text-xs, 12px);
-  font-weight: 700;
-  background-color: rgba(39, 174, 96, 0.12);
-  color: #27AE60;
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-}
-
-.statusBadgeSuspended {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: var(--text-xs, 12px);
-  font-weight: 700;
-  background-color: rgba(231, 76, 60, 0.12);
-  color: #E74C3C;
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-}
-
-.statusDot {
-  width: 6px;
-  height: 6px;
+.userAvatar {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: currentColor;
-}
-
-.statNum {
-  font-weight: 700;
-  color: var(--color-asphalt, #2C3E50);
-  font-variant-numeric: tabular-nums;
-}
-
-.actionsCell {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.suspendBtn {
-  background-color: transparent;
-  color: #C0392B;
-  border: 1px solid rgba(192, 57, 43, 0.3);
-  padding: 6px 12px;
-  border-radius: var(--radius-sm, 4px);
-  font-size: var(--text-xs, 12px);
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition-fast, 0.15s);
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-}
-
-.suspendBtn:hover {
-  background-color: #C0392B;
-  color: #FFFFFF;
-}
-
-.reactivateBtn {
-  background-color: #27AE60;
-  color: #FFFFFF;
-  border: 1px solid #27AE60;
-  padding: 6px 12px;
-  border-radius: var(--radius-sm, 4px);
-  font-size: var(--text-xs, 12px);
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition-fast, 0.15s);
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-}
-
-.reactivateBtn:hover {
-  background-color: #219653;
-  border-color: #219653;
-}
-
-.emptyState {
-  padding: var(--space-12, 48px) var(--space-6, 24px);
-  text-align: center;
-  color: var(--color-gray-400, #7F8C8D);
-}
-
-.emptyTitle {
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-  font-size: var(--text-base, 16px);
-  font-weight: 700;
-  color: var(--color-asphalt, #2C3E50);
-  margin-top: 12px;
-}
-
-/* ============================================
- * Restricted Access Screen
- * ============================================ */
-.restrictedPage {
-  min-height: 60vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-6, 24px);
-}
-
-.restrictedCard {
-  background-color: var(--color-card-white, #FFFFFF);
-  border-radius: var(--radius-lg, 12px);
-  padding: var(--space-8, 32px);
-  max-width: 480px;
-  width: 100%;
-  text-align: center;
-  box-shadow: var(--shadow-card, 0 2px 8px rgba(44, 62, 80, 0.08));
-  border: 1px solid rgba(44, 62, 80, 0.08);
-  border-top: 4px solid var(--color-safety-yellow, #F1C40F);
-}
-
-.restrictedIcon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto var(--space-4, 16px);
-  border-radius: 50%;
-  background: rgba(241, 196, 15, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-asphalt, #2C3E50);
-}
-
-.restrictedTitle {
-  font-family: var(--font-heading, 'Rubik', sans-serif);
-  font-size: var(--text-xl, 20px);
+  background-color: #0C2237;
+  color: #FFE600;
   font-weight: 800;
-  color: var(--color-asphalt, #2C3E50);
-  margin-bottom: var(--space-2, 8px);
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.restrictedDesc {
-  font-size: var(--text-sm, 14px);
-  color: var(--color-gray-400, #7F8C8D);
-  line-height: 1.5;
-  margin-bottom: var(--space-6, 24px);
+.roleBadgeAdmin {
+  background-color: #FEF3C7;
+  color: #B45309;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 9999px;
+}
+
+.roleBadgeCollector {
+  background-color: #E0E7FF;
+  color: #3730A3;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 9999px;
+}
+
+.roleBadgeSuper {
+  background-color: #0C2237;
+  color: #FFE600;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 9999px;
 }

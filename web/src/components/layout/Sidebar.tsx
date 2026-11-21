@@ -58,7 +58,7 @@ export default function Sidebar() {
         <div className={styles.logoText}>
           <span className={styles.logoName}>Quick<span style={{ color: 'var(--color-safety-yellow)' }}>Cash</span></span>
           <span className={styles.logoTag}>
-            {isSuperAdmin ? 'Consola Global' : 'Plataforma de Préstamos'}
+            {isSuperAdmin ? 'Dirección General' : 'Plataforma de Préstamos'}
           </span>
         </div>
       </div>
@@ -67,13 +67,13 @@ export default function Sidebar() {
         {isSuperAdmin ? (
           <>
             <div className={styles.navSection}>
-              <span className={styles.sectionLabel} style={{ color: 'var(--color-safety-yellow)' }}>PLATAFORMA GLOBAL</span>
+              <span className={styles.sectionLabel} style={{ color: 'var(--color-safety-yellow)' }}>TU NEGOCIO</span>
               <Link
                 href="/superadmin"
                 className={`${styles.navItem} ${pathname === '/superadmin' ? styles.navItemActive : ''}`}
               >
                 <span className={styles.navIcon} style={{ color: 'var(--color-safety-yellow)' }}><IconSuperAdmin /></span>
-                <span className={styles.navLabel} style={{ fontWeight: 700, color: 'var(--color-safety-yellow)' }}>Control SuperAdmin</span>
+                <span className={styles.navLabel} style={{ fontWeight: 700, color: 'var(--color-safety-yellow)' }}>Panel del Negocio</span>
               </Link>
             </div>
             <div className={styles.navSection}>

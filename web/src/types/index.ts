@@ -207,6 +207,24 @@ export interface CollectionRouteWithDetails extends CollectionRoute {
 
 /* ---- SuperAdmin & Registration Models ---- */
 
+export interface TenantBillingInfo {
+  enabled: boolean;
+  monthly_fee: number;
+  status: 'active' | 'grace' | 'locked';
+  expires_at: string | null;
+  days_left: number;
+  is_locked: boolean;
+  last_payment_date?: string | null;
+  last_payment_amount?: number | null;
+}
+
+export interface PlatformBillingSettings {
+  is_billing_enabled: boolean;
+  default_monthly_fee: number;
+  grace_days: number;
+  contact_phone: string;
+}
+
 export interface SuperAdminTenant {
   id: string;
   name: string;
@@ -225,6 +243,9 @@ export interface SuperAdminTenant {
   total_clients: number;
   total_loans: number;
   active_loans_count: number;
+  total_capital_lent?: number;
+  billing?: TenantBillingInfo;
+  last_activity_at?: string | null;
 }
 
 export interface SuperAdminKPIs {
@@ -233,6 +254,11 @@ export interface SuperAdminKPIs {
   total_users: number;
   total_clients: number;
   total_collectors: number;
+  dau_today: number;
+  global_capital_active: number;
+  global_today_collected: number;
+  mrr_projected: number;
+  platform_billing: PlatformBillingSettings;
   total_capital_in_street?: number;
   total_today_collected?: number;
 }

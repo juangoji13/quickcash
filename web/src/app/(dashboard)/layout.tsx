@@ -7,6 +7,8 @@ import { useAuth } from '@/hooks';
 import Sidebar from '@/components/layout/Sidebar';
 import BottomNav from '@/components/layout/BottomNav';
 import NotificationsModal from '@/components/layout/NotificationsModal';
+import SubscriptionLockScreen from '@/components/layout/SubscriptionLockScreen';
+import { checkTenantSubscriptionStatus } from '@/services/superadmin.service';
 import styles from './dashboard.module.css';
 
 function IconSettings() {
@@ -47,6 +49,11 @@ export default function DashboardLayout({
   const [hasUnread, setHasUnread] = useState(true);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [billingLock, setBillingLock] = useState<{
+    isBlocked: boolean;
+    monthlyFee: number;
+    contactPhone: string;
+  } | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -70,6 +77,27 @@ export default function DashboardLayout({
       }
     }
   }, [session, isLoading, appUser, pathname, router]);
+
+  // Verificar estado de suscripción de la cuenta (solo para prestamistas y cobradores)
+  useEffect(() => {
+    if (!appUser || appUser.role === 'superadmin' || (appUser.role as string) === 'super_admin') {
+      return;
+    }
+
+    if (appUser.tenant_id) {
+      checkTenantSubscriptionStatus(appUser.tenant_id).then((res) => {
+        if (res && res.isBlocked) {
+          setBillingLock({
+            isBlocked: true,
+            monthlyFee: res.monthlyFee,
+            contactPhone: res.contactPhone,
+          });
+        } else {
+          setBillingLock(null);
+        }
+      });
+    }
+  }, [appUser]);
 
   if (isLoggingOut) {
     return (
@@ -98,6 +126,18 @@ export default function DashboardLayout({
   }
 
   if (!session) return null;
+
+  // Si la suscripción del negocio está bloqueada por falta de pago
+  if (billingLock?.isBlocked) {
+    return (
+      <SubscriptionLockScreen
+        monthlyFee={billingLock.monthlyFee}
+        contactPhone={billingLock.contactPhone}
+        tenantName={appUser?.full_name ? `el negocio de ${appUser.full_name}` : 'tu negocio'}
+        onSignOut={signOut}
+      />
+    );
+  }
 
   // El SuperAdmin sólo puede visualizar la consola global y ajustes
   if (appUser && (appUser.role === 'superadmin' || (appUser.role as string) === 'super_admin')) {

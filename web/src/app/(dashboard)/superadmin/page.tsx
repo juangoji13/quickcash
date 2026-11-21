@@ -1,9 +1,9 @@
 'use client';
 
-/* ============================================
- * QuickCash — SuperAdmin Portal
- * Consola de Control Global, Gobernanza y Directorio de Usuarios
- * ============================================ */
+/* ==============================================================================
+ * QuickCash — Panel de Dirección del Negocio & Plataforma
+ * Enfoque Founder/SaaS: Métricas Macro, Volumen GMV, Usuarios Activos & Mensualidades
+ * ============================================================================== */
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -11,13 +11,13 @@ import { useAuth } from '@/hooks';
 import {
   getSuperAdminKPIs,
   getAllTenants,
-  toggleTenantStatus,
   getAllPlatformUsers,
+  toggleGlobalBillingSwitch,
+  updateTenantBilling,
   toggleUserActive,
 } from '@/services/superadmin.service';
 import type { SuperAdminKPIs, SuperAdminTenant } from '@/types';
-import { formatDate } from '@/lib/utils';
-import { ConfirmModal } from '@/components/ui/Modal';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import styles from './superadmin.module.css';
 
 type FilterState = 'all' | 'active' | 'suspended';
@@ -44,25 +44,16 @@ export default function SuperAdminPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterState>('all');
-  
-  // Modal target for tenant
-  const [statusTarget, setStatusTarget] = useState<{
-    id: string;
-    name: string;
-    currentActive: boolean;
-  } | null>(null);
-
-  // Modal target for user
-  const [userStatusTarget, setUserStatusTarget] = useState<{
-    id: string;
-    name: string;
-    currentActive: boolean;
-  } | null>(null);
-
   const [actionLoading, setActionLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const isSuperAdmin =
     appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin';
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const loadData = useCallback(async () => {
     if (!isSuperAdmin) return;
@@ -77,7 +68,7 @@ export default function SuperAdminPage() {
       setTenants(tenantsData);
       setUsersList(usersData as PlatformUser[]);
     } catch (err) {
-      console.error('Error loading SuperAdmin data:', err);
+      console.error('Error cargando datos de dirección:', err);
     } finally {
       setLoading(false);
     }
@@ -89,7 +80,81 @@ export default function SuperAdminPage() {
     }
   }, [authLoading, isSuperAdmin, loadData]);
 
-  // Filtrado reactivo de prestamistas
+  // Interruptor Maestro de Cobro
+  const handleToggleGlobalBilling = async () => {
+    if (!kpis) return;
+    setActionLoading(true);
+    const nextState = !kpis.platform_billing.is_billing_enabled;
+
+    try {
+      const res = await toggleGlobalBillingSwitch(nextState);
+      if (res.success) {
+        showToast(
+          nextState
+            ? 'Cobro de mensualidades ACTIVADO ($25.000 COP / mes)'
+            : 'Modo Gratuito ACTIVADO (Plataforma promocional sin bloqueos)'
+        );
+        await loadData();
+      } else {
+        alert(res.error || 'No se pudo cambiar el interruptor de cobro.');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Registrar pago de mensualidad a un prestamista ($25.000 / +30 días)
+  const handleRegisterPayment = async (tenant: SuperAdminTenant) => {
+    setActionLoading(true);
+    try {
+      const res = await updateTenantBilling(tenant.id, {
+        enabled: true,
+        addDays: 30,
+        status: 'active',
+      });
+      if (res.success) {
+        showToast(`Pago registrado para ${tenant.name}. +30 días agregados.`);
+        await loadData();
+      } else {
+        alert(res.error || 'Error registrando pago.');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Simular Bloqueo / Desbloqueo rápido para pruebas
+  const handleToggleLock = async (tenant: SuperAdminTenant) => {
+    setActionLoading(true);
+    const nextStatus = tenant.billing?.status === 'locked' ? 'active' : 'locked';
+
+    try {
+      const res = await updateTenantBilling(tenant.id, {
+        enabled: true,
+        status: nextStatus,
+      });
+      if (res.success) {
+        showToast(
+          nextStatus === 'locked'
+            ? `Se ha simulado el bloqueo de ${tenant.name}.`
+            : `${tenant.name} ha sido desbloqueado exitosamente.`
+        );
+        await loadData();
+      } else {
+        alert(res.error || 'Error al modificar estado de bloqueo.');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Filtrado de prestamistas
   const filteredTenants = useMemo(() => {
     return tenants.filter((t) => {
       if (filter === 'active' && !t.is_active) return false;
@@ -105,7 +170,7 @@ export default function SuperAdminPage() {
     });
   }, [tenants, filter, searchQuery]);
 
-  // Filtrado reactivo de usuarios
+  // Filtrado de usuarios
   const filteredUsers = useMemo(() => {
     return usersList.filter((u) => {
       if (filter === 'active' && !u.is_active) return false;
@@ -121,71 +186,11 @@ export default function SuperAdminPage() {
     });
   }, [usersList, filter, searchQuery]);
 
-  // Toggle tenant status
-  async function handleToggleStatus() {
-    if (!statusTarget) return;
-    setActionLoading(true);
-    const nextState = !statusTarget.currentActive;
-
-    try {
-      const res = await toggleTenantStatus(statusTarget.id, nextState);
-      if (res.success) {
-        setTenants((prev) =>
-          prev.map((t) =>
-            t.id === statusTarget.id ? { ...t, is_active: nextState } : t
-          )
-        );
-        const [updatedKpis, updatedUsers] = await Promise.all([
-          getSuperAdminKPIs(),
-          getAllPlatformUsers(),
-        ]);
-        setKpis(updatedKpis);
-        setUsersList(updatedUsers as PlatformUser[]);
-        setStatusTarget(null);
-      } else {
-        console.error('Error al cambiar estado del tenant:', res.error);
-      }
-    } catch (err) {
-      console.error('Error al ejecutar toggleTenantStatus:', err);
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  // Toggle single user status
-  async function handleToggleUserStatus() {
-    if (!userStatusTarget) return;
-    setActionLoading(true);
-    const nextState = !userStatusTarget.currentActive;
-
-    try {
-      const res = await toggleUserActive(userStatusTarget.id, nextState);
-      if (res.success) {
-        setUsersList((prev) =>
-          prev.map((u) =>
-            u.id === userStatusTarget.id ? { ...u, is_active: nextState } : u
-          )
-        );
-        const updatedKpis = await getSuperAdminKPIs();
-        setKpis(updatedKpis);
-        setUserStatusTarget(null);
-      } else {
-        console.error('Error al cambiar estado de usuario:', res.error);
-      }
-    } catch (err) {
-      console.error('Error al ejecutar toggleUserActive:', err);
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
   if (authLoading) {
     return (
       <div className={styles.page}>
-        <div className={styles.kpiGrid}>
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="skeleton" style={{ height: 110, borderRadius: 8 }} />
-          ))}
+        <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>
+          Cargando panel de dirección...
         </div>
       </div>
     );
@@ -193,159 +198,200 @@ export default function SuperAdminPage() {
 
   if (!isSuperAdmin) {
     return (
-      <div className={styles.restrictedPage}>
-        <div className={styles.restrictedCard}>
-          <div className={styles.restrictedIcon}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <h2 className={styles.restrictedTitle}>Acceso Restringido</h2>
-          <p className={styles.restrictedDesc}>
-            Esta consola es exclusiva para el Súper Administrador de la plataforma QuickCash.
-          </p>
-          <Link href="/overview" className="btn btn--primary">
-            Volver
-          </Link>
-        </div>
+      <div style={{ padding: 40, textAlign: 'center' }}>
+        <h2>Acceso Restringido</h2>
+        <p>Esta consola es exclusiva para la dirección de QuickCash.</p>
+        <Link href="/overview" className="btn btn--primary">
+          Ir al Inicio
+        </Link>
       </div>
     );
   }
 
+  const isGlobalBillingOn = Boolean(kpis?.platform_billing?.is_billing_enabled);
+
   return (
     <div className={styles.page}>
-      {/* Header */}
-      <div className={styles.header}>
+      {/* Toast Notification Flotante */}
+      {toastMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            backgroundColor: '#0C2237',
+            color: '#FFE600',
+            fontFamily: 'var(--font-heading)',
+            fontWeight: 800,
+            fontSize: '0.88rem',
+            padding: '12px 20px',
+            borderRadius: '12px',
+            boxShadow: '0 8px 24px rgba(12, 34, 55, 0.25)',
+            zIndex: 999999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <span>✓</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Header con Interruptor Maestro de Cobro */}
+      <header className={styles.header}>
         <div>
           <div className={styles.headerTitleWrapper}>
-            <h1 className={styles.title}>Consola de Control Global</h1>
-            <span className={styles.platformBadge}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              SuperAdmin
-            </span>
+            <h1 className={styles.title}>Dirección del Negocio</h1>
+            <span className={styles.platformBadge}>QuickCash SaaS</span>
           </div>
           <p className={styles.subtitle}>
-            Gobernanza de la plataforma, control de organizaciones registradas y directorio de usuarios
+            Métricas de crecimiento, volumen de plataforma y control de mensualidades
           </p>
         </div>
 
-        <div className={styles.headerActions}>
+        {/* Interruptor Maestro de Cobro de Mensualidades */}
+        <div className={styles.masterBillingCard}>
+          <div className={styles.masterBillingInfo}>
+            <span className={styles.masterBillingLabel}>Modo de Cobro</span>
+            <span
+              className={`${styles.masterBillingStatus} ${
+                isGlobalBillingOn
+                  ? styles.masterBillingStatusActive
+                  : styles.masterBillingStatusFree
+              }`}
+            >
+              {isGlobalBillingOn
+                ? 'Cobro Activo ($25.000/mes)'
+                : 'Gratuito (Promocional)'}
+            </span>
+          </div>
+
           <button
-            className="btn btn--ghost btn--sm"
-            onClick={loadData}
-            disabled={loading}
-            title="Recargar datos"
+            type="button"
+            className={`${styles.switchBtn} ${
+              isGlobalBillingOn ? styles.switchBtnActive : ''
+            }`}
+            onClick={handleToggleGlobalBilling}
+            disabled={actionLoading}
+            title={
+              isGlobalBillingOn
+                ? 'Hacer la plataforma gratuita (Sin bloqueos)'
+                : 'Activar cobro de mensualidades ($25.000 COP)'
+            }
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M23 4v6h-6" />
-              <path d="M1 20v-6h6" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-            </svg>
-            Refrescar
+            <span className={styles.switchKnob} />
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Tarjetas KPI de Gobernanza de Plataforma (Sin datos financieros de préstamos) */}
-      <div className={styles.kpiGrid}>
-        <div className={styles.kpiCard} style={{ '--kpi-accent': 'var(--color-safety-yellow, #F1C40F)' } as any}>
-          <span className={styles.kpiLabel}>Organizaciones / Prestamistas</span>
-          <span className={styles.kpiValue}>
-            {loading ? '—' : `${kpis?.active_tenants ?? 0} / ${kpis?.total_tenants ?? 0}`}
-          </span>
-          <span className={styles.kpiSub}>
-            Prestamistas activos / totales
+      {/* HERO COCKPIT: Métricas Macro de Negocio (Estilo Talonario Deep Navy) */}
+      <section className={styles.heroCockpit}>
+        {/* Columna 1: Tus Ingresos Mensuales Proyectados */}
+        <div className={styles.heroCol}>
+          <span className={styles.heroLabel}>Tus Ingresos Mensuales (MRR)</span>
+          <div className={styles.heroValGold}>
+            {formatCurrency(kpis?.mrr_projected || 0)}
+          </div>
+          <span className={styles.heroSub}>
+            {isGlobalBillingOn
+              ? `${kpis?.total_tenants || 0} prestamistas × $25.000`
+              : 'En modo promocional (gratis)'}
           </span>
         </div>
 
-        <div className={styles.kpiCard} style={{ '--kpi-accent': 'var(--color-blue, #2980B9)' } as any}>
-          <span className={styles.kpiLabel}>Usuarios en Plataforma</span>
-          <span className={styles.kpiValue}>
-            {loading ? '—' : (kpis?.total_users ?? 0)}
-          </span>
-          <span className={styles.kpiSub}>
-            Cuentas registradas en el sistema
-          </span>
+        <div className={styles.heroDivider} />
+
+        {/* Columna 2: Volumen de Dinero en Circulación (GMV) */}
+        <div className={styles.heroCol}>
+          <span className={styles.heroLabel}>Dinero en Circulación (GMV)</span>
+          <div className={styles.heroValWhite}>
+            {formatCurrency(kpis?.global_capital_active || 0)}
+          </div>
+          <span className={styles.heroSub}>Capital colocado en la red</span>
         </div>
 
-        <div className={styles.kpiCard} style={{ '--kpi-accent': 'var(--color-green, #27AE60)' } as any}>
-          <span className={styles.kpiLabel}>Clientes en la Red</span>
-          <span className={styles.kpiValue}>
-            {loading ? '—' : (kpis?.total_clients ?? 0)}
-          </span>
-          <span className={styles.kpiSub}>
-            Prestatarios en todas las rutas
-          </span>
+        <div className={styles.heroDivider} />
+
+        {/* Columna 3: Usuarios Activos Hoy (DAU) */}
+        <div className={styles.heroCol}>
+          <span className={styles.heroLabel}>Usuarios Activos Hoy</span>
+          <div className={styles.heroValGreen}>{kpis?.dau_today || 1}</div>
+          <span className={styles.heroSub}>Interactuando en plataforma</span>
         </div>
 
-        <div className={styles.kpiCard} style={{ '--kpi-accent': '#8E44AD' } as any}>
-          <span className={styles.kpiLabel}>Cobradores en Campo</span>
-          <span className={styles.kpiValue}>
-            {loading ? '—' : (kpis?.total_collectors ?? 0)}
-          </span>
-          <span className={styles.kpiSub}>
-            Operadores activos en calle
-          </span>
-        </div>
-      </div>
+        <div className={styles.heroDivider} />
 
-      {/* Selector de Pestañas Principales */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+        {/* Columna 4: Censo de la Red */}
+        <div className={styles.heroCol}>
+          <span className={styles.heroLabel}>Censo de la Red</span>
+          <div className={styles.censusRow}>
+            <div className={styles.censusItem}>
+              <span className={styles.censusVal}>{kpis?.total_tenants || 0}</span>
+              <span className={styles.censusTag}>Prestamistas</span>
+            </div>
+            <div className={styles.censusItem}>
+              <span className={styles.censusVal}>{kpis?.total_collectors || 0}</span>
+              <span className={styles.censusTag}>Cobradores</span>
+            </div>
+            <div className={styles.censusItem}>
+              <span className={styles.censusVal}>{kpis?.total_clients || 0}</span>
+              <span className={styles.censusTag}>Clientes</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tabs Principales */}
+      <div className={styles.tabsRow}>
         <button
-          onClick={() => { setViewTab('tenants'); setSearchQuery(''); }}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: viewTab === 'tenants' ? 'var(--color-asphalt)' : 'var(--color-white)',
-            color: viewTab === 'tenants' ? 'var(--color-safety-yellow)' : 'var(--color-gray-600)',
-            border: '1px solid var(--color-gray-200)',
-            borderRadius: '8px',
-            fontFamily: 'var(--font-heading)',
-            fontSize: '13px',
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: viewTab === 'tenants' ? '0 2px 8px rgba(44, 62, 80, 0.2)' : 'none',
-            transition: 'all 0.2s',
+          type="button"
+          className={`${styles.tabBtn} ${
+            viewTab === 'tenants' ? styles.tabBtnActive : ''
+          }`}
+          onClick={() => {
+            setViewTab('tenants');
+            setSearchQuery('');
           }}
         >
-          Organizaciones y Prestamistas ({tenants.length})
+          Prestamistas Afiliados ({tenants.length})
         </button>
 
         <button
-          onClick={() => { setViewTab('users'); setSearchQuery(''); }}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: viewTab === 'users' ? 'var(--color-asphalt)' : 'var(--color-white)',
-            color: viewTab === 'users' ? 'var(--color-safety-yellow)' : 'var(--color-gray-600)',
-            border: '1px solid var(--color-gray-200)',
-            borderRadius: '8px',
-            fontFamily: 'var(--font-heading)',
-            fontSize: '13px',
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: viewTab === 'users' ? '0 2px 8px rgba(44, 62, 80, 0.2)' : 'none',
-            transition: 'all 0.2s',
+          type="button"
+          className={`${styles.tabBtn} ${
+            viewTab === 'users' ? styles.tabBtnActive : ''
+          }`}
+          onClick={() => {
+            setViewTab('users');
+            setSearchQuery('');
           }}
         >
-          Directorio Global de Usuarios ({usersList.length})
+          Directorio de Usuarios ({usersList.length})
         </button>
       </div>
 
       {/* Toolbar: Búsqueda y Filtros */}
       <div className={styles.toolbar}>
         <div className={styles.searchBox}>
-          <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            className={styles.searchIcon}
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             type="text"
-            className={`input ${styles.searchInput}`}
+            className={styles.searchInput}
             placeholder={
               viewTab === 'tenants'
-                ? 'Buscar por negocio, prestamista o correo...'
+                ? 'Buscar negocio, titular o teléfono...'
                 : 'Buscar por nombre, usuario, correo u organización...'
             }
             value={searchQuery}
@@ -353,21 +399,30 @@ export default function SuperAdminPage() {
           />
         </div>
 
-        <div className={styles.filterTabs}>
+        <div className={styles.filterGroup}>
           <button
-            className={`${styles.filterTab} ${filter === 'all' ? styles.filterTabActive : ''}`}
+            type="button"
+            className={`${styles.filterBtn} ${
+              filter === 'all' ? styles.filterBtnActive : ''
+            }`}
             onClick={() => setFilter('all')}
           >
             Todos
           </button>
           <button
-            className={`${styles.filterTab} ${filter === 'active' ? styles.filterTabActive : ''}`}
+            type="button"
+            className={`${styles.filterBtn} ${
+              filter === 'active' ? styles.filterBtnActive : ''
+            }`}
             onClick={() => setFilter('active')}
           >
             Activos
           </button>
           <button
-            className={`${styles.filterTab} ${filter === 'suspended' ? styles.filterTabActive : ''}`}
+            type="button"
+            className={`${styles.filterBtn} ${
+              filter === 'suspended' ? styles.filterBtnActive : ''
+            }`}
             onClick={() => setFilter('suspended')}
           >
             Suspendidos
@@ -375,300 +430,255 @@ export default function SuperAdminPage() {
         </div>
       </div>
 
-      {/* TAB 1: Organizaciones y Prestamistas */}
+      {/* VISTA 1: Prestamistas Afiliados con Módulo de Mensualidad */}
       {viewTab === 'tenants' && (
-        <div className={styles.tableCard}>
-          <div className={styles.tableResponsive}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Empresa / Prestamista</th>
-                  <th>Titular de la Cuenta</th>
-                  <th>Teléfono</th>
-                  <th>Estado</th>
-                  <th style={{ textAlign: 'center' }}>Clientes</th>
-                  <th>Fecha de Registro</th>
-                  <th style={{ textAlign: 'right' }}>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} style={{ padding: 32, textAlign: 'center' }}>
-                      <div className="skeleton" style={{ width: '80%', height: 24, margin: '0 auto 8px' }} />
-                      <div className="skeleton" style={{ width: '60%', height: 20, margin: '0 auto' }} />
-                    </td>
-                  </tr>
-                ) : filteredTenants.length === 0 ? (
-                  <tr>
-                    <td colSpan={7}>
-                      <div className={styles.emptyState}>
-                        <div className={styles.emptyTitle}>No se encontraron organizaciones</div>
-                        <p style={{ margin: '4px 0 0', fontSize: 13 }}>
-                          {searchQuery ? 'Prueba con otro término' : 'No hay organizaciones con este filtro'}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTenants.map((tenant) => (
-                    <tr key={tenant.id}>
-                      <td>
-                        <div className={styles.tenantInfo}>
-                          <span className={styles.tenantName}>{tenant.name}</span>
-                          <div className={styles.tenantMeta}>
-                            <span className={styles.currencyTag}>{tenant.currency}</span>
-                            <span>ID: {tenant.id.slice(0, 8)}</span>
-                          </div>
-                        </div>
-                      </td>
+        <div className={styles.tenantsStack}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 40, color: '#64748B' }}>
+              Cargando prestamistas...
+            </div>
+          ) : filteredTenants.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: '#64748B' }}>
+              No se encontraron prestamistas con ese criterio.
+            </div>
+          ) : (
+            filteredTenants.map((t) => {
+              const billing = t.billing;
+              const isLocked = Boolean(billing?.is_locked);
+              const daysLeft = billing?.days_left ?? 30;
+              const isDueSoon = daysLeft <= 3 && daysLeft >= 0;
 
-                      <td>
-                        <div className={styles.adminInfo}>
-                          <span className={styles.adminName}>
-                            {tenant.admin?.full_name || 'Sin titular asignado'}
-                          </span>
-                          {tenant.admin?.username && (
-                            <span className={styles.adminHandle}>@{tenant.admin.username.replace('@', '')}</span>
-                          )}
-                          <span className={styles.adminEmail}>{tenant.admin?.email || '—'}</span>
-                        </div>
-                      </td>
-
-                      <td>{tenant.admin?.phone || '—'}</td>
-
-                      <td>
-                        {tenant.is_active ? (
-                          <span className={styles.statusBadgeActive}>
-                            <span className={styles.statusDot} />
-                            Activo
-                          </span>
-                        ) : (
-                          <span className={styles.statusBadgeSuspended}>
-                            <span className={styles.statusDot} />
-                            Suspendido
-                          </span>
-                        )}
-                      </td>
-
-                      <td style={{ textAlign: 'center' }}>
-                        <span className={styles.statNum}>{tenant.total_clients}</span>
-                      </td>
-
-                      <td>{formatDate(tenant.created_at)}</td>
-
-                      <td className={styles.actionsCell}>
-                        {tenant.is_active ? (
-                          <button
-                            className={styles.suspendBtn}
-                            onClick={() =>
-                              setStatusTarget({
-                                id: tenant.id,
-                                name: tenant.name,
-                                currentActive: true,
-                              })
-                            }
-                          >
-                            Suspender
-                          </button>
-                        ) : (
-                          <button
-                            className={styles.reactivateBtn}
-                            onClick={() =>
-                              setStatusTarget({
-                                id: tenant.id,
-                                name: tenant.name,
-                                currentActive: false,
-                              })
-                            }
-                          >
-                            Reactivar
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: Directorio Global de Usuarios */}
-      {viewTab === 'users' && (
-        <div className={styles.tableCard}>
-          <div className={styles.tableResponsive}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Nombre y Usuario</th>
-                  <th>Correo Electrónico</th>
-                  <th>Rol</th>
-                  <th>Organización</th>
-                  <th>Teléfono</th>
-                  <th>Estado</th>
-                  <th>Registro</th>
-                  <th style={{ textAlign: 'right' }}>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} style={{ padding: 32, textAlign: 'center' }}>
-                      <div className="skeleton" style={{ width: '80%', height: 24, margin: '0 auto 8px' }} />
-                      <div className="skeleton" style={{ width: '60%', height: 20, margin: '0 auto' }} />
-                    </td>
-                  </tr>
-                ) : filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={8}>
-                      <div className={styles.emptyState}>
-                        <div className={styles.emptyTitle}>No se encontraron usuarios</div>
-                        <p style={{ margin: '4px 0 0', fontSize: 13 }}>
-                          {searchQuery ? 'Prueba con otro término' : 'No hay usuarios registrados con este filtro'}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((u) => {
-                    const roleBadge =
-                      u.role === 'superadmin' || u.role === 'super_admin'
-                        ? 'SuperAdmin'
-                        : u.role === 'admin'
-                        ? 'Prestamista'
-                        : 'Cobrador';
-
-                    return (
-                      <tr key={u.id}>
-                        <td>
-                          <div className={styles.adminInfo}>
-                            <span className={styles.adminName}>{u.full_name}</span>
-                            <span className={styles.adminHandle}>@{u.username.replace('@', '')}</span>
-                          </div>
-                        </td>
-
-                        <td>{u.email}</td>
-
-                        <td>
+              return (
+                <div key={t.id} className={styles.tenantCard}>
+                  {/* Negocio & Titular */}
+                  <div className={styles.tenantMain}>
+                    <div className={styles.tenantLogo}>
+                      {t.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className={styles.tenantInfo}>
+                      <div className={styles.tenantNameRow}>
+                        <span className={styles.tenantName}>{t.name}</span>
+                        {t.is_active ? (
                           <span
                             style={{
-                              padding: '2px 8px',
-                              borderRadius: '4px',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              textTransform: 'uppercase',
-                              backgroundColor:
-                                roleBadge === 'SuperAdmin'
-                                  ? 'var(--color-asphalt)'
-                                  : roleBadge === 'Prestamista'
-                                  ? '#FEF3C7'
-                                  : '#E0F2FE',
-                              color:
-                                roleBadge === 'SuperAdmin'
-                                  ? 'var(--color-safety-yellow)'
-                                  : roleBadge === 'Prestamista'
-                                  ? '#92400E'
-                                  : '#0369A1',
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              backgroundColor: '#10B981',
                             }}
-                          >
-                            {roleBadge}
-                          </span>
-                        </td>
+                            title="Cuenta activa"
+                          />
+                        ) : (
+                          <span
+                            style={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              backgroundColor: '#EF4444',
+                            }}
+                            title="Cuenta suspendida"
+                          />
+                        )}
+                      </div>
+                      <span className={styles.tenantAdmin}>
+                        {t.admin?.full_name || 'Sin titular'}
+                        {t.admin?.phone && (
+                          <>
+                            <span>·</span>
+                            <a
+                              href={`https://wa.me/${t.admin.phone.replace(
+                                /\D/g,
+                                ''
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.whatsappLink}
+                            >
+                              WhatsApp
+                            </a>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </div>
 
-                        <td>{u.tenant_name}</td>
+                  {/* Cifras de Operación del Prestamista */}
+                  <div className={styles.tenantStats}>
+                    <div className={styles.statItem}>
+                      <span className={styles.statVal}>{t.total_clients}</span>
+                      <span className={styles.statTag}>Clientes</span>
+                    </div>
+                    <div className={styles.statItem}>
+                      <span className={styles.statVal}>{t.active_loans_count}</span>
+                      <span className={styles.statTag}>Créditos</span>
+                    </div>
+                    <div className={styles.statItem}>
+                      <span className={styles.statVal}>
+                        {formatCurrency(t.total_capital_lent || 0)}
+                      </span>
+                      <span className={styles.statTag}>Cartera</span>
+                    </div>
+                  </div>
 
-                        <td>{u.phone}</td>
+                  {/* Módulo de Mensualidad */}
+                  <div className={styles.billingBox}>
+                    <div className={styles.billingText}>
+                      <span className={styles.billingTitle}>Mensualidad</span>
+                      {!isGlobalBillingOn ? (
+                        <span className={styles.badgeFree}>Modo Gratis</span>
+                      ) : isLocked ? (
+                        <span className={styles.badgeLocked}>
+                          🔴 Bloqueado (No pagó)
+                        </span>
+                      ) : isDueSoon ? (
+                        <span className={styles.badgeGrace}>
+                          🟡 Vence en {daysLeft} días
+                        </span>
+                      ) : (
+                        <span className={styles.badgeActive}>
+                          🟢 Al Día ({daysLeft} días)
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                        <td>
-                          {u.is_active ? (
-                            <span className={styles.statusBadgeActive}>
-                              <span className={styles.statusDot} />
-                              Activo
-                            </span>
-                          ) : (
-                            <span className={styles.statusBadgeSuspended}>
-                              <span className={styles.statusDot} />
-                              Inactivo
-                            </span>
-                          )}
-                        </td>
+                  {/* Acciones */}
+                  <div className={styles.tenantActions}>
+                    <button
+                      type="button"
+                      className={styles.payBtn}
+                      onClick={() => handleRegisterPayment(t)}
+                      disabled={actionLoading}
+                      title="Registrar pago de mensualidad (+30 días)"
+                    >
+                      <span>➕ Pago $25.000</span>
+                    </button>
 
-                        <td>{formatDate(u.created_at)}</td>
-
-                        <td className={styles.actionsCell}>
-                          {u.role !== 'superadmin' && (
-                            u.is_active ? (
-                              <button
-                                className={styles.suspendBtn}
-                                onClick={() =>
-                                  setUserStatusTarget({
-                                    id: u.id,
-                                    name: u.full_name,
-                                    currentActive: true,
-                                  })
-                                }
-                              >
-                                Desactivar
-                              </button>
-                            ) : (
-                              <button
-                                className={styles.reactivateBtn}
-                                onClick={() =>
-                                  setUserStatusTarget({
-                                    id: u.id,
-                                    name: u.full_name,
-                                    currentActive: false,
-                                  })
-                                }
-                              >
-                                Activar
-                              </button>
-                            )
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                    {/* Botón para Simular Bloqueo / Desbloqueo en Pruebas */}
+                    {billing?.status === 'locked' ? (
+                      <button
+                        type="button"
+                        className={styles.unlockBtn}
+                        onClick={() => handleToggleLock(t)}
+                        disabled={actionLoading}
+                        title="Desbloquear acceso"
+                      >
+                        🔓 Desbloquear
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.testLockBtn}
+                        onClick={() => handleToggleLock(t)}
+                        disabled={actionLoading}
+                        title="Simular bloqueo por no pago para pruebas"
+                      >
+                        🔒 Simular Bloqueo
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 
-      {/* Modal de Confirmación para Suspender / Reactivar Organizaciones */}
-      <ConfirmModal
-        isOpen={!!statusTarget}
-        onClose={() => setStatusTarget(null)}
-        onConfirm={handleToggleStatus}
-        title={statusTarget?.currentActive ? 'Suspender Prestamista' : 'Reactivar Prestamista'}
-        message={
-          statusTarget?.currentActive
-            ? `¿Estás seguro de que deseas suspender la cuenta de "${statusTarget?.name}"? Sus usuarios y cobradores no podrán ingresar hasta que sea reactivada.`
-            : `¿Deseas reactivar el acceso para "${statusTarget?.name}"? Sus usuarios podrán volver a ingresar y operar normalmente.`
-        }
-        confirmLabel={statusTarget?.currentActive ? 'Sí, Suspender' : 'Sí, Reactivar'}
-        cancelLabel="Cancelar"
-        isDestructive={statusTarget?.currentActive}
-      />
+      {/* VISTA 2: Directorio de Usuarios de la Red */}
+      {viewTab === 'users' && (
+        <div className={styles.tableCard}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Organización</th>
+                <th>Teléfono</th>
+                <th>Estado</th>
+                <th>Registro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: 32, textAlign: 'center' }}>
+                    Cargando usuarios...
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: 32, textAlign: 'center' }}>
+                    No se encontraron usuarios.
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((u) => {
+                  let roleBadge = (
+                    <span className={styles.roleBadgeCollector}>COBRADOR</span>
+                  );
+                  if (u.role === 'admin') {
+                    roleBadge = (
+                      <span className={styles.roleBadgeAdmin}>PRESTAMISTA</span>
+                    );
+                  } else if (
+                    u.role === 'superadmin' ||
+                    u.role === 'super_admin'
+                  ) {
+                    roleBadge = (
+                      <span className={styles.roleBadgeSuper}>DIRECCIÓN</span>
+                    );
+                  }
 
-      {/* Modal de Confirmación para Activar / Desactivar Usuario */}
-      <ConfirmModal
-        isOpen={!!userStatusTarget}
-        onClose={() => setUserStatusTarget(null)}
-        onConfirm={handleToggleUserStatus}
-        title={userStatusTarget?.currentActive ? 'Desactivar Usuario' : 'Activar Usuario'}
-        message={
-          userStatusTarget?.currentActive
-            ? `¿Deseas desactivar a "${userStatusTarget?.name}"? No podrá iniciar sesión hasta que vuelva a ser activado.`
-            : `¿Deseas activar a "${userStatusTarget?.name}"? Podrá iniciar sesión normalmente.`
-        }
-        confirmLabel={userStatusTarget?.currentActive ? 'Sí, Desactivar' : 'Sí, Activar'}
-        cancelLabel="Cancelar"
-        isDestructive={userStatusTarget?.currentActive}
-      />
+                  return (
+                    <tr key={u.id}>
+                      <td>
+                        <div className={styles.userCell}>
+                          <div className={styles.userAvatar}>
+                            {u.full_name.slice(0, 1).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 800 }}>{u.full_name}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#656B81' }}>
+                              {u.username}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ color: '#475569' }}>{u.email}</td>
+                      <td>{roleBadge}</td>
+                      <td style={{ fontWeight: 600 }}>{u.tenant_name}</td>
+                      <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                        {u.phone}
+                      </td>
+                      <td>
+                        {u.is_active ? (
+                          <span style={{ color: '#10B981', fontWeight: 700 }}>
+                            ● Activo
+                          </span>
+                        ) : (
+                          <span style={{ color: '#EF4444', fontWeight: 700 }}>
+                            ● Inactivo
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          fontSize: '0.78rem',
+                          color: '#656B81',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {u.created_at ? formatDate(u.created_at) : '—'}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
