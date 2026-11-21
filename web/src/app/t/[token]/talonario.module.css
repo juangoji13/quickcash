@@ -1,6 +1,6 @@
 /* ==============================================================================
  * QuickCash — Talonario Virtual (Tarjeta de Cuotas Digital)
- * Diseño de Alta Fidelidad — Fiel al Mockup del Usuario
+ * Diseño Minimalista de Alta Fidelidad — 100% Integrado
  * Colores: Navy #0C2237 / #172B43, Yellow #FEBF02 / #FFE600, Green #B8F6C5 / #06E267
  * ============================================================================== */
 
@@ -45,7 +45,7 @@
 .mainCard {
   background: #FFFFFF;
   border-radius: 28px;
-  padding: 22px 18px 22px 18px;
+  padding: 22px 18px 20px 18px;
   box-shadow: 0 12px 36px -4px rgba(12, 34, 55, 0.08), 0 4px 12px rgba(12, 34, 55, 0.03);
   border: 1px solid rgba(226, 232, 240, 0.8);
   position: relative;
@@ -234,7 +234,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   position: relative;
   z-index: 2;
 }
@@ -408,44 +408,46 @@
 }
 
 /* ==============================================================================
- * Guía de Instalación en Pantalla (Diseño Acorde, Visual, Cero Emojis Feos)
+ * Guía de Instalación Seamless (Integrada 100% en la misma tarjeta)
  * ============================================================================== */
-.guideContainer {
+.guideSection {
+  border-top: 1px solid #F1F5F9;
+  padding-top: 10px;
   margin-top: 4px;
-  margin-bottom: 14px;
-  border-radius: 18px;
-  background-color: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  overflow: hidden;
-  transition: all 200ms ease;
   position: relative;
   z-index: 2;
 }
 
-.guideHeaderBtn {
+.guideTrigger {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 6px 2px;
   background: transparent;
   border: none;
   cursor: pointer;
   text-align: left;
   gap: 10px;
+  border-radius: 10px;
+  transition: opacity 150ms ease;
 }
 
-.guideHeaderLeft {
+.guideTrigger:hover {
+  opacity: 0.85;
+}
+
+.guideLeft {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
   min-width: 0;
 }
 
-.guideAppIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+.guideMiniLogo {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
   background: #0C2237;
   display: flex;
   align-items: center;
@@ -453,13 +455,13 @@
   color: #FFE600;
   font-family: var(--font-heading, sans-serif);
   font-weight: 900;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   letter-spacing: -0.03em;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(12, 34, 55, 0.15);
+  box-shadow: 0 2px 6px rgba(12, 34, 55, 0.12);
 }
 
-.guideHeaderText {
+.guideText {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -474,26 +476,33 @@
 }
 
 .guideSubtitle {
-  font-size: 0.73rem;
+  font-size: 0.74rem;
   color: #656B81;
   font-weight: 500;
-  margin-top: 2px;
-  line-height: 1.25;
+  margin-top: 1px;
+  line-height: 1.2;
 }
 
-.guideChevron {
-  font-size: 0.72rem;
+.guideChevronSvg {
   color: #94A3B8;
   flex-shrink: 0;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.guideBody {
-  padding: 0 14px 14px 14px;
+.guideChevronSvgOpen {
+  transform: rotate(180deg);
+  color: #0C2237;
+}
+
+.guideContent {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #F8FAFC;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  border-top: 1px dashed #E2E8F0;
-  padding-top: 12px;
+  gap: 8px;
   animation: fadeIn 180ms ease;
 }
 
@@ -502,14 +511,14 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Selector de Plataforma (Segmented Control sobrio) */
+/* Selector de Plataforma */
 .platformSelector {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: #EEF2F6;
   padding: 3px;
-  border-radius: 10px;
+  border-radius: 9px;
 }
 
 .platformTab {
@@ -518,11 +527,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 5px 8px;
   border: none;
   background: transparent;
-  border-radius: 8px;
-  font-size: 0.78rem;
+  border-radius: 7px;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #64748B;
   cursor: pointer;
@@ -539,82 +548,68 @@
   flex-shrink: 0;
 }
 
-/* Pasos Visuales */
-.stepsContainer {
+/* Pasos Visuales Simples */
+.stepsList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-.stepCard {
+.stepRow {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 9px;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 7px 10px;
 }
 
-.stepBadge {
-  width: 22px;
-  height: 22px;
+.stepNum {
+  width: 19px;
+  height: 19px;
   border-radius: 50%;
   background: #0C2237;
   color: #FFE600;
   font-family: var(--font-heading, sans-serif);
   font-weight: 900;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-top: 1px;
 }
 
-.stepContent {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.stepTitle {
-  font-size: 0.8rem;
-  font-weight: 700;
+.stepText {
+  font-size: 0.76rem;
+  font-weight: 600;
   color: #0C2237;
-  line-height: 1.35;
+  line-height: 1.3;
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 4px;
 }
 
-.inlineActionIcon {
+.actionIconPill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
   background: #F1F5F9;
   color: #0C2237;
   vertical-align: middle;
 }
 
-.stepDesc {
-  font-size: 0.73rem;
-  color: #656B81;
-  line-height: 1.35;
-}
-
 /* Footer limpio */
 .footer {
   text-align: center;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #656B81;
-  padding-top: 14px;
-  border-top: 1px solid #F1F5F9;
+  padding-top: 12px;
   position: relative;
   z-index: 2;
 }
