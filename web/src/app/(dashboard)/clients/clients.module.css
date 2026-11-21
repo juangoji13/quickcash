@@ -424,6 +424,26 @@
   color: #FFFFFF;
 }
 
+.quickActionBtnQr {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.quickActionBtnQr:hover {
+  background: #059669;
+  color: #FFFFFF;
+}
+
 .collectorTag {
   display: inline-flex;
   align-items: center;

@@ -538,6 +538,29 @@
   transform: scale(0.92);
 }
 
+.qrBtnMini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #1D4ED8;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 120ms ease;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.qrBtnMini:active {
+  transform: scale(0.94);
+  background-color: #DBEAFE;
+}
+
 /* Card Details (Financial info) */
 .cardFinancials {
   display: grid;

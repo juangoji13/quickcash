@@ -9,6 +9,7 @@ import { formatDate, getRiskBadgeClass, getRiskLabel, getInitials, formatCurrenc
 import type { Client } from '@/types';
 import { ConfirmModal, AlertModal } from '@/components/ui/Modal';
 import ReassignClientModal from '@/components/clients/ReassignClientModal';
+import ClientQrModal from '@/components/clients/ClientQrModal';
 import styles from './clients.module.css';
 
 export default function ClientsPage() {
@@ -26,6 +27,7 @@ export default function ClientsPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
   const [reassignClientTarget, setReassignClientTarget] = useState<Client | null>(null);
+  const [qrClientTarget, setQrClientTarget] = useState<Client | null>(null);
   const [collectorsMap, setCollectorsMap] = useState<Record<string, string>>({});
 
   // Form state
@@ -352,6 +354,24 @@ export default function ClientsPage() {
                       <div className={styles.clientQuickActions}>
                         <button
                           type="button"
+                          className={styles.quickActionBtnQr}
+                          title="Ver QR del Talonario"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setQrClientTarget(client);
+                          }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                          </svg>
+                          <span>QR</span>
+                        </button>
+
+                        <button
+                          type="button"
                           className={styles.quickActionBtnReassign}
                           title="Reasignar Cobrador"
                           onClick={(e) => {
@@ -419,6 +439,12 @@ export default function ClientsPage() {
                 <p className={styles.pageSubtitle}>{selectedClient.full_name} · CC {selectedClient.document_id}</p>
               </div>
               <div className={styles.headerBtns} style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  className="btn btn--secondary" 
+                  onClick={() => setQrClientTarget(selectedClient)}
+                >
+                  📱 QR Talonario
+                </button>
                 <button 
                   className="btn btn--secondary" 
                   onClick={() => setReassignClientTarget(selectedClient)}
@@ -513,6 +539,11 @@ export default function ClientsPage() {
             setSelectedClient(prev => prev ? { ...prev, collector_id: reassignClientTarget.collector_id } : null);
           }
         }}
+      />
+      <ClientQrModal
+        isOpen={Boolean(qrClientTarget)}
+        onClose={() => setQrClientTarget(null)}
+        client={qrClientTarget}
       />
     </>
   );

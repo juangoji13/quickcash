@@ -75,6 +75,7 @@ export const clients = pgTable('clients', {
   tenant_id: uuid('tenant_id').references(() => tenants.id).notNull(),
   collector_id: uuid('collector_id').references(() => users.id),
   route_id: uuid('route_id').references(() => collection_routes.id),
+  access_token: varchar('access_token', { length: 64 }).unique(),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

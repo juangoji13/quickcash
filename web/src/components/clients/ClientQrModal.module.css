@@ -1,0 +1,105 @@
+.qrContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.clientNameTitle {
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+.clientDocSub {
+  font-size: 0.82rem;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.qrFrame {
+  background: #FFFFFF;
+  padding: 12px;
+  border-radius: 16px;
+  border: 2px solid #E2E8F0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrImage {
+  width: 240px;
+  height: 240px;
+  display: block;
+}
+
+.qrPlaceholder {
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94A3B8;
+  font-size: 0.85rem;
+}
+
+.tipBox {
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: #1E40AF;
+  line-height: 1.45;
+  text-align: left;
+  display: flex;
+  gap: 8px;
+}
+
+.urlBox {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.urlInput {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #CBD5E1;
+  background-color: #F8FAFC;
+  font-size: 0.78rem;
+  color: #475569;
+  font-family: monospace;
+}
+
+.copyBtn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--color-asphalt, #2C3E50);
+  color: var(--color-safety-yellow, #F1C40F);
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+  font-weight: 800;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 120ms ease;
+}
+
+.copyBtn:hover {
+  filter: brightness(1.1);
+}
+
+.actionRow {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}

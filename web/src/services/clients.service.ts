@@ -171,6 +171,7 @@ export async function createClient(
   clientData: any
 ): Promise<{ data: Client | null; error?: string }> {
   try {
+    const token = 'qc_' + (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).substring(2, 14));
     const [newClient] = await db.insert(clients).values({
       full_name: clientData.full_name,
       tenant_id: clientData.tenant_id,
@@ -181,6 +182,7 @@ export async function createClient(
       latitude: clientData.latitude,
       longitude: clientData.longitude,
       risk_status: 'green',
+      access_token: clientData.access_token || token,
     }).returning();
 
     return { data: newClient as unknown as Client };

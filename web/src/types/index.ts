@@ -74,6 +74,7 @@ export interface Client {
   risk_status: RiskStatus;
   notes: string | null;
   route_id: string | null;
+  access_token?: string | null;
   created_at: string;
 }
 
