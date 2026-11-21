@@ -1,6 +1,6 @@
 /* ==============================================================================
  * QuickCash — Talonario Virtual (Tarjeta de Cuotas Digital)
- * Diseño de Alta Fidelidad — Ventana Rodante de 4 Cuotas (Sin tarjeta aparte)
+ * Diseño Minimalista Puro — Exacto al Mockup del Usuario
  * Colores: Navy #0C2237 / #172B43, Yellow #FEBF02 / #FFE600, Green #B8F6C5 / #06E267
  * ============================================================================== */
 
@@ -45,7 +45,7 @@
 .mainCard {
   background: #FFFFFF;
   border-radius: 28px;
-  padding: 22px 18px 20px 18px;
+  padding: 22px 18px 22px 18px;
   box-shadow: 0 12px 36px -4px rgba(12, 34, 55, 0.08), 0 4px 12px rgba(12, 34, 55, 0.03);
   border: 1px solid rgba(226, 232, 240, 0.8);
   position: relative;
@@ -233,8 +233,8 @@
 .cuotasList {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 18px;
   position: relative;
   z-index: 2;
 }
@@ -247,7 +247,6 @@
   padding: 10px 14px;
   border-radius: 16px;
   box-sizing: border-box;
-  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 /* Cuota Pagada */
@@ -408,136 +407,16 @@
   color: #DC2626;
 }
 
-/* Separador elegante para salto de cuotas intermedias */
-.gapDivider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 4px 6px;
-  margin: 1px 0;
-}
-
-.gapLine {
-  flex: 1;
-  height: 1px;
-  background-color: #E2E8F0;
-}
-
-.gapBadge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #64748B;
-  background-color: #F8FAFC;
-  border: 1px dashed #CBD5E1;
-  padding: 2px 10px;
-  border-radius: 20px;
-}
-
-/* Botón discreto para alternar entre resumen y ver todas */
-.viewAllToggleBtn {
-  background: none;
-  border: none;
-  color: #0284C7;
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 6px 0;
-  cursor: pointer;
-  text-align: center;
-  width: 100%;
-  transition: color 150ms ease;
-}
-
-.viewAllToggleBtn:hover {
-  color: #0369A1;
-  text-decoration: underline;
-}
-
-/* Footer integrado dentro de la tarjeta */
+/* Footer limpio */
 .footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding-top: 12px;
-  border-top: 1px solid #F1F5F9;
-  position: relative;
-  z-index: 2;
-}
-
-.footerBrand {
+  text-align: center;
   font-size: 0.84rem;
   font-weight: 600;
   color: #656B81;
-}
-
-/* Enlace discreto para guardar en pantalla de inicio */
-.saveShortcutBtn {
-  background: transparent;
-  border: none;
-  color: #64748B;
-  font-size: 0.76rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  padding: 4px 10px;
-  border-radius: 8px;
-  transition: all 150ms ease;
-}
-
-.saveShortcutBtn:hover {
-  color: #0C2237;
-  background-color: #F1F5F9;
-}
-
-/* Mini guía integrada limpia (sin tarjeta externa ni tecnicismos) */
-.installHelpBox {
-  margin-top: 8px;
-  padding: 12px 14px;
-  background-color: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  width: 100%;
-  box-sizing: border-box;
-  animation: fadeIn 180ms ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.installHelpGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-@media (max-width: 360px) {
-  .installHelpGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.installHelpItem {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.installHelpPlatform {
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: #0F172A;
-}
-
-.installHelpText {
-  font-size: 0.72rem;
-  color: #475569;
-  line-height: 1.35;
-  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid #F1F5F9;
+  position: relative;
+  z-index: 2;
 }
 
 /* Loading & Empty States */
