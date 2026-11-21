@@ -188,7 +188,7 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Mobile TopBar: [ ⚙️ 🧭 ] [ QuickCash ] [ 🔔 🚪 ] */}
+        {/* Mobile TopBar */}
         <header className={`${styles.topBar} ${styles.topBarMobile}`} style={{ position: 'relative', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2 }}>
             <Link href="/settings" className={styles.iconBtn} aria-label="Configuración">

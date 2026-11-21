@@ -681,54 +681,109 @@ export default function LoansPage() {
               <p style={{ fontSize: 'var(--text-sm)' }}>No hay cuotas programadas para este préstamo.</p>
             </div>
           ) : (
-            <div className={styles.scheduleTable} style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: 'none', padding: '0 var(--space-4)' }}>
-              <table style={{ minWidth: '520px', width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--color-gray-200)', color: 'var(--color-gray-500)', fontSize: '0.85rem' }}>
-                    <th style={{ padding: '12px 8px' }}>#</th>
-                    <th style={{ padding: '12px 8px' }}>Vencimiento</th>
-                    <th style={{ padding: '12px 8px' }}>Esperado</th>
-                    <th style={{ padding: '12px 8px' }}>Pagado</th>
-                    <th style={{ padding: '12px 8px' }}>Estado</th>
-                    <th style={{ padding: '12px 8px' }}>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loanDetail.payments?.map((payment: any) => (
-                    <tr key={payment.id} style={{ borderBottom: '1px solid var(--color-gray-100)' }}>
-                      <td style={{ padding: '12px 8px', fontWeight: 600 }}>{payment.installment_number}</td>
-                      <td style={{ padding: '12px 8px' }}>{formatDate(payment.due_date)}</td>
-                      <td style={{ padding: '12px 8px' }}>{formatCurrency(payment.amount_due)}</td>
-                      <td style={{ padding: '12px 8px', color: payment.amount_paid > 0 ? 'var(--color-primary)' : 'inherit' }}>{formatCurrency(payment.amount_paid || 0)}</td>
-                      <td style={{ padding: '12px 8px' }}>
-                        <span className={getPaymentBadge(payment.status)}>{getPaymentLabel(payment.status)}</span>
-                      </td>
-                      <td style={{ padding: '12px 8px' }}>
-                        {(() => {
-                          const isPayable = (payment.status === 'missed') ||
-                            (payment.status === 'partial') ||
-                            (payment.status === 'pending'); // Permitir cobros anticipados
-                          return isPayable ? (
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <button className="btn btn--sm btn--primary" onClick={() => handlePayInstallment(payment.id, payment.installment_number, payment.amount_due)}>
-                                Cobrar
-                              </button>
-                              <button 
-                                className="btn btn--sm btn--ghost" 
-                                onClick={() => handleGraceDay(payment.id, payment.installment_number)}
-                                title="No Pagó (Aplica Día de Gracia)"
-                              >
-                                Omitir
-                              </button>
-                            </div>
-                          ) : null;
-                        })()}
-                      </td>
+            <>
+              {/* Vista Tabla Desktop (>= 640px) */}
+              <div className={styles.scheduleTableWrapper}>
+                <table className={styles.scheduleTableElement}>
+                  <thead>
+                    <tr>
+                      <th style={{ padding: '12px 10px' }}>#</th>
+                      <th style={{ padding: '12px 10px' }}>Vencimiento</th>
+                      <th style={{ padding: '12px 10px' }}>Esperado</th>
+                      <th style={{ padding: '12px 10px' }}>Pagado</th>
+                      <th style={{ padding: '12px 10px' }}>Estado</th>
+                      <th style={{ padding: '12px 10px' }}>Acción</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {loanDetail.payments?.map((payment: any) => (
+                      <tr key={payment.id}>
+                        <td style={{ padding: '12px 10px', fontWeight: 600 }}>{payment.installment_number}</td>
+                        <td style={{ padding: '12px 10px' }}>{formatDate(payment.due_date)}</td>
+                        <td style={{ padding: '12px 10px' }}>{formatCurrency(payment.amount_due)}</td>
+                        <td style={{ padding: '12px 10px', color: payment.amount_paid > 0 ? 'var(--color-primary)' : 'inherit' }}>{formatCurrency(payment.amount_paid || 0)}</td>
+                        <td style={{ padding: '12px 10px' }}>
+                          <span className={getPaymentBadge(payment.status)}>{getPaymentLabel(payment.status)}</span>
+                        </td>
+                        <td style={{ padding: '12px 10px' }}>
+                          {(() => {
+                            const isPayable = (payment.status === 'missed') ||
+                              (payment.status === 'partial') ||
+                              (payment.status === 'pending');
+                            return isPayable ? (
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="btn btn--sm btn--primary" onClick={() => handlePayInstallment(payment.id, payment.installment_number, payment.amount_due)}>
+                                  Cobrar
+                                </button>
+                                <button 
+                                  className="btn btn--sm btn--ghost" 
+                                  onClick={() => handleGraceDay(payment.id, payment.installment_number)}
+                                  title="No Pagó (Aplica Día de Gracia)"
+                                >
+                                  Omitir
+                                </button>
+                              </div>
+                            ) : null;
+                          })()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Vista Tarjetas Mobile (< 640px): Cero scroll horizontal */}
+              <div className={styles.scheduleCardsMobile}>
+                {loanDetail.payments?.map((payment: any) => {
+                  const isPayable = (payment.status === 'missed') ||
+                    (payment.status === 'partial') ||
+                    (payment.status === 'pending');
+                  return (
+                    <div key={payment.id} className={styles.scheduleCardItem}>
+                      <div className={styles.scheduleCardItemHeader}>
+                        <div className={styles.scheduleCardItemNum}>
+                          <strong>Cuota #{payment.installment_number}</strong>
+                          <span className={styles.scheduleCardItemDate}>{formatDate(payment.due_date)}</span>
+                        </div>
+                        <span className={getPaymentBadge(payment.status)}>{getPaymentLabel(payment.status)}</span>
+                      </div>
+                      <div className={styles.scheduleCardItemAmounts}>
+                        <div>
+                          <span className={styles.scheduleAmountLbl}>Esperado</span>
+                          <span className={styles.scheduleAmountVal}>{formatCurrency(payment.amount_due)}</span>
+                        </div>
+                        <div>
+                          <span className={styles.scheduleAmountLbl}>Pagado</span>
+                          <span className={styles.scheduleAmountVal} style={{ color: payment.amount_paid > 0 ? 'var(--color-green)' : 'inherit' }}>
+                            {formatCurrency(payment.amount_paid || 0)}
+                          </span>
+                        </div>
+                      </div>
+                      {isPayable && (
+                        <div className={styles.scheduleCardItemActions}>
+                          <button
+                            type="button"
+                            className="btn btn--sm btn--primary"
+                            style={{ flex: 1, minHeight: '38px', justifyContent: 'center' }}
+                            onClick={() => handlePayInstallment(payment.id, payment.installment_number, payment.amount_due)}
+                          >
+                            Cobrar
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--sm btn--ghost"
+                            style={{ flex: 1, minHeight: '38px', justifyContent: 'center' }}
+                            onClick={() => handleGraceDay(payment.id, payment.installment_number)}
+                          >
+                            Omitir
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </div>

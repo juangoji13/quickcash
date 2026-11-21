@@ -154,7 +154,12 @@ export default function PublicTalonarioPage() {
   if (!data) {
     return (
       <div className={styles.loadingContainer}>
-        <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🔍</div>
+        <div style={{ marginBottom: 12, color: '#64748B' }}>
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
         <h3 style={{ margin: 0, fontWeight: 800, color: '#0F172A' }}>Talonario no encontrado</h3>
         <p style={{ color: '#64748B', fontSize: '0.85rem', maxWidth: 300, marginTop: 6, lineHeight: 1.4 }}>
           Este enlace no es válido o cambió. Por favor pídele a tu cobrador que te comparta su código QR actualizado.
@@ -169,7 +174,15 @@ export default function PublicTalonarioPage() {
         {/* Banner discreto sin internet */}
         {isOffline && (
           <div className={styles.offlineBanner}>
-            <span>📶</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+              <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+              <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+              <path d="M10.71 5.05A16 16 0 0 1 22.58 9"/>
+              <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+              <line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
             <span>
               Modo sin conexión. Mostrando última copia guardada
               {cachedTime ? ` (${cachedTime})` : ''}.
@@ -211,8 +224,11 @@ export default function PublicTalonarioPage() {
           {/* Si no tiene crédito activo o ya lo completó */}
           {!data.has_active_loan ? (
             <div style={{ textAlign: 'center', padding: '24px 12px', position: 'relative', zIndex: 2 }}>
-              <div style={{ fontSize: '2.8rem', marginBottom: 8 }}>
-                {data.is_completed ? '🎉' : '✨'}
+              <div style={{ marginBottom: 12, color: data.is_completed ? '#16A34A' : '#F1C40F', display: 'flex', justifyContent: 'center' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
               </div>
               <h3 style={{ margin: 0, fontWeight: 800, color: '#0C2237', fontSize: '1.2rem' }}>
                 {data.is_completed ? '¡Crédito Completado!' : 'Sin Cuotas Pendientes'}

@@ -338,7 +338,11 @@ export default function ClientsPage() {
                       </div>
                     )}
                     <div className={styles.collectorTag}>
-                      <span>👤 {client.collector_id ? (collectorsMap[client.collector_id] || 'Cobrador asignado') : 'Sin cobrador asignado'}</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink: 0 }}>
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                      <span>{client.collector_id ? (collectorsMap[client.collector_id] || 'Cobrador asignado') : 'Sin cobrador asignado'}</span>
                     </div>
 
                     {/* Fila 3: Teléfono y Acciones Táctiles Directas */}
@@ -423,18 +427,31 @@ export default function ClientsPage() {
                 <h2 className={styles.pageTitle}>Dashboard del Cliente</h2>
                 <p className={styles.pageSubtitle}>{selectedClient.full_name} · CC {selectedClient.document_id}</p>
               </div>
-              <div className={styles.headerBtns} style={{ display: 'flex', gap: '8px' }}>
+              <div className={styles.headerBtns} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button 
                   className="btn btn--secondary" 
                   onClick={() => setQrClientTarget(selectedClient)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  📱 QR Talonario
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                  <span>QR Talonario</span>
                 </button>
                 <button 
                   className="btn btn--secondary" 
                   onClick={() => setReassignClientTarget(selectedClient)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  🔄 Reasignar Cobrador
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  <span>Reasignar Cobrador</span>
                 </button>
                 <button className="btn btn--danger" onClick={() => handleDelete(selectedClient.id, selectedClient.full_name)}>
                   Eliminar Cliente

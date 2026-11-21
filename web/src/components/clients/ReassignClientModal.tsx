@@ -97,7 +97,7 @@ export default function ReassignClientModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="🔄 Reasignar Cobrador" width="460px">
+    <Modal isOpen={isOpen} onClose={onClose} title="Reasignar Cobrador" width="460px">
       <form onSubmit={handleSubmit} className={styles.reassignForm}>
         <div className={styles.clientSummary}>
           <h4 className={styles.clientName}>{client.full_name}</h4>
@@ -138,7 +138,11 @@ export default function ReassignClientModal({
         </div>
 
         <div className={styles.transferNote}>
-          <span style={{ fontSize: '1.1rem' }}>ℹ️</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink: 0, marginTop: 2 }}>
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
           <span>
             <strong>Transferencia instantánea:</strong> La ruta, créditos activos y cuotas pendientes del cliente
             se sincronizarán de inmediato en la app móvil del nuevo cobrador.
@@ -147,7 +151,12 @@ export default function ReassignClientModal({
 
         {errorMessage && (
           <div className={styles.errorBanner}>
-            ⚠️ {errorMessage}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{errorMessage}</span>
           </div>
         )}
 

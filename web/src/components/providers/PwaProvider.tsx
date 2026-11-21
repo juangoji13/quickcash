@@ -45,10 +45,10 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
         navigator.serviceWorker
           .register('/sw.js')
           .then((registration) => {
-            console.log('⚡ QuickCash PWA: Service Worker registrado en scope:', registration.scope);
+            console.log('QuickCash PWA: Service Worker registrado en scope:', registration.scope);
           })
           .catch((error) => {
-            console.warn('⚠️ QuickCash PWA: Error al registrar Service Worker:', error);
+            console.warn('QuickCash PWA: Error al registrar Service Worker:', error);
           });
       };
 
@@ -207,7 +207,11 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
             letterSpacing: '0.5px',
           }}
         >
-          <span>⚠️</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink: 0 }}>
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
           <span>Sin conexión a internet. Operando en modo offline.</span>
         </div>
       )}

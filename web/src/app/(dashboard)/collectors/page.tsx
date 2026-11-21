@@ -266,7 +266,9 @@ export default function CollectorsPage() {
                       <h4 className={styles.memberName}>{c.user.full_name}</h4>
                       <div className={styles.memberMeta}>
                         {c.user.username && (
-                          <span style={{ color: '#2563EB', fontWeight: 700 }}>{c.user.username}</span>
+                          <span style={{ color: '#2563EB', fontWeight: 700 }}>
+                            {c.user.username.startsWith('@') ? c.user.username : `@${c.user.username}`}
+                          </span>
                         )}
                         <span>·</span>
                         <span className={styles.roleText}>

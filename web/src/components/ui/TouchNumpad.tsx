@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLockBodyScroll } from '@/hooks';
 import { formatCurrency } from '@/lib/utils';
 import styles from './TouchNumpad.module.css';
 
@@ -263,6 +264,8 @@ export function TouchNumpadModal({
   onClose,
   ...props
 }: TouchNumpadModalProps) {
+  useLockBodyScroll(isOpen);
+
   if (!isOpen) return null;
 
   return (

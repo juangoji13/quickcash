@@ -56,7 +56,7 @@ export default function ClientQrModal({ isOpen, onClose, client }: ClientQrModal
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="📱 Talonario Virtual del Cliente" width="440px">
+    <Modal isOpen={isOpen} onClose={onClose} title="Talonario Virtual del Cliente" width="440px">
       <div className={styles.qrContainer}>
         <div>
           <h4 className={styles.clientNameTitle}>{client.full_name}</h4>
@@ -75,7 +75,11 @@ export default function ClientQrModal({ isOpen, onClose, client }: ClientQrModal
         </div>
 
         <div className={styles.tipBox}>
-          <span>💡</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink: 0, marginTop: 2 }}>
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
           <span>
             <strong>Pídele al cliente que escanee este código</strong> con la cámara de su teléfono.
             Podrá ver sus cuotas pagadas y su cuota diaria sin contraseñas ni complicaciones.
@@ -92,7 +96,7 @@ export default function ClientQrModal({ isOpen, onClose, client }: ClientQrModal
             onClick={(e) => (e.target as HTMLInputElement).select()}
           />
           <button type="button" className={styles.copyBtn} onClick={handleCopy}>
-            {copied ? '¡Copiado! ✅' : 'Copiar Enlace'}
+            {copied ? '¡Copiado!' : 'Copiar Enlace'}
           </button>
         </div>
 

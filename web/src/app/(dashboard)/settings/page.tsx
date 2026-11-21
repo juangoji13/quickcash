@@ -70,7 +70,6 @@ export default function SettingsPage() {
   const [requireGps, setRequireGps] = useState(true);
   const [allowPartialPayments, setAllowPartialPayments] = useState(true);
   const [requireDailyClosure, setRequireDailyClosure] = useState(true);
-  const [autoReceiptsWhatsapp, setAutoReceiptsWhatsapp] = useState(true);
 
   // Calendar state
   const [nonWorkingDays, setNonWorkingDays] = useState<string[]>(['sunday']);
@@ -125,7 +124,6 @@ export default function SettingsPage() {
         if (settings.require_gps !== undefined) setRequireGps(settings.require_gps);
         if (settings.allow_partial_payments !== undefined) setAllowPartialPayments(settings.allow_partial_payments);
         if (settings.require_daily_closure !== undefined) setRequireDailyClosure(settings.require_daily_closure);
-        if (settings.auto_receipts_whatsapp !== undefined) setAutoReceiptsWhatsapp(settings.auto_receipts_whatsapp);
       }
 
       if (userProfile) {
@@ -185,7 +183,6 @@ export default function SettingsPage() {
       require_gps: Boolean(requireGps),
       allow_partial_payments: Boolean(allowPartialPayments),
       require_daily_closure: Boolean(requireDailyClosure),
-      auto_receipts_whatsapp: Boolean(autoReceiptsWhatsapp),
     };
 
     const res = await updateTenant(tenant.id, {

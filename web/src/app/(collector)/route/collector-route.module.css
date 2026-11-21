@@ -775,6 +775,8 @@
   align-items: flex-end;
   justify-content: center;
   animation: fadeIn 0.15s ease-out;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .sheetContent {
@@ -788,6 +790,7 @@
   gap: var(--space-4);
   animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.2);
+  overscroll-behavior: contain;
 }
 
 .sheetHeader {
@@ -871,6 +874,9 @@
   gap: var(--space-4);
   max-height: 90dvh;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

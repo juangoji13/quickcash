@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { useAuth, useOfflineSync } from '@/hooks';
+import { useAuth, useOfflineSync, useLockBodyScroll } from '@/hooks';
 import {
   getCollectionRoutes,
   getRouteActiveChecklist,
@@ -87,6 +87,8 @@ export default function CollectorRoutePage() {
   const [alertError, setAlertError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useLockBodyScroll(Boolean(missedItem) || showCloseModal);
 
   // Estados de Cierre de Jornada y Arqueo (Sprint 4)
   const [isShiftClosed, setIsShiftClosed] = useState(false);
@@ -173,7 +175,7 @@ export default function CollectorRoutePage() {
         setSelectedRoute(cached.selectedRoute || cached.routes[0] || null);
         if (cached.checklist) setChecklist(cached.checklist);
         if (cached.todayCollected) setTodayCollected(cached.todayCollected);
-        showToast('⚡ Datos cargados desde caché offline');
+        showToast('Datos cargados desde caché local (offline)');
       } else {
         setAlertError('Error al cargar rutas de cobro.');
       }
@@ -314,7 +316,7 @@ export default function CollectorRoutePage() {
     ? Math.round(((collectedClients.length + incidentClients.length) / checklist.length) * 100)
     : 0;
 
-  /* ---- ACCIÓN 1: 🟢 COBRO COMPLETO (1-TAP) ---- */
+  /* ---- ACCIÓN 1: COBRO COMPLETO (1-TAP) ---- */
   const handleFullPayment = async () => {
     if (!activeTarget || !appUser || isSubmitting) return;
 
@@ -348,7 +350,7 @@ export default function CollectorRoutePage() {
         }));
 
         setTodayCollected((prev) => prev + amount);
-        showToast(`⚡ Cobro guardado en cola offline: ${formatCurrency(amount)}`);
+        showToast(`Cobro guardado en cola offline: ${formatCurrency(amount)}`);
         advanceToNextPending(activeTarget.client_id);
         setIsSubmitting(false);
         return;
@@ -373,9 +375,9 @@ export default function CollectorRoutePage() {
           latitude: gps.latitude,
           longitude: gps.longitude,
         });
-        showToast(`⚡ Guardado en cola local: ${formatCurrency(amount)}`);
+        showToast(`Cobro guardado en cola local: ${formatCurrency(amount)}`);
       } else {
-        showToast(`✅ Cobro completo: ${formatCurrency(amount)}`);
+        showToast(`Cobro completo registrado: ${formatCurrency(amount)}`);
       }
 
       // Actualizar estado en vivo
@@ -414,7 +416,7 @@ export default function CollectorRoutePage() {
         }));
 
         setTodayCollected((prev) => prev + amount);
-        showToast(`⚡ Guardado en cola offline: ${formatCurrency(amount)}`);
+        showToast(`Cobro guardado en cola local: ${formatCurrency(amount)}`);
         advanceToNextPending(activeTarget.client_id);
       } catch (offlineErr) {
         setAlertError('Error al registrar cobro.');
@@ -424,7 +426,7 @@ export default function CollectorRoutePage() {
     }
   };
 
-  /* ---- ACCIÓN 2: 🟡 ABONO PARCIAL (TOUCH NUMPAD) ---- */
+  /* ---- ACCIÓN 2: ABONO PARCIAL (TOUCH NUMPAD) ---- */
   const handleOpenPartialNumpad = () => {
     if (!activeTarget) return;
     triggerHaptic(30);
@@ -461,7 +463,7 @@ export default function CollectorRoutePage() {
         }));
 
         setTodayCollected((prev) => prev + amount);
-        showToast(`⚡ Abono guardado en cola offline: ${formatCurrency(amount)}`);
+        showToast(`Abono guardado en cola offline: ${formatCurrency(amount)}`);
         advanceToNextPending(numpadItem.client_id);
         setIsSubmitting(false);
         return;
@@ -485,9 +487,9 @@ export default function CollectorRoutePage() {
           latitude: gps.latitude,
           longitude: gps.longitude,
         });
-        showToast(`⚡ Abono guardado en cola local: ${formatCurrency(amount)}`);
+        showToast(`Abono guardado en cola local: ${formatCurrency(amount)}`);
       } else {
-        showToast(`🟡 Abono registrado: ${formatCurrency(amount)}`);
+        showToast(`Abono parcial registrado: ${formatCurrency(amount)}`);
       }
 
       setProcessedMap((prev) => ({
@@ -525,7 +527,7 @@ export default function CollectorRoutePage() {
         }));
 
         setTodayCollected((prev) => prev + amount);
-        showToast(`⚡ Abono guardado offline: ${formatCurrency(amount)}`);
+        showToast(`Abono guardado en cola local: ${formatCurrency(amount)}`);
         advanceToNextPending(numpadItem.client_id);
       } catch (offlineErr) {
         setAlertError('Error al procesar abono parcial.');
@@ -535,7 +537,7 @@ export default function CollectorRoutePage() {
     }
   };
 
-  /* ---- ACCIÓN 3: 🔴 NO PAGÓ (SELECTOR DE MOTIVO) ---- */
+  /* ---- ACCIÓN 3: NO PAGÓ (SELECTOR DE MOTIVO) ---- */
   const handleOpenMissedModal = () => {
     if (!activeTarget) return;
     triggerHaptic(40);
@@ -573,7 +575,7 @@ export default function CollectorRoutePage() {
           },
         }));
 
-        showToast(`⚡ Novedad guardada offline: ${reason}`);
+        showToast(`Novedad guardada en cola offline: ${reason}`);
         advanceToNextPending(missedItem.client_id);
         setIsSubmitting(false);
         return;
@@ -597,9 +599,9 @@ export default function CollectorRoutePage() {
           latitude: gps.latitude,
           longitude: gps.longitude,
         });
-        showToast(`⚡ Novedad guardada en cola local: ${reason}`);
+        showToast(`Novedad guardada en cola local: ${reason}`);
       } else {
-        showToast(`🔴 Novedad: ${reason}`);
+        showToast(`Novedad registrada: ${reason}`);
       }
 
       setProcessedMap((prev) => ({
@@ -637,7 +639,7 @@ export default function CollectorRoutePage() {
           },
         }));
 
-        showToast(`⚡ Novedad guardada offline: ${reason}`);
+        showToast(`Novedad guardada en cola offline: ${reason}`);
         advanceToNextPending(missedItem.client_id);
       } catch (offlineErr) {
         setAlertError('Error al registrar novedad.');
@@ -682,7 +684,7 @@ export default function CollectorRoutePage() {
         setIsShiftClosed(true);
         setViewClosedReceipt(true);
         setShowCloseModal(false);
-        showToast('🏁 Jornada cerrada con éxito.');
+        showToast('Jornada cerrada con éxito.');
         triggerHaptic([100, 50, 100, 50, 150]);
       }
     } catch (err: any) {
@@ -806,7 +808,12 @@ export default function CollectorRoutePage() {
       {isShiftClosed && viewClosedReceipt && closedSummary ? (
         <section className={styles.closedScreenOverlay}>
           <div className={styles.closedSuccessBanner}>
-            <div style={{ fontSize: '2.5rem' }}>🏁</div>
+            <div style={{ color: 'var(--color-green)', display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
             <span className={styles.closedSuccessTitle}>Jornada Cerrada con Éxito</span>
             <span className={styles.closedSuccessSub}>
               Ruta formalmente finalizada. Entrega este comprobante de caja al prestamista.
@@ -915,7 +922,12 @@ export default function CollectorRoutePage() {
       {/* Barra de Búsqueda y Filtros Rápidos (Sprint Prioridad 1) */}
       <div className={styles.quickFilterBar}>
         <div className={styles.searchBox}>
-          <span className={styles.searchIcon}>🔍</span>
+          <span className={styles.searchIcon}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
           <input
             type="text"
             className={styles.routeSearchInput}
@@ -1004,7 +1016,12 @@ export default function CollectorRoutePage() {
           <>
             {pendingClients.length === 0 ? (
               <div className={styles.emptyState}>
-                <div style={{ fontSize: '2rem' }}>🎉</div>
+                <div style={{ color: 'var(--color-green)', display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </div>
                 <div className={styles.emptyTitle}>¡Ruta al Día!</div>
                 <div className={styles.emptyText}>
                   No hay cobros pendientes por realizar en esta jornada.
@@ -1012,7 +1029,12 @@ export default function CollectorRoutePage() {
               </div>
             ) : displayedPendingClients.length === 0 ? (
               <div className={styles.emptyState}>
-                <div style={{ fontSize: '1.8rem' }}>🔍</div>
+                <div style={{ color: 'var(--color-gray-400)', display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </div>
                 <div className={styles.emptyTitle}>Sin coincidencias</div>
                 <div className={styles.emptyText}>No hay clientes pendientes que coincidan con el filtro actual.</div>
                 <button
@@ -1074,8 +1096,15 @@ export default function CollectorRoutePage() {
                             triggerHaptic(15);
                           }}
                           title="Ver QR del Talonario"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                         >
-                          📱 QR
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                          </svg>
+                          <span>QR</span>
                         </button>
 
                         {client.phone && (
@@ -1133,7 +1162,12 @@ export default function CollectorRoutePage() {
               </div>
             ) : displayedCollectedClients.length === 0 ? (
               <div className={styles.emptyState}>
-                <div style={{ fontSize: '1.8rem' }}>🔍</div>
+                <div style={{ color: 'var(--color-gray-400)', display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </div>
                 <div className={styles.emptyTitle}>Sin coincidencias</div>
                 <div className={styles.emptyText}>No hay cobros que coincidan con el filtro actual.</div>
               </div>
@@ -1164,8 +1198,15 @@ export default function CollectorRoutePage() {
                             triggerHaptic(15);
                           }}
                           title="Ver QR del Talonario"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                         >
-                          📱 QR
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                          </svg>
+                          <span>QR</span>
                         </button>
                         <span
                           className={`${styles.statusOutcomeBadge} ${
@@ -1207,7 +1248,12 @@ export default function CollectorRoutePage() {
               </div>
             ) : displayedIncidentClients.length === 0 ? (
               <div className={styles.emptyState}>
-                <div style={{ fontSize: '1.8rem' }}>🔍</div>
+                <div style={{ color: 'var(--color-gray-400)', display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </div>
                 <div className={styles.emptyTitle}>Sin coincidencias</div>
                 <div className={styles.emptyText}>No hay novedades que coincidan con el filtro actual.</div>
               </div>
@@ -1238,8 +1284,15 @@ export default function CollectorRoutePage() {
                             triggerHaptic(15);
                           }}
                           title="Ver QR del Talonario"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                         >
-                          📱 QR
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                          </svg>
+                          <span>QR</span>
                         </button>
                         <span className={`${styles.statusOutcomeBadge} ${styles.badgeMissed}`}>
                           No Pagó
@@ -1279,7 +1332,7 @@ export default function CollectorRoutePage() {
       {isShiftClosed ? (
         <footer className={styles.thumbZone} style={{ padding: '12px' }}>
           <div className={styles.closedFrozenNotice}>
-            <span>🔒 Jornada cerrada por hoy · Edición de cobros congelada</span>
+            <span>Jornada cerrada por hoy · Edición de cobros congelada</span>
             <button
               type="button"
               className={styles.shortcutBtn}
@@ -1299,7 +1352,7 @@ export default function CollectorRoutePage() {
         <footer className={styles.thumbZone}>
           <div className={styles.activeTargetBanner}>
             <span className={styles.activeTargetName}>
-              🎯 {activeTarget.client_name}
+              {activeTarget.client_name}
             </span>
             <span className={styles.activeTargetQuota}>
               {formatCurrency(activeTarget.expectedQuota)}
@@ -1307,7 +1360,7 @@ export default function CollectorRoutePage() {
           </div>
 
           <div className={styles.actionButtonsGrid}>
-            {/* 🟢 Cobro Completo (1-Tap instantáneo) */}
+            {/* Cobro Completo (1-Tap instantáneo) */}
             <button
               type="button"
               className={`${styles.btnAction} ${styles.btnComplete}`}
@@ -1321,7 +1374,7 @@ export default function CollectorRoutePage() {
               <span className={styles.btnActionSub}>1-Tap</span>
             </button>
 
-            {/* 🟡 Abono Parcial (Touch Numpad) */}
+            {/* Abono Parcial (Touch Numpad) */}
             <button
               type="button"
               className={`${styles.btnAction} ${styles.btnPartial}`}
@@ -1339,7 +1392,7 @@ export default function CollectorRoutePage() {
               <span className={styles.btnActionSub}>Parcial</span>
             </button>
 
-            {/* 🔴 No Pagó (Selector de Motivo) */}
+            {/* No Pagó (Selector de Motivo) */}
             <button
               type="button"
               className={`${styles.btnAction} ${styles.btnMissed}`}
