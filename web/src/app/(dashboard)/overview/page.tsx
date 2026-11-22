@@ -97,13 +97,11 @@ export default function OverviewPage() {
           label="Capital en Calle"
           value={loading ? null : formatCurrency(kpis?.capital_in_street || 0)}
           sub={loading ? '—' : `${kpis?.total_active_loans || 0} préstamos activos`}
-          accent="var(--color-safety-yellow)"
         />
         <KPICard
           label="Intereses por Cobrar"
           value={loading ? null : formatCurrency(kpis?.interest_receivable || 0)}
           sub="Ganancia calculada"
-          accent="var(--color-green)"
         />
         <KPICard
           label="Recaudo del Día"
@@ -111,13 +109,11 @@ export default function OverviewPage() {
           sub={!loading && kpis && kpis.today_expected > 0
             ? `de ${formatCurrency(kpis.today_expected)} esperados hoy`
             : 'Sin cobros pendientes para hoy'}
-          accent="var(--color-blue)"
         />
         <KPICard
           label="Índice de Mora"
           value={loading ? null : `${kpis?.delinquency_rate || 0}%`}
           sub={loading ? '—' : `${kpis?.total_clients || 0} clientes registrados`}
-          accent="var(--color-red)"
         />
       </div>
 
@@ -128,11 +124,15 @@ export default function OverviewPage() {
           <h3 className={styles.sectionTitle}>Semáforo de Riesgo</h3>
           {loading ? (
             <div className="skeleton" style={{ height: 100 }} />
+          ) : !kpis || kpis.total_clients === 0 ? (
+            <div className={styles.emptyRiskState}>
+              <p style={{ margin: 0 }}>Sin clientes registrados en cartera actualmente.</p>
+            </div>
           ) : (
             <div className={styles.riskBars}>
-              <RiskRow label="Al Día" count={kpis?.risk_distribution.green || 0} total={kpis?.total_clients || 1} color="var(--color-green)" />
-              <RiskRow label="Alerta" count={kpis?.risk_distribution.yellow || 0} total={kpis?.total_clients || 1} color="var(--color-yellow)" />
-              <RiskRow label="En Mora" count={kpis?.risk_distribution.red || 0} total={kpis?.total_clients || 1} color="var(--color-red)" />
+              <RiskRow label="Al Día" count={kpis.risk_distribution.green || 0} total={kpis.total_clients} color="#16A34A" />
+              <RiskRow label="Alerta" count={kpis.risk_distribution.yellow || 0} total={kpis.total_clients} color="#D97706" />
+              <RiskRow label="En Mora" count={kpis.risk_distribution.red || 0} total={kpis.total_clients} color="#DC2626" />
             </div>
           )}
         </div>
@@ -237,9 +237,9 @@ function formatToday(): string {
   return new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function KPICard({ label, value, sub, accent }: { label: string; value: string | null; sub: string; accent: string }) {
+function KPICard({ label, value, sub }: { label: string; value: string | null; sub: string }) {
   return (
-    <div className={styles.kpiCard} style={{ '--kpi-accent': accent } as React.CSSProperties}>
+    <div className={styles.kpiCard}>
       <span className={styles.kpiLabel}>{label}</span>
       <span className={styles.kpiValue}>
         {value ?? <span className="skeleton" style={{ width: 100, height: 32, display: 'inline-block' }} />}

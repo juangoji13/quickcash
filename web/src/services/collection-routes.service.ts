@@ -547,7 +547,7 @@ export async function getRouteClosures(
     return closures.map((c: any) => {
       const expected = Number(c.total_expected || 0);
       const collected = Number(c.total_collected || 0);
-      const rate = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 100;
+      const rate = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 0;
 
       return {
         id: c.id,
@@ -618,4 +618,23 @@ export async function verifyRouteClosure(
     return { success: false, error: err.message };
   }
 }
+
+export async function deleteRouteClosure(
+  closureId: string,
+  tenantId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await db.delete(route_closures).where(
+      and(
+        eq(route_closures.id, closureId),
+        eq(route_closures.tenant_id, tenantId)
+      )
+    );
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error deleting route closure:', err);
+    return { success: false, error: err.message || 'Error al eliminar el arqueo.' };
+  }
+}
+
 

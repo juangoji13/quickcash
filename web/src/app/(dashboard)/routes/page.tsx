@@ -14,6 +14,7 @@ import {
   closeRouteRecord,
   getRouteClosures,
   verifyRouteClosure,
+  deleteRouteClosure,
   type RouteClosureDetail,
 } from '@/services/collection-routes.service';
 import { getCollectors } from '@/services/collectors.service';
@@ -57,11 +58,23 @@ export default function RoutesPage() {
 
   // Modals
   const [deleteRouteTarget, setDeleteRouteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [closureToDelete, setClosureToDelete] = useState<RouteClosureDetail | null>(null);
   const [removeClientTarget, setRemoveClientTarget] = useState<{ id: string; name: string } | null>(null);
   const [payTarget, setPayTarget] = useState<{ id: string; client_name: string; amount: number; isFull: boolean } | null>(null);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [closingRoute, setClosingRoute] = useState(false);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
+
+  async function handleConfirmDeleteClosure() {
+    if (!closureToDelete || !appUser?.tenant_id) return;
+    const { success, error } = await deleteRouteClosure(closureToDelete.id, appUser.tenant_id);
+    if (!success) {
+      setErrorAlert(error || 'No se pudo eliminar el arqueo');
+    } else {
+      setClosureToDelete(null);
+      loadClosures();
+    }
+  }
 
   // Load Data [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
 
@@ -486,7 +499,11 @@ export default function RoutesPage() {
                             <div className={styles.collectorMiniAvatar}>{getInitials(c.collector_name)}</div>
                             <div className={styles.collectorMeta}>
                               <span style={{ fontWeight: 600 }}>{c.collector_name}</span>
-                              {c.collector_username && <span className={styles.collectorUsername}>@{c.collector_username}</span>}
+                              {c.collector_username && (
+                                <span className={styles.collectorUsername}>
+                                  @{c.collector_username.replace(/^@+/, '')}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -513,30 +530,40 @@ export default function RoutesPage() {
                           ) : (
                             <span className={styles.statusBadgeClosed}>
                               <span className={styles.statusDotClosed} />
-                              Cerrado
+                              Por Conciliar
                             </span>
                           )}
                         </td>
                         <td>
-                          {isVerified ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {isVerified ? (
+                              <button
+                                type="button"
+                                className={styles.reconcileBtnVerified}
+                                onClick={() => openReconcileModal(c)}
+                                title="Revisar o actualizar arqueo verificado"
+                              >
+                                Revisar Arqueo
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className={styles.reconcileBtn}
+                                onClick={() => openReconcileModal(c)}
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                Conciliar Caja
+                              </button>
+                            )}
                             <button
                               type="button"
-                              className={styles.reconcileBtnVerified}
-                              onClick={() => openReconcileModal(c)}
-                              title="Revisar o actualizar arqueo verificado"
+                              className={styles.deleteClosureBtn}
+                              onClick={() => setClosureToDelete(c)}
+                              title="Descartar arqueo"
                             >
-                              Revisar Arqueo
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                             </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className={styles.reconcileBtn}
-                              onClick={() => openReconcileModal(c)}
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                              Conciliar Caja
-                            </button>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -576,7 +603,11 @@ export default function RoutesPage() {
                       <div className={styles.collectorMiniAvatar}>{getInitials(c.collector_name)}</div>
                       <div className={styles.collectorMeta}>
                         <span className={styles.cardCollectorName}>{c.collector_name}</span>
-                        {c.collector_username && <span className={styles.collectorUsername}>@{c.collector_username}</span>}
+                        {c.collector_username && (
+                          <span className={styles.collectorUsername}>
+                            @{c.collector_username.replace(/^@+/, '')}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -619,6 +650,15 @@ export default function RoutesPage() {
                           Conciliar Caja Física
                         </button>
                       )}
+                      <button
+                        type="button"
+                        className={styles.cardActionBtnDelete}
+                        onClick={() => setClosureToDelete(c)}
+                        title="Descartar arqueo"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                        <span>Descartar</span>
+                      </button>
                     </div>
                   </div>
                 );
@@ -1020,6 +1060,25 @@ export default function RoutesPage() {
           </form>
         )}
       </Modal>
+
+      <ConfirmModal
+        isOpen={!!closureToDelete}
+        onClose={() => setClosureToDelete(null)}
+        onConfirm={handleConfirmDeleteClosure}
+        title="Descartar Arqueo de Ruta"
+        message={
+          <div>
+            <p style={{ margin: '0 0 8px 0', fontSize: '0.92rem' }}>
+              ¿Estás seguro de que deseas eliminar este registro de arqueo del cobrador <strong>{closureToDelete?.collector_name}</strong>?
+            </p>
+            <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748B' }}>
+              Esta acción borrará el registro de cierre de caja definitivamente del sistema.
+            </p>
+          </div>
+        }
+        confirmLabel="Sí, Descartar"
+        isDestructive={true}
+      />
 
       <AlertModal
         isOpen={!!errorAlert}

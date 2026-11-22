@@ -31,65 +31,49 @@
 
 @media (max-width: 1024px) { .kpiGrid { grid-template-columns: repeat(2, 1fr); } }
 
-/* KPI Card — Diseño sólido, sin glass */
+/* KPI Card — Metal y Asfalto arquitectónico, limpio y sobrio */
 .kpiCard {
   background-color: var(--color-card-white);
   border-radius: var(--radius-md);
   padding: var(--space-5);
-  box-shadow: var(--shadow-card);
-  border: 1px solid rgba(44, 62, 80, 0.06);
-  border-bottom: 4px solid var(--kpi-accent, var(--color-gray-200));
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(44, 62, 80, 0.08);
   display: flex;
   flex-direction: column;
   gap: 4px;
   transition: all var(--transition-base);
-  animation: slideUp 0.3s ease-out both;
-  position: relative;
-  overflow: hidden;
   min-width: 0;
   box-sizing: border-box;
 }
 
-/* Glow sutil en la esquina superior derecha */
-.kpiCard::after {
-  content: '';
-  position: absolute;
-  top: -20px; right: -20px;
-  width: 80px; height: 80px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--kpi-accent, transparent) 0%, transparent 70%);
-  opacity: 0.12;
-  pointer-events: none;
-}
-
-.kpiCard:nth-child(2) { animation-delay: 60ms; }
-.kpiCard:nth-child(3) { animation-delay: 120ms; }
-.kpiCard:nth-child(4) { animation-delay: 180ms; }
-
 .kpiCard:hover {
-  box-shadow: var(--shadow-lg), 0 0 20px var(--kpi-accent);
-  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: #CBD5E1;
+  transform: translateY(-2px);
 }
 
 .kpiLabel {
   font-family: var(--font-heading);
-  font-size: 10px; font-weight: 700;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--color-gray-400);
-  text-transform: uppercase; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .kpiValue {
   font-family: var(--font-heading);
-  font-size: var(--text-3xl); font-weight: 800;
+  font-size: var(--text-3xl);
+  font-weight: 800;
   color: var(--color-asphalt);
   line-height: 1.1;
-  margin-top: 2px;
+  margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
 
 .kpiSub {
   font-size: var(--text-xs);
-  color: var(--color-gray-300);
+  color: var(--color-gray-400);
   font-weight: 500;
   margin-top: 2px;
 }
@@ -169,6 +153,13 @@
   font-family: var(--font-heading); font-weight: 700;
   font-size: var(--text-sm); width: 24px; text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.emptyRiskState {
+  padding: 16px 0;
+  color: var(--color-gray-400);
+  font-size: var(--text-sm);
+  margin: 0;
 }
 
 /* Quick Stats */

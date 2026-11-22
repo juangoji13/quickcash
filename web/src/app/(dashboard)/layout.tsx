@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks';
 import Sidebar from '@/components/layout/Sidebar';
 import BottomNav from '@/components/layout/BottomNav';
-import NotificationsModal from '@/components/layout/NotificationsModal';
+import NotificationsModal, { NotificationItem } from '@/components/layout/NotificationsModal';
 import SubscriptionLockScreen from '@/components/layout/SubscriptionLockScreen';
 import { checkTenantSubscriptionStatus } from '@/services/superadmin.service';
+import { getLiveNotifications } from '@/services/notifications.service';
 import styles from './dashboard.module.css';
 
 function IconSettings() {
@@ -46,7 +47,8 @@ export default function DashboardLayout({
 }) {
   const { session, isLoading, appUser, signOut } = useAuth();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [hasUnread, setHasUnread] = useState(true);
+  const [hasUnread, setHasUnread] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [billingLock, setBillingLock] = useState<{
@@ -56,6 +58,16 @@ export default function DashboardLayout({
   } | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!appUser?.tenant_id) return;
+    getLiveNotifications(appUser.tenant_id)
+      .then((items) => {
+        setNotifications(items);
+        setHasUnread(items.length > 0);
+      })
+      .catch((err) => console.error(err));
+  }, [appUser?.tenant_id, pathname]);
 
   const toggleNotifications = () => {
     setIsNotifOpen((prev) => !prev);
@@ -236,6 +248,7 @@ export default function DashboardLayout({
         isOpen={isNotifOpen}
         onClose={() => setIsNotifOpen(false)}
         onClearDot={() => setHasUnread(false)}
+        notifications={notifications}
       />
 
       {/* Modal de Cierre de Sesión Global */}

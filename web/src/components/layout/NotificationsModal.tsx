@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLockBodyScroll } from '@/hooks';
 import styles from './NotificationsModal.module.css';
 
@@ -11,57 +12,48 @@ export interface NotificationItem {
   time: string;
   type: 'info' | 'warning' | 'success';
   read: boolean;
+  link?: string;
 }
-
-const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'notif-1',
-    title: 'Operación de Campo Lista',
-    message: 'Tu sistema y rutas están sincronizados para registrar los cobros de hoy.',
-    time: 'Hace un momento',
-    type: 'success',
-    read: false,
-  },
-  {
-    id: 'notif-2',
-    title: 'Cobranza Sin Conexión',
-    message: 'Recuerda que en la calle puedes seguir cobrando aunque te quedes sin señal o datos.',
-    time: 'Hoy',
-    type: 'info',
-    read: false,
-  },
-  {
-    id: 'notif-3',
-    title: 'Cierres de Jornada',
-    message: 'Al terminar la ruta, tu cobrador o tú pueden realizar el arqueo de caja con un solo toque.',
-    time: 'Ayer',
-    type: 'info',
-    read: true,
-  },
-];
 
 interface NotificationsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onClearDot?: () => void;
+  notifications?: NotificationItem[];
 }
 
-export default function NotificationsModal({ isOpen, onClose, onClearDot }: NotificationsModalProps) {
+export default function NotificationsModal({
+  isOpen,
+  onClose,
+  onClearDot,
+  notifications: initialNotifications = [],
+}: NotificationsModalProps) {
   useLockBodyScroll(isOpen);
+  const router = useRouter();
+  const [items, setItems] = useState<NotificationItem[]>(initialNotifications);
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>(DEFAULT_NOTIFICATIONS);
+  useEffect(() => {
+    setItems(initialNotifications);
+  }, [initialNotifications]);
 
   if (!isOpen) return null;
 
   const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
     if (onClearDot) onClearDot();
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate(25);
     }
   };
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const handleItemClick = (item: NotificationItem) => {
+    if (item.link) {
+      onClose();
+      router.push(item.link);
+    }
+  };
+
+  const unreadCount = items.filter((n) => !n.read).length;
 
   return (
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true" aria-label="Notificaciones">
@@ -90,18 +82,36 @@ export default function NotificationsModal({ isOpen, onClose, onClearDot }: Noti
         </div>
 
         <div className={styles.list}>
-          {notifications.map((item) => (
-            <div key={item.id} className={`${styles.item} ${!item.read ? styles.itemUnread : ''}`}>
-              <div className={styles.itemHeader}>
-                <span className={`${styles.badge} ${styles['badge_' + item.type]}`}>
-                  {item.type === 'success' ? 'Operación' : item.type === 'warning' ? 'Alerta' : 'Aviso'}
-                </span>
-                <span className={styles.time}>{item.time}</span>
+          {items.length === 0 ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyIcon}>
+                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
               </div>
-              <h4 className={styles.itemTitle}>{item.title}</h4>
-              <p className={styles.itemMessage}>{item.message}</p>
+              <h4 className={styles.emptyTitle}>Todo al día</h4>
+              <p className={styles.emptyText}>No tienes alertas, arqueos por conciliar ni cobros atrasados en este momento.</p>
             </div>
-          ))}
+          ) : (
+            items.map((item) => (
+              <div
+                key={item.id}
+                className={`${styles.item} ${!item.read ? styles.itemUnread : ''}`}
+                onClick={() => handleItemClick(item)}
+                style={{ cursor: item.link ? 'pointer' : 'default' }}
+              >
+                <div className={styles.itemHeader}>
+                  <span className={`${styles.badge} ${styles['badge_' + item.type]}`}>
+                    {item.type === 'success' ? 'Operación' : item.type === 'warning' ? 'Alerta' : 'Aviso'}
+                  </span>
+                  <span className={styles.time}>{item.time}</span>
+                </div>
+                <h4 className={styles.itemTitle}>{item.title}</h4>
+                <p className={styles.itemMessage}>{item.message}</p>
+              </div>
+            ))
+          )}
         </div>
 
         <div className={styles.footer}>
