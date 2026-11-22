@@ -590,97 +590,172 @@ export default function SuperAdminPage() {
 
       {/* VISTA 2: Directorio de Usuarios de la Red */}
       {viewTab === 'users' && (
-        <div className={styles.tableCard}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Usuario</th>
-                <th>Correo</th>
-                <th>Rol</th>
-                <th>Organización</th>
-                <th>Teléfono</th>
-                <th>Estado</th>
-                <th>Registro</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} style={{ padding: 32, textAlign: 'center' }}>
-                    Cargando usuarios...
-                  </td>
-                </tr>
-              ) : filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ padding: 32, textAlign: 'center' }}>
-                    No se encontraron usuarios.
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((u) => {
-                  let roleBadge = (
-                    <span className={styles.roleBadgeCollector}>COBRADOR</span>
+        <div className={styles.usersContainer}>
+          {/* Vista Móvil: Tarjetas Táctiles (< 768px) */}
+          <div className={styles.mobileUsersList}>
+            {loading ? (
+              <div style={{ padding: 32, textAlign: 'center', color: '#64748B' }}>
+                Cargando usuarios...
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div style={{ padding: 32, textAlign: 'center', color: '#64748B' }}>
+                No se encontraron usuarios con ese criterio.
+              </div>
+            ) : (
+              filteredUsers.map((u) => {
+                const roleBadge =
+                  u.role === 'admin' ? (
+                    <span className={styles.roleTagAdmin}>Prestamista</span>
+                  ) : u.role === 'superadmin' || u.role === 'super_admin' ? (
+                    <span className={styles.roleTagSuper}>Dirección</span>
+                  ) : (
+                    <span className={styles.roleTagCollector}>Cobrador</span>
                   );
-                  if (u.role === 'admin') {
-                    roleBadge = (
-                      <span className={styles.roleBadgeAdmin}>PRESTAMISTA</span>
-                    );
-                  } else if (
-                    u.role === 'superadmin' ||
-                    u.role === 'super_admin'
-                  ) {
-                    roleBadge = (
-                      <span className={styles.roleBadgeSuper}>DIRECCIÓN</span>
-                    );
-                  }
 
-                  return (
-                    <tr key={u.id}>
-                      <td>
-                        <div className={styles.userCell}>
-                          <div className={styles.userAvatar}>
-                            {u.full_name.slice(0, 1).toUpperCase()}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 800 }}>{u.full_name}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#656B81' }}>
-                              {u.username}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ color: '#475569' }}>{u.email}</td>
-                      <td>{roleBadge}</td>
-                      <td style={{ fontWeight: 600 }}>{u.tenant_name}</td>
-                      <td style={{ fontVariantNumeric: 'tabular-nums' }}>
-                        {u.phone}
-                      </td>
-                      <td>
-                        {u.is_active ? (
-                          <span style={{ color: '#10B981', fontWeight: 700 }}>
-                            ● Activo
-                          </span>
-                        ) : (
-                          <span style={{ color: '#EF4444', fontWeight: 700 }}>
-                            ● Inactivo
-                          </span>
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          fontSize: '0.78rem',
-                          color: '#656B81',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {u.created_at ? formatDate(u.created_at) : '—'}
+                return (
+                  <div key={u.id} className={styles.mobileUserCard}>
+                    <div className={styles.mobileUserCardHeader}>
+                      <div className={styles.userAvatar}>
+                        {u.full_name.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className={styles.mobileUserCardInfo}>
+                        <div className={styles.mobileUserCardName}>{u.full_name}</div>
+                        <div className={styles.mobileUserCardUsername}>{u.username}</div>
+                      </div>
+                      {roleBadge}
+                    </div>
+
+                    <div className={styles.mobileUserCardBody}>
+                      <div className={styles.mobileUserCardRow}>
+                        <span className={styles.mobileUserCardLabel}>Correo:</span>
+                        <span className={styles.mobileUserCardValue}>{u.email}</span>
+                      </div>
+                      <div className={styles.mobileUserCardRow}>
+                        <span className={styles.mobileUserCardLabel}>Organización:</span>
+                        <span className={styles.mobileUserCardValue}>{u.tenant_name || 'QuickCash Global'}</span>
+                      </div>
+                      <div className={styles.mobileUserCardRow}>
+                        <span className={styles.mobileUserCardLabel}>Teléfono:</span>
+                        <span className={styles.mobileUserCardValue}>{u.phone || '—'}</span>
+                      </div>
+                      <div className={styles.mobileUserCardRow}>
+                        <span className={styles.mobileUserCardLabel}>Estado:</span>
+                        <span className={styles.mobileUserCardValue}>
+                          {u.is_active ? (
+                            <span style={{ color: '#10B981', fontWeight: 700 }}>● Activo</span>
+                          ) : (
+                            <span style={{ color: '#EF4444', fontWeight: 700 }}>● Inactivo</span>
+                          )}
+                        </span>
+                      </div>
+                      <div className={styles.mobileUserCardRow}>
+                        <span className={styles.mobileUserCardLabel}>Registro:</span>
+                        <span className={styles.mobileUserCardValue}>
+                          {u.created_at ? formatDate(u.created_at) : '—'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Vista Escritorio: Tabla Completa con Scroll Horizontal Seguro (>= 768px) */}
+          <div className={styles.desktopTableWrapper}>
+            <div className={styles.tableCard}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                    <th>Organización</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Registro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: 32, textAlign: 'center' }}>
+                        Cargando usuarios...
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                  ) : filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: 32, textAlign: 'center' }}>
+                        No se encontraron usuarios.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((u) => {
+                      let roleBadge = (
+                        <span className={styles.roleTagCollector}>Cobrador</span>
+                      );
+                      if (u.role === 'admin') {
+                        roleBadge = (
+                          <span className={styles.roleTagAdmin}>Prestamista</span>
+                        );
+                      } else if (
+                        u.role === 'superadmin' ||
+                        u.role === 'super_admin'
+                      ) {
+                        roleBadge = (
+                          <span className={styles.roleTagSuper}>Dirección</span>
+                        );
+                      }
+
+                      return (
+                        <tr key={u.id}>
+                          <td>
+                            <div className={styles.userCell}>
+                              <div className={styles.userAvatar}>
+                                {u.full_name.slice(0, 1).toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 800 }}>{u.full_name}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#656B81' }}>
+                                  {u.username}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ color: '#475569' }}>{u.email}</td>
+                          <td>{roleBadge}</td>
+                          <td style={{ fontWeight: 600 }}>{u.tenant_name}</td>
+                          <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                            {u.phone}
+                          </td>
+                          <td>
+                            {u.is_active ? (
+                              <span style={{ color: '#10B981', fontWeight: 700 }}>
+                                ● Activo
+                              </span>
+                            ) : (
+                              <span style={{ color: '#EF4444', fontWeight: 700 }}>
+                                ● Inactivo
+                              </span>
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              fontSize: '0.78rem',
+                              color: '#656B81',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {u.created_at ? formatDate(u.created_at) : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
     </div>

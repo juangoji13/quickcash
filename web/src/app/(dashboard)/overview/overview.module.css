@@ -4,6 +4,7 @@
   max-width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
+  padding-bottom: calc(110px + env(safe-area-inset-bottom, 24px));
 }
 
 .pageHeader { margin-bottom: var(--space-6); }

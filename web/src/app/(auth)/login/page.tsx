@@ -30,6 +30,8 @@ export default function LoginPage() {
       const userRole = (session?.user as any)?.role;
       if (userRole === 'superadmin' || userRole === 'super_admin') {
         router.replace('/superadmin');
+      } else if (userRole === 'collector') {
+        router.replace('/route');
       } else {
         router.replace('/overview');
       }

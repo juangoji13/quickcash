@@ -48,6 +48,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .collectorHeaderProfile {
@@ -144,6 +145,7 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 0.82rem;
+  flex-shrink: 0;
 }
 
 .routeText {
@@ -216,6 +218,7 @@
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
 }
 
 .tabsContainer::-webkit-scrollbar {
