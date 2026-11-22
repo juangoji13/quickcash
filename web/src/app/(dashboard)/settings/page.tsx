@@ -9,6 +9,8 @@ import {
   updateUserProfile,
   changeUserPassword,
 } from '@/services/tenant.service';
+import { checkTenantSubscriptionStatus } from '@/services/superadmin.service';
+import { formatCurrency } from '@/lib/utils';
 import type { Tenant, TenantSettings, LoanFrequency } from '@/types';
 import styles from './settings.module.css';
 
@@ -93,6 +95,18 @@ export default function SettingsPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  // Subscription state
+  const [subscriptionInfo, setSubscriptionInfo] = useState<{
+    planName: string;
+    status: 'active' | 'grace' | 'locked';
+    monthlyFee: number;
+    daysLeft: number;
+    isGlobalBillingEnabled: boolean;
+    expiresAt: string | null;
+    contactPhone: string;
+    isBlocked: boolean;
+  } | null>(null);
+
   const [businessMsg, setBusinessMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -102,10 +116,15 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
-      const [tenantData, userProfile] = await Promise.all([
+      const [tenantData, userProfile, subData] = await Promise.all([
         getTenant(appUser.tenant_id),
         getUserProfile(appUser.id),
+        appUser.tenant_id ? checkTenantSubscriptionStatus(appUser.tenant_id) : Promise.resolve(null),
       ]);
+
+      if (subData) {
+        setSubscriptionInfo(subData);
+      }
 
       if (tenantData) {
         setTenant(tenantData);
@@ -320,6 +339,9 @@ export default function SettingsPage() {
               {username && <span>• @{username.replace('@', '')}</span>}
               <span>• Negocio: <strong>{tenant?.name || 'Mi Ruta'}</strong></span>
               <span>• {roleLabel}</span>
+              <span className={subscriptionInfo?.planName === 'Plan Gratis' ? styles.planBadgeFree : styles.planBadgePro}>
+                {subscriptionInfo?.planName || 'Plan Gratis'}
+              </span>
             </div>
           </div>
         </div>
@@ -327,6 +349,72 @@ export default function SettingsPage() {
 
       {/* Settings Grid */}
       <div className={styles.grid}>
+        {/* Suscripción & Membresía */}
+        <div className="card">
+          <div className={styles.planCardHeader}>
+            <div className={styles.planCardTitleGroup}>
+              <h2 className={styles.sectionTitle} style={{ margin: 0 }}>
+                <span>Suscripción y Membresía</span>
+              </h2>
+              <span className={subscriptionInfo?.planName === 'Plan Gratis' ? styles.planBadgeFree : styles.planBadgePro}>
+                {subscriptionInfo?.planName || 'Plan Gratis'}
+              </span>
+            </div>
+            <div className={styles.planPriceTag}>
+              {subscriptionInfo?.planName === 'Plan Gratis' ? (
+                <>
+                  <span className={styles.priceAmount}>$0 COP</span>
+                  <span className={styles.pricePeriod}>/ promocional</span>
+                </>
+              ) : (
+                <>
+                  <span className={styles.priceAmount}>{formatCurrency(subscriptionInfo?.monthlyFee || 25000)}</span>
+                  <span className={styles.pricePeriod}>/ mes</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.planDetailsGrid}>
+            <div className={styles.planDetailItem}>
+              <span className={styles.planDetailLabel}>Estado de la cuenta</span>
+              <span className={styles.planDetailValue}>
+                {subscriptionInfo?.isBlocked ? (
+                  <span style={{ color: '#DC2626', fontWeight: 700 }}>● Pausada / No pagó</span>
+                ) : (
+                  <span style={{ color: '#16A34A', fontWeight: 700 }}>● Activa y Operativa</span>
+                )}
+              </span>
+            </div>
+            <div className={styles.planDetailItem}>
+              <span className={styles.planDetailLabel}>Modalidad de facturación</span>
+              <span className={styles.planDetailValue}>
+                {subscriptionInfo?.planName === 'Plan Gratis' ? 'Sin costo mensual activo' : 'Membresía Mensual QuickCash'}
+              </span>
+            </div>
+            <div className={styles.planDetailItem}>
+              <span className={styles.planDetailLabel}>Tiempo de servicio</span>
+              <span className={styles.planDetailValue}>
+                {subscriptionInfo?.planName === 'Plan Gratis'
+                  ? 'Ilimitado (Modo Promocional)'
+                  : `${subscriptionInfo?.daysLeft || 30} días restantes`}
+              </span>
+            </div>
+            <div className={styles.planDetailItem}>
+              <span className={styles.planDetailLabel}>Fecha de renovación</span>
+              <span className={styles.planDetailValue}>
+                {subscriptionInfo?.expiresAt ? new Date(subscriptionInfo.expiresAt).toLocaleDateString('es-CO') : 'Sin corte programado'}
+              </span>
+            </div>
+          </div>
+
+          <p className={styles.fieldHint} style={{ marginTop: 14 }}>
+            {subscriptionInfo?.planName === 'Plan Gratis'
+              ? 'Tu negocio opera actualmente en Plan Gratis sin cargos periódicos. Todas las funciones de préstamos, cobros y rutas están habilitadas.'
+              : 'Tu suscripción incluye soporte prioritario, copias de seguridad de cartera y acceso a la plataforma para todo tu equipo de cobradores.'}
+          </p>
+        </div>
+
         {/* 1. Perfil del Titular */}
         <div className="card">
           <h2 className={styles.sectionTitle}>

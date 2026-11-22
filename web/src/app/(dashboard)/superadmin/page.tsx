@@ -519,13 +519,13 @@ export default function SuperAdminPage() {
                   {/* Módulo de Mensualidad */}
                   <div className={styles.billingBox}>
                     <div className={styles.billingText}>
-                      <span className={styles.billingTitle}>Mensualidad</span>
-                      {!isGlobalBillingOn ? (
-                        <span className={styles.badgeFree}>Modo Gratis</span>
-                      ) : isLocked ? (
+                      <span className={styles.billingTitle}>Plan / Mensualidad</span>
+                      {isLocked ? (
                         <span className={styles.badgeLocked}>
                           ● Bloqueado (No pagó)
                         </span>
+                      ) : !isGlobalBillingOn || !billing?.enabled || !billing?.expires_at ? (
+                        <span className={styles.badgeFree}>Plan Gratis</span>
                       ) : isDueSoon ? (
                         <span className={styles.badgeGrace}>
                           ● Vence en {daysLeft} días

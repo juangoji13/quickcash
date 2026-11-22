@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useLockBodyScroll } from '@/hooks';
 import { getCollectorDetail } from '@/services/collectors.service';
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils';
@@ -23,11 +24,16 @@ export default function CollectorDetailModal({
   collectorId,
   tenantId,
 }: CollectorDetailModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<CollectorFullDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('clients');
   const [clientSearch, setClientSearch] = useState('');
   const [reassignTarget, setReassignTarget] = useState<CollectorClientItem | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen && collectorId && tenantId) {
@@ -50,7 +56,7 @@ export default function CollectorDetailModal({
 
   useLockBodyScroll(isOpen);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
@@ -64,7 +70,7 @@ export default function CollectorDetailModal({
     c.document_id.includes(clientSearch)
   );
 
-  return (
+  const modalContent = (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
@@ -132,20 +138,23 @@ export default function CollectorDetailModal({
             className={`${styles.tabBtn} ${activeTab === 'clients' ? styles.tabBtnActive : ''}`}
             onClick={() => handleTabChange('clients')}
           >
-            Clientes Asignados
+            <span className={styles.tabDesktop}>Clientes Asignados</span>
+            <span className={styles.tabMobile}>Clientes</span>
             <span className={styles.tabCountBadge}>{data?.clients.length || 0}</span>
           </button>
           <button 
             className={`${styles.tabBtn} ${activeTab === 'performance' ? styles.tabBtnActive : ''}`}
             onClick={() => handleTabChange('performance')}
           >
-            Rendimiento & Caja
+            <span className={styles.tabDesktop}>Rendimiento & Caja</span>
+            <span className={styles.tabMobile}>Rendimiento</span>
           </button>
           <button 
             className={`${styles.tabBtn} ${activeTab === 'history' ? styles.tabBtnActive : ''}`}
             onClick={() => handleTabChange('history')}
           >
-            Cobros Recientes
+            <span className={styles.tabDesktop}>Cobros Recientes</span>
+            <span className={styles.tabMobile}>Cobros</span>
             <span className={styles.tabCountBadge}>{data?.recentPayments.length || 0}</span>
           </button>
         </div>
@@ -192,9 +201,22 @@ export default function CollectorDetailModal({
                       <div className={styles.clientMainRow}>
                         <div className={styles.clientIdentity}>
                           <h4 className={styles.clientName}>{c.full_name}</h4>
-                          <div className={styles.clientAddress}>
-                            <span>{c.address || 'Sin dirección registrada'}</span>
-                            {c.phone && <span>· Tel: {c.phone}</span>}
+                          <div className={styles.clientMetaBlock}>
+                            <div className={styles.clientAddressLine}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                              </svg>
+                              <span>{c.address || 'Sin dirección registrada'}</span>
+                            </div>
+                            {c.phone && (
+                              <div className={styles.clientPhoneLine}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <span>{c.phone}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <span className={`${styles.clientStatusPill} ${
@@ -383,4 +405,6 @@ export default function CollectorDetailModal({
       />
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks';
 import { getDashboardKPIs, getUpcomingPayments } from '@/services/dashboard.service';
+import { checkTenantSubscriptionStatus } from '@/services/superadmin.service';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { DashboardKPIs } from '@/types';
 import styles from './overview.module.css';
@@ -24,6 +25,7 @@ export default function OverviewPage() {
   const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
   const [upcoming, setUpcoming] = useState<UpcomingPayment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [planName, setPlanName] = useState<string>('Plan Gratis');
 
   useEffect(() => {
     if (appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin') {
@@ -37,12 +39,16 @@ export default function OverviewPage() {
       
       try {
         setLoading(true);
-        const [kpiData, upcomingData] = await Promise.all([
+        const [kpiData, upcomingData, subData] = await Promise.all([
           getDashboardKPIs(appUser.tenant_id),
-          getUpcomingPayments(appUser.tenant_id)
+          getUpcomingPayments(appUser.tenant_id),
+          checkTenantSubscriptionStatus(appUser.tenant_id),
         ]);
         setKpis(kpiData);
         setUpcoming(upcomingData);
+        if (subData?.planName) {
+          setPlanName(subData.planName);
+        }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -66,6 +72,22 @@ export default function OverviewPage() {
             {getGreeting()}, <span className={styles.name}>{firstName}</span>
           </h1>
           <p className={styles.date}>{formatToday()}</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            padding: '4px 10px',
+            borderRadius: '6px',
+            backgroundColor: planName === 'Plan Gratis' ? '#F1F5F9' : '#FEF3C7',
+            color: planName === 'Plan Gratis' ? '#475569' : '#92400E',
+            border: planName === 'Plan Gratis' ? '1px solid #CBD5E1' : '1px solid #FCD34D',
+            fontFamily: 'var(--font-heading)'
+          }}>
+            {planName}
+          </span>
         </div>
       </div>
 

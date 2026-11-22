@@ -168,13 +168,13 @@ export async function getTalonarioData(token: string): Promise<TalonarioData | n
     // Mensaje cálido y motivador humanizado
     let encouragement = '¡Bienvenido! Ten lista tu cuota del día cuando pase tu cobrador.';
     if (progressPercent >= 100) {
-      encouragement = '¡Felicidades de corazón! Has completado todas las cuotas de tu crédito con total puntualidad 🎉.';
+      encouragement = 'Has completado todas las cuotas de tu crédito con total puntualidad.';
     } else if (progressPercent >= 80) {
-      encouragement = `¡Estás en la recta final! Solo te faltan ${remainingCount} cuoticas para estar al 100% libre. ¡Gran trabajo! 💪`;
+      encouragement = `Estás en la recta final: solo te faltan ${remainingCount} cuotas para terminar tu crédito.`;
     } else if (progressPercent >= 50) {
-      encouragement = '¡Ya superaste más de la mitad del camino! Gracias por tu puntualidad y seriedad 👏.';
+      encouragement = 'Has superado más de la mitad del camino. Gracias por tu puntualidad.';
     } else if (progressPercent > 0) {
-      encouragement = `¡Llevas un excelente ritmo! Cada cuota pagada suma a tu buen historial con nosotros.`;
+      encouragement = 'Llevas un excelente ritmo. Cada cuota pagada suma a tu historial comercial.';
     }
 
     // Frecuencia en texto natural

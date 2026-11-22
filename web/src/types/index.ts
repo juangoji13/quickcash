@@ -214,6 +214,7 @@ export interface TenantBillingInfo {
   expires_at: string | null;
   days_left: number;
   is_locked: boolean;
+  plan_name?: string;
   last_payment_date?: string | null;
   last_payment_amount?: number | null;
 }

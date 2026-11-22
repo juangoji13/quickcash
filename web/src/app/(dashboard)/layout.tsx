@@ -97,7 +97,7 @@ export default function DashboardLayout({
         }
       });
     }
-  }, [appUser]);
+  }, [appUser, pathname]);
 
   if (isLoggingOut) {
     return (

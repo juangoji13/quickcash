@@ -1,10 +1,10 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.65);
+  background-color: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,7 +210,7 @@
 .tabsContainer {
   display: flex;
   background: #F1F5F9;
-  padding: 6px 14px;
+  padding: 6px 10px;
   border-bottom: 1px solid #E2E8F0;
   gap: 6px;
   overflow-x: auto;
@@ -224,8 +224,8 @@
 
 .tabBtn {
   flex: 1;
-  min-height: 42px;
-  padding: 10px 12px;
+  min-height: 40px;
+  padding: 8px 10px;
   border: none;
   background: transparent;
   border-radius: 8px;
@@ -241,6 +241,23 @@
   gap: 6px;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.tabMobile {
+  display: inline;
+}
+
+.tabDesktop {
+  display: none;
+}
+
+@media (min-width: 520px) {
+  .tabMobile {
+    display: none;
+  }
+  .tabDesktop {
+    display: inline;
+  }
 }
 
 .tabBtnActive {
@@ -329,13 +346,26 @@
   margin: 0;
 }
 
-.clientAddress {
+.clientMetaBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.clientAddressLine,
+.clientPhoneLine {
   font-size: 0.78rem;
   color: #64748B;
-  margin-top: 3px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  line-height: 1.3;
+}
+
+.clientPhoneLine {
+  color: #2563EB;
+  font-weight: 600;
 }
 
 .clientStatusPill {

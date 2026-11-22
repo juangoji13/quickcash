@@ -178,6 +178,7 @@ export async function getAllTenants(): Promise<SuperAdminTenant[]> {
       const billingData = settings.billing || {};
       const fee = Number(billingData.monthly_fee ?? defaultFee);
       const enabled = Boolean(billingData.enabled ?? false);
+      const hasPaidPlan = Boolean(enabled && billingData.expires_at);
 
       // Si no tiene fecha de vencimiento, inicializar a 30 días a futuro
       let expiresAtStr = billingData.expires_at || null;
@@ -200,8 +201,9 @@ export async function getAllTenants(): Promise<SuperAdminTenant[]> {
         }
       }
 
-      // Bloqueado si el cobro global está activo, el cobro al tenant está activo y el estado es locked
-      const isLocked = isGlobalBillingEnabled && enabled && status === 'locked';
+      // Bloqueado si status es locked, o si el cobro global está activo con plan vencido
+      const isLocked = status === 'locked' || (isGlobalBillingEnabled && hasPaidPlan && daysLeft < -graceDays);
+      const planName = hasPaidPlan ? 'Plan Mensual QuickCash' : 'Plan Gratis';
 
       const billing: TenantBillingInfo = {
         enabled,
@@ -210,6 +212,7 @@ export async function getAllTenants(): Promise<SuperAdminTenant[]> {
         expires_at: expiresAtStr,
         days_left: daysLeft,
         is_locked: isLocked,
+        plan_name: planName,
         last_payment_date: billingData.last_payment_date || null,
         last_payment_amount: billingData.last_payment_amount || null,
       };
@@ -361,7 +364,7 @@ export async function updateTenantBilling(
 
 /**
  * Consulta de verificación para el layout del prestamista:
- * Determina si la cuenta está bloqueada por no pago.
+ * Determina el plan actual (Plan Gratis vs Plan Mensual) y si la cuenta está bloqueada por no pago.
  */
 export async function checkTenantSubscriptionStatus(tenantId: string): Promise<{
   isBlocked: boolean;
@@ -369,19 +372,25 @@ export async function checkTenantSubscriptionStatus(tenantId: string): Promise<{
   monthlyFee: number;
   contactPhone: string;
   daysLeft: number;
+  planName: string;
+  isGlobalBillingEnabled: boolean;
+  expiresAt: string | null;
 }> {
   try {
     if (!tenantId || tenantId === GLOBAL_TENANT_ID) {
       return {
         isBlocked: false,
         status: 'active',
-        monthlyFee: 25000,
+        monthlyFee: 0,
         contactPhone: '+57 300 000 0001',
         daysLeft: 999,
+        planName: 'Plan Maestro',
+        isGlobalBillingEnabled: false,
+        expiresAt: null,
       };
     }
 
-    // 1. Verificar si el cobro global está habilitado
+    // 1. Verificar si el cobro global está habilitado en la plataforma
     const globalTenant = await db.query.tenants.findFirst({
       where: eq(tenants.id, GLOBAL_TENANT_ID),
     });
@@ -390,17 +399,6 @@ export async function checkTenantSubscriptionStatus(tenantId: string): Promise<{
     const contactPhone = globalSettings.platform_billing?.contact_phone || '+57 300 000 0001';
     const defaultFee = Number(globalSettings.platform_billing?.default_monthly_fee ?? 25000);
     const graceDays = Number(globalSettings.platform_billing?.grace_days ?? 2);
-
-    // Si el cobro global está desactivado (Modo Gratuito), nadie se bloquea
-    if (!isGlobalBillingEnabled) {
-      return {
-        isBlocked: false,
-        status: 'active',
-        monthlyFee: defaultFee,
-        contactPhone,
-        daysLeft: 999,
-      };
-    }
 
     // 2. Verificar datos del tenant específico
     const tenant = await db.query.tenants.findFirst({
@@ -411,30 +409,23 @@ export async function checkTenantSubscriptionStatus(tenantId: string): Promise<{
       return {
         isBlocked: false,
         status: 'active',
-        monthlyFee: defaultFee,
+        monthlyFee: 0,
         contactPhone,
         daysLeft: 999,
+        planName: 'Plan Gratis',
+        isGlobalBillingEnabled,
+        expiresAt: null,
       };
     }
 
     const settings = (tenant.settings as any) || {};
     const billing = settings.billing || {};
-    const isTenantBillingEnabled = Boolean(billing.enabled ?? false);
     const fee = Number(billing.monthly_fee ?? defaultFee);
+    const hasPaidPlan = Boolean(billing.enabled && billing.expires_at);
+    const expiresAt = billing.expires_at || null;
 
-    // Si a este prestamista se le tiene en modo gratuito/exento, no se bloquea
-    if (!isTenantBillingEnabled) {
-      return {
-        isBlocked: false,
-        status: 'active',
-        monthlyFee: fee,
-        contactPhone,
-        daysLeft: 999,
-      };
-    }
-
-    let status: 'active' | 'grace' | 'locked' = billing.status || 'active';
     let daysLeft = 30;
+    let status: 'active' | 'grace' | 'locked' = billing.status || 'active';
 
     if (billing.expires_at) {
       const expDate = new Date(billing.expires_at);
@@ -446,10 +437,56 @@ export async function checkTenantSubscriptionStatus(tenantId: string): Promise<{
           status = 'locked';
         } else if (daysLeft <= 0) {
           status = 'grace';
+        } else {
+          status = 'active';
         }
       }
     }
 
+    // Si el administrador bloqueó explícitamente la cuenta (para pruebas o mora)
+    if (billing.status === 'locked') {
+      return {
+        isBlocked: true,
+        status: 'locked',
+        monthlyFee: fee,
+        contactPhone,
+        daysLeft: Math.min(daysLeft, 0),
+        planName: hasPaidPlan ? 'Plan Mensual QuickCash' : 'Plan Gratis',
+        isGlobalBillingEnabled,
+        expiresAt,
+      };
+    }
+
+    // Si el cobro global está desactivado (Modo Gratuito General)
+    if (!isGlobalBillingEnabled) {
+      return {
+        isBlocked: false,
+        status: 'active',
+        monthlyFee: 0,
+        contactPhone,
+        daysLeft: 999,
+        planName: 'Plan Gratis',
+        isGlobalBillingEnabled: false,
+        expiresAt: null,
+      };
+    }
+
+    // Cobro global ACTIVADO:
+    // "si no tienen plan debe salir plan gratis"
+    if (!hasPaidPlan) {
+      return {
+        isBlocked: false,
+        status: 'active',
+        monthlyFee: 0,
+        contactPhone,
+        daysLeft: 999,
+        planName: 'Plan Gratis',
+        isGlobalBillingEnabled: true,
+        expiresAt: null,
+      };
+    }
+
+    // Prestamista con plan mensual activo o en gracia/mora
     const isBlocked = status === 'locked';
 
     return {
@@ -458,6 +495,9 @@ export async function checkTenantSubscriptionStatus(tenantId: string): Promise<{
       monthlyFee: fee,
       contactPhone,
       daysLeft,
+      planName: 'Plan Mensual QuickCash',
+      isGlobalBillingEnabled: true,
+      expiresAt,
     };
   } catch (error) {
     console.error('Error in checkTenantSubscriptionStatus:', error);
@@ -467,6 +507,9 @@ export async function checkTenantSubscriptionStatus(tenantId: string): Promise<{
       monthlyFee: 25000,
       contactPhone: '+57 300 000 0001',
       daysLeft: 999,
+      planName: 'Plan Gratis',
+      isGlobalBillingEnabled: false,
+      expiresAt: null,
     };
   }
 }
