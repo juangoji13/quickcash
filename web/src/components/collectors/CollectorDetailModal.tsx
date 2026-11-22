@@ -170,7 +170,7 @@ export default function CollectorDetailModal({
             <div className={styles.emptyState}>No se pudo cargar la información del cobrador.</div>
           ) : activeTab === 'clients' ? (
             /* ---- PESTAÑA 1: CLIENTES ASIGNADOS ---- */
-            <div>
+            <div className={styles.tabContentPane} key="tab-clients">
               {data.clients.length > 3 && (
                 <div style={{ marginBottom: 12 }}>
                   <input
@@ -285,9 +285,9 @@ export default function CollectorDetailModal({
             </div>
           ) : activeTab === 'performance' ? (
             /* ---- PESTAÑA 2: RENDIMIENTO & CAJA ---- */
-            <div>
+            <div className={styles.tabContentPane} key="tab-performance">
               <div className={styles.performanceGrid}>
-                <div className={`${styles.metricTile} ${styles.metricTileHighlight}`}>
+                <div className={`${styles.metricTile} ${data.stats.totalCollectedToday > 0 ? styles.metricTileHighlight : ''}`}>
                   <span className={styles.metricTileLabel}>Recaudado Hoy</span>
                   <span className={styles.metricTileValue}>{formatCurrency(data.stats.totalCollectedToday)}</span>
                   <span className={styles.metricTileSub}>Ingreso de hoy en caja</span>
@@ -311,43 +311,79 @@ export default function CollectorDetailModal({
 
               {/* Arqueo de Caja / Cierre Diario */}
               <h4 className={styles.sectionTitle}>Arqueo & Cierre de Caja del Día</h4>
-              <div className={styles.closureCard}>
-                <div className={styles.closureHeader}>
-                  <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Caja de Ruta Diaria</strong>
-                  <span className={data.stats.closureStatus === 'closed' ? styles.closureStatusClosed : styles.closureStatusOpen}>
-                    {data.stats.closureStatus === 'closed' ? 'Caja Entregada / Cerrada' : 'Caja en Calle (Abierta)'}
-                  </span>
+              {data.stats.closureAmountToday === 0 && data.stats.totalCollectedToday === 0 ? (
+                <div className={styles.closureCardNeutral}>
+                  <div className={styles.closureHeader}>
+                    <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Caja de Ruta Diaria</strong>
+                    <span className={styles.closureStatusNeutral}>
+                      Sin movimientos hoy
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                    <span style={{ color: '#64748B' }}>Efectivo en calle:</span>
+                    <strong style={{ fontSize: '1.05rem', color: '#0F172A' }}>$0 COP</strong>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748B', lineHeight: 1.4 }}>
+                    No se registran cobros ni dinero en efectivo pendiente de liquidación en la jornada de hoy.
+                  </p>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                  <span style={{ color: '#64748B' }}>Efectivo reportado hoy:</span>
-                  <strong style={{ fontSize: '1.05rem', color: '#0F172A' }}>{formatCurrency(data.stats.closureAmountToday)}</strong>
+              ) : (
+                <div className={styles.closureCard}>
+                  <div className={styles.closureHeader}>
+                    <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Caja de Ruta Diaria</strong>
+                    <span className={data.stats.closureStatus === 'closed' ? styles.closureStatusClosed : styles.closureStatusOpen}>
+                      {data.stats.closureStatus === 'closed' ? 'Caja Entregada / Cerrada' : 'Caja en Calle (Abierta)'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                    <span style={{ color: '#64748B' }}>Efectivo reportado hoy:</span>
+                    <strong style={{ fontSize: '1.05rem', color: '#0F172A' }}>{formatCurrency(data.stats.closureAmountToday)}</strong>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748B', lineHeight: 1.4 }}>
+                    {data.stats.closureStatus === 'closed' 
+                      ? 'El cobrador ya realizó la liquidación de la jornada y entregó el efectivo.'
+                      : 'El cobrador tiene la ruta activa y el dinero en efectivo pendiente por liquidar al final de la jornada.'}
+                  </p>
                 </div>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748B', lineHeight: 1.4 }}>
-                  {data.stats.closureStatus === 'closed' 
-                    ? 'El cobrador ya realizó la liquidación de la jornada y entregó el efectivo.'
-                    : 'El cobrador tiene la ruta activa y el dinero en efectivo pendiente por liquidar al final de la jornada.'}
-                </p>
-              </div>
+              )}
 
               {/* Indicadores Clave de Riesgo */}
               <h4 className={styles.sectionTitle}>Indicadores de Cartera y Cobranza</h4>
               <div className={styles.breakdownBox}>
                 <div className={styles.breakdownRow}>
                   <span className={styles.breakdownRowLabel}>Efectividad de Cobro</span>
-                  <span className={styles.breakdownRowValue} style={{ color: '#16A34A' }}>
-                    {data.stats.collectionEfficiency}%
+                  <span
+                    className={styles.breakdownRowValue}
+                    style={{
+                      color: data.stats.clientsCount > 0 && data.stats.collectionEfficiency > 0 ? '#16A34A' : '#64748B',
+                    }}
+                  >
+                    {data.stats.clientsCount > 0 && data.stats.collectionEfficiency > 0
+                      ? `${data.stats.collectionEfficiency}%`
+                      : '— (Sin cuotas programadas hoy)'}
                   </span>
                 </div>
                 <div className={styles.breakdownRow}>
                   <span className={styles.breakdownRowLabel}>Tasa de Morosidad de Cartera</span>
-                  <span className={styles.breakdownRowValue} style={{ color: data.stats.delinquencyRate > 10 ? '#DC2626' : '#16A34A' }}>
-                    {data.stats.delinquencyRate}%
+                  <span
+                    className={styles.breakdownRowValue}
+                    style={{
+                      color: data.stats.delinquencyRate > 10 ? '#DC2626' : data.stats.clientsCount > 0 ? '#16A34A' : '#64748B',
+                    }}
+                  >
+                    {data.stats.clientsCount > 0 ? `${data.stats.delinquencyRate}%` : '0%'}
                   </span>
                 </div>
                 <div className={styles.breakdownRow}>
                   <span className={styles.breakdownRowLabel}>Distribución Semáforo de Riesgo</span>
                   <span className={styles.breakdownRowValue}>
-                    <span style={{ color: '#16A34A', fontWeight: 700 }}>● {data.stats.greenClients} Al Día</span> · <span style={{ color: '#D97706', fontWeight: 700 }}>● {data.stats.yellowClients} Alerta</span> · <span style={{ color: '#DC2626', fontWeight: 700 }}>● {data.stats.redClients} Mora</span>
+                    {data.stats.clientsCount > 0 ? (
+                      <>
+                        <span style={{ color: '#16A34A', fontWeight: 700 }}>● {data.stats.greenClients} Al Día</span> · <span style={{ color: '#D97706', fontWeight: 700 }}>● {data.stats.yellowClients} Alerta</span> · <span style={{ color: '#DC2626', fontWeight: 700 }}>● {data.stats.redClients} Mora</span>
+                      </>
+                    ) : (
+                      <span style={{ color: '#94A3B8', fontWeight: 600 }}>Sin clientes asignados</span>
+                    )}
                   </span>
                 </div>
                 <div className={styles.breakdownRow}>
@@ -360,7 +396,7 @@ export default function CollectorDetailModal({
             </div>
           ) : (
             /* ---- PESTAÑA 3: COBROS RECIENTES ---- */
-            <div>
+            <div className={styles.tabContentPane} key="tab-history">
               {data.recentPayments.length === 0 ? (
                 <div className={styles.emptyState}>No hay cobros registrados por este cobrador.</div>
               ) : (

@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks';
 import {
   getCollectorsWithMetrics,
   updateCollector,
+  deleteCollector,
   getInvitations,
   createInvitation,
   deleteInvitation,
@@ -37,6 +38,8 @@ export default function CollectorsPage() {
 
   // Modals
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; email: string } | null>(null);
+  const [collectorToDelete, setCollectorToDelete] = useState<CollectorWithMetrics | null>(null);
+  const [isDeletingCollector, setIsDeletingCollector] = useState(false);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
@@ -56,13 +59,17 @@ export default function CollectorsPage() {
   }, [loadData]);
 
   // Totales de rendimiento del equipo
+  const collectorsWithClients = collectors.filter((c) => c.stats.clientsCount > 0);
   const teamStats = {
     totalCollectedToday: collectors.reduce((sum, c) => sum + c.stats.totalCollectedToday, 0),
     totalCapitalInStreet: collectors.reduce((sum, c) => sum + c.stats.capitalInStreet, 0),
     totalClients: collectors.reduce((sum, c) => sum + c.stats.clientsCount, 0),
-    avgEfficiency: collectors.length > 0
-      ? Math.round(collectors.reduce((sum, c) => sum + c.stats.collectionEfficiency, 0) / collectors.length)
-      : 100,
+    avgEfficiency: collectorsWithClients.length > 0
+      ? Math.round(
+          collectorsWithClients.reduce((sum, c) => sum + c.stats.collectionEfficiency, 0) /
+            collectorsWithClients.length
+        )
+      : 0,
   };
 
   const filteredCollectors = collectors.filter((c) =>
@@ -70,6 +77,27 @@ export default function CollectorsPage() {
     c.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (c.user.username && c.user.username.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Excluir al prestamista/administrador si no opera como cobrador directo con clientes en calle
+  const visibleCollectors = filteredCollectors.filter((c) => {
+    if (c.user.id === appUser?.id && c.user.role === 'admin' && c.stats.clientsCount === 0) {
+      return false;
+    }
+    return true;
+  });
+
+  async function handleConfirmDeleteCollector() {
+    if (!collectorToDelete || !appUser?.tenant_id) return;
+    setIsDeletingCollector(true);
+    const { success, error } = await deleteCollector(collectorToDelete.user.id, appUser.tenant_id);
+    setIsDeletingCollector(false);
+    if (!success) {
+      setErrorAlert(error || 'No se pudo desvincular al cobrador.');
+    } else {
+      setCollectorToDelete(null);
+      loadData();
+    }
+  }
 
   async function handleToggleActive(user: User) {
     if (!appUser?.tenant_id) return;
@@ -149,12 +177,16 @@ export default function CollectorsPage() {
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Clientes en Cobro</span>
           <span className={styles.summaryValue}>{teamStats.totalClients}</span>
-          <span className={styles.summarySub}>{collectors.length} cobradores activos</span>
+          <span className={styles.summarySub}>{visibleCollectors.length} cobradores en supervisión</span>
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Efectividad de Cobro</span>
-          <span className={styles.summaryValue}>{teamStats.avgEfficiency}%</span>
-          <span className={styles.summarySub}>Cumplimiento global</span>
+          <span className={styles.summaryValue}>
+            {teamStats.totalClients > 0 ? `${teamStats.avgEfficiency}%` : '—'}
+          </span>
+          <span className={styles.summarySub}>
+            {teamStats.totalClients > 0 ? 'Cumplimiento global' : 'Sin clientes asignados'}
+          </span>
         </div>
       </div>
 
@@ -165,7 +197,7 @@ export default function CollectorsPage() {
             className={`${styles.tab} ${tab === 'team' ? styles.tabActive : ''}`}
             onClick={() => setTab('team')}
           >
-            Equipo ({collectors.length})
+            Equipo ({visibleCollectors.length})
           </button>
           <button
             className={`${styles.tab} ${tab === 'invitations' ? styles.tabActive : ''}`}
@@ -239,7 +271,7 @@ export default function CollectorsPage() {
           ))}
         </div>
       ) : tab === 'team' ? (
-        filteredCollectors.length === 0 ? (
+        visibleCollectors.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyIcon}>
               <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -254,7 +286,7 @@ export default function CollectorsPage() {
           </div>
         ) : (
           <div className={styles.grid}>
-            {filteredCollectors.map((c) => {
+            {visibleCollectors.map((c) => {
               const isAdminOnly = c.user.role === 'admin' && c.stats.clientsCount === 0 && c.stats.capitalInStreet === 0;
 
               return (
@@ -287,27 +319,29 @@ export default function CollectorsPage() {
                         Titular de la cuenta y administración general del negocio.
                       </p>
                       <div className={styles.secondaryActions}>
-                        {c.user.phone && (
-                          <a
-                            href={`tel:${c.user.phone}`}
-                            className={styles.btnCall}
-                            title="Llamar"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                            </svg>
-                            <span>Llamar</span>
-                          </a>
-                        )}
-                        {c.user.id !== appUser?.id && (
-                          <button
-                            className="btn btn--ghost btn--sm"
-                            onClick={() => handleToggleActive(c.user)}
-                            style={{ fontSize: '0.72rem' }}
-                          >
-                            {c.user.is_active ? 'Pausar' : 'Activar'}
-                          </button>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {c.user.phone && (
+                            <a
+                              href={`tel:${c.user.phone}`}
+                              className={styles.btnCall}
+                              title="Llamar"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                              </svg>
+                              <span>Llamar</span>
+                            </a>
+                          )}
+                          {c.user.id !== appUser?.id && (
+                            <button
+                              className="btn btn--ghost btn--sm"
+                              onClick={() => handleToggleActive(c.user)}
+                              style={{ fontSize: '0.72rem' }}
+                            >
+                              {c.user.is_active ? 'Pausar' : 'Activar'}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -363,26 +397,42 @@ export default function CollectorsPage() {
                         </button>
 
                         <div className={styles.secondaryActions}>
-                          {c.user.phone && (
-                            <a
-                              href={`tel:${c.user.phone}`}
-                              className={styles.btnCall}
-                              title="Llamar al Cobrador"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                              </svg>
-                              <span>Llamar</span>
-                            </a>
-                          )}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {c.user.phone && (
+                              <a
+                                href={`tel:${c.user.phone}`}
+                                className={styles.btnCall}
+                                title="Llamar al Cobrador"
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <span>Llamar</span>
+                              </a>
+                            )}
+
+                            {c.user.id !== appUser?.id && (
+                              <button
+                                className="btn btn--ghost btn--sm"
+                                onClick={() => handleToggleActive(c.user)}
+                                style={{ fontSize: '0.72rem' }}
+                              >
+                                {c.user.is_active ? 'Pausar' : 'Activar'}
+                              </button>
+                            )}
+                          </div>
 
                           {c.user.id !== appUser?.id && (
                             <button
-                              className="btn btn--ghost btn--sm"
-                              onClick={() => handleToggleActive(c.user)}
-                              style={{ fontSize: '0.72rem' }}
+                              className={styles.btnDeleteCollector}
+                              onClick={() => setCollectorToDelete(c)}
+                              title="Desvincular cobrador de la organización"
                             >
-                              {c.user.is_active ? 'Pausar' : 'Activar'}
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                              </svg>
+                              <span>Desvincular</span>
                             </button>
                           )}
                         </div>
@@ -447,6 +497,24 @@ export default function CollectorsPage() {
       />
 
       {/* Modales de Confirmación y Alerta */}
+      <ConfirmModal
+        isOpen={!!collectorToDelete}
+        onClose={() => setCollectorToDelete(null)}
+        onConfirm={handleConfirmDeleteCollector}
+        title="Desvincular Cobrador"
+        message={
+          <div>
+            <p style={{ margin: '0 0 10px 0', fontSize: '0.92rem' }}>
+              ¿Estás seguro de que deseas desvincular a <strong>{collectorToDelete?.user.full_name}</strong> del equipo?
+            </p>
+            <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748B' }}>
+              Sus rutas asignadas y su cartera de clientes quedarán liberadas automáticamente en el sistema para que puedas reasignarlas a otro cobrador.
+            </p>
+          </div>
+        }
+        confirmLabel={isDeletingCollector ? 'Desvinculando...' : 'Sí, Desvincular'}
+        isDestructive={true}
+      />
       <ConfirmModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}

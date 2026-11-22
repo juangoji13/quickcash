@@ -304,7 +304,7 @@ export default function SettingsPage() {
     appUser?.role === 'superadmin' || (appUser?.role as string) === 'super_admin'
       ? 'Súper Administrador'
       : appUser?.role === 'admin'
-      ? 'Prestamista / Administrador'
+      ? 'Administrador'
       : 'Cobrador de Ruta';
 
   return (

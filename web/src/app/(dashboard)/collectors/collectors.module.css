@@ -120,11 +120,11 @@
 /* Team Grid */
 .grid { 
   display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
-  gap: var(--space-4); 
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); 
+  gap: var(--space-5); 
 }
 
-@media (max-width: 767px) {
+@media (max-width: 860px) {
   .grid { grid-template-columns: 1fr; gap: var(--space-3); }
 }
 
@@ -338,6 +338,28 @@
 
 .btnCall:hover {
   background: #DBEAFE;
+}
+
+.btnDeleteCollector {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  cursor: pointer;
+  transition: all 120ms ease;
+  touch-action: manipulation;
+}
+
+.btnDeleteCollector:hover {
+  background: #FEE2E2;
+  border-color: #DC2626;
+  color: #B91C1C;
 }
 
 .statusActive { font-size: 11px; font-weight: 800; color: #16A34A; }

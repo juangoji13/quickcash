@@ -22,7 +22,8 @@ export async function getCollectors(tenantId: string): Promise<User[]> {
     const results = await db.query.users.findMany({
       where: and(
         eq(users.tenant_id, tenantId),
-        inArray(users.role, ['collector', 'admin'])
+        inArray(users.role, ['collector', 'admin']),
+        sql`${users.email} NOT LIKE '%.unlinked.%'`
       ),
       orderBy: [users.full_name],
     });
@@ -38,7 +39,8 @@ export async function getCollectorsWithMetrics(tenantId: string): Promise<Collec
     const rawUsers = await db.query.users.findMany({
       where: and(
         eq(users.tenant_id, tenantId),
-        inArray(users.role, ['collector', 'admin'])
+        inArray(users.role, ['collector', 'admin']),
+        sql`${users.email} NOT LIKE '%.unlinked.%'`
       ),
       orderBy: [users.full_name],
     });
@@ -138,9 +140,9 @@ export async function getCollectorsWithMetrics(tenantId: string): Promise<Collec
       const yellowClients = assignedClients.filter((c) => c.risk_status === 'yellow').length;
       const redClients = assignedClients.filter((c) => c.risk_status === 'red').length;
 
-      const efficiency = totalInstallmentsExpected > 0
+      const efficiency = (totalInstallmentsExpected > 0 && assignedClients.length > 0)
         ? Math.round((totalInstallmentsPaid / totalInstallmentsExpected) * 100)
-        : 100;
+        : 0;
 
       const delinquencyRate = assignedClients.length > 0
         ? Math.round((redClients / assignedClients.length) * 100)
@@ -321,6 +323,74 @@ export async function updateCollector(
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
+  }
+}
+
+export async function deleteCollector(
+  collectorId: string,
+  tenantId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const targetUser = await db.query.users.findFirst({
+      where: and(
+        eq(users.id, collectorId),
+        eq(users.tenant_id, tenantId)
+      ),
+    });
+
+    if (!targetUser) {
+      return { success: false, error: 'Cobrador no encontrado en tu organización.' };
+    }
+
+    // 1. Liberar rutas asignadas a este cobrador
+    await db.update(collection_routes)
+      .set({ collector_id: null })
+      .where(and(
+        eq(collection_routes.tenant_id, tenantId),
+        eq(collection_routes.collector_id, collectorId)
+      ));
+
+    // 2. Liberar clientes asignados a este cobrador
+    await db.update(clients)
+      .set({ collector_id: null })
+      .where(and(
+        eq(clients.tenant_id, tenantId),
+        eq(clients.collector_id, collectorId)
+      ));
+
+    // 3. Comprobar si tiene registros contables históricos (pagos o arqueos)
+    const [hasPayments, hasClosures] = await Promise.all([
+      db.query.payments.findFirst({
+        where: eq(payments.collector_id, collectorId),
+      }),
+      db.query.route_closures.findFirst({
+        where: eq(route_closures.collector_id, collectorId),
+      }),
+    ]);
+
+    if (hasPayments || hasClosures) {
+      // Tiene historial contable: Desactivar y revocar acceso inmediatamente para preservar la integridad contable
+      await db.update(users)
+        .set({
+          is_active: false,
+          email: `${targetUser.email}.unlinked.${Date.now()}`,
+        })
+        .where(and(
+          eq(users.id, collectorId),
+          eq(users.tenant_id, tenantId)
+        ));
+    } else {
+      // Sin historial contable: Borrado físico seguro
+      await db.delete(users).where(and(
+        eq(users.id, collectorId),
+        eq(users.tenant_id, tenantId)
+      ));
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error desvinculando cobrador:', err);
+    return { success: false, error: err.message || 'Error al desvincular el cobrador.' };
   }
 }
 

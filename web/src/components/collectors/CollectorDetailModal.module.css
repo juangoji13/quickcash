@@ -17,8 +17,8 @@
 .modal {
   background: #ffffff;
   width: 100%;
-  max-width: 640px;
-  max-height: min(92dvh, 720px);
+  max-width: 760px;
+  max-height: min(90dvh, 760px);
   border-radius: 16px;
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
   display: flex;
@@ -254,7 +254,7 @@
   display: none;
 }
 
-@media (min-width: 520px) {
+@media (min-width: 640px) {
   .tabMobile {
     display: none;
   }
@@ -264,24 +264,38 @@
 }
 
 .tabBtnActive {
-  background: #0F172A;
-  color: #F1C40F;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+  background: #2C3E50;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.2);
 }
 
 /* Tab Badge */
 .tabCountBadge {
-  background: rgba(241, 196, 15, 0.25);
-  color: #F1C40F;
+  background: rgba(44, 62, 80, 0.1);
+  color: #475569;
   font-size: 0.7rem;
   padding: 1px 6px;
   border-radius: 10px;
   font-weight: 800;
 }
 
+.tabBtnActive .tabCountBadge {
+  background: #F1C40F;
+  color: #1A252F;
+}
+
 .tabBtn:not(.tabBtnActive) .tabCountBadge {
   background: #CBD5E1;
   color: #475569;
+}
+
+@keyframes tabContentFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tabContentPane {
+  animation: tabContentFadeIn 180ms ease-out;
 }
 
 /* Modal Body */
@@ -550,6 +564,28 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.closureCardNeutral {
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px;
+  background: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.closureStatusNeutral {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #CBD5E1;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .closureHeader {
